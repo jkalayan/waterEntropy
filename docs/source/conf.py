@@ -44,12 +44,12 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinxcontrib.contentui",
     "sphinx_copybutton",
-    #"aiida.sphinxext",
+    # "aiida.sphinxext",
 ]
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
-    #"aiida": ("https://aiida.readthedocs.io/projects/aiida-core/en/latest", None),
+    # "aiida": ("https://aiida.readthedocs.io/projects/aiida-core/en/latest", None),
 }
 
 # Add any paths that contain templates here, relative to this directory.
@@ -230,7 +230,7 @@ html_search_language = "en"
 # html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "waterentropy-doc"
+htmlhelp_basename = "waterentrop-doc"
 
 # Warnings to ignore when using the -n (nitpicky) option
 # We should ignore any python built-in exception, for instance
@@ -314,9 +314,9 @@ def run_apidoc(_):
 
     # See https://stackoverflow.com/a/30144019
     env = os.environ.copy()
-    env[
-        "SPHINX_APIDOC_OPTIONS"
-    ] = "members,special-members,private-members,undoc-members,show-inheritance"
+    env["SPHINX_APIDOC_OPTIONS"] = (
+        "members,special-members,private-members,undoc-members,show-inheritance"
+    )
     subprocess.check_call([cmd_path] + options, env=env)
 
 
