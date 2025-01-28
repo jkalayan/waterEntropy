@@ -16,6 +16,8 @@ import time
 
 import waterEntropy
 
+sys.path.insert(0, os.path.abspath("../waterEntropy"))
+
 # -- AiiDA-related setup --------------------------------------------------
 
 # If we are not on READTHEDOCS load the Sphinx theme manually
