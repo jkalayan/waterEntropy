@@ -3,7 +3,9 @@
 # waterEntropy
 The Python package for calculating interfacial water entropy from molecular dynamics simulations.
 
-![waterEntropy logo](docs/source/images/waterentropy_logo_grey.png)
+<p align="center">
+<img src="docs/source/images/waterentropy_logo_grey.png" height="500px" />
+</p>
 
 ## Documentation
 
