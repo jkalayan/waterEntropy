@@ -4,7 +4,7 @@
 The Python package for calculating interfacial water entropy from molecular dynamics simulations.
 
 <p align="center">
-<img src="docs/source/images/waterentropy_logo_grey.png" height="500px" />
+<img src="docs/source/images/waterentropy_logo_grey.png" width="500px" />
 </p>
 
 ## Documentation
