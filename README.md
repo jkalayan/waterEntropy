@@ -1,8 +1,9 @@
 [![Documentation Status](https://readthedocs.org/projects/waterentropy/badge/?version=latest)](https://waterentropy.readthedocs.io/en/latest/?badge=latest)
 
-
 # waterEntropy
 The Python package for calculating interfacial water entropy from molecular dynamics simulations.
+
+![waterEntropy logo](docs/source/images/waterentropy_logo_grey.png)
 
 ## Documentation
 
