@@ -8,7 +8,7 @@ simulations.
 ``waterEntropy`` is available at https://github.com/jkalayan/waterEntropy
 
 .. image:: images/waterentropy_logo_grey.png
-    :width: 300px
+    :width: 400px
     :align: center
     :target: https://github.com/jkalayan/waterEntropy
 
@@ -57,7 +57,7 @@ Please contact Jas Kalayan jas.kalayan@stfc.ac.uk for information concerning ``w
 Funding
 =======
 
-Contributors to waterEntropy were supported by
+Contributors to waterEntropy were supported by:
 
 .. image:: images/ccpbiosim-logo-white-background.png
    :height: 100px
