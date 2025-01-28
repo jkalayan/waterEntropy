@@ -230,7 +230,7 @@ html_search_language = "en"
 # html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "waterentrop-doc"
+htmlhelp_basename = "waterentropy-doc"
 
 # Warnings to ignore when using the -n (nitpicky) option
 # We should ignore any python built-in exception, for instance

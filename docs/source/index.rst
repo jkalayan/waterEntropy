@@ -4,7 +4,7 @@
     :target: http://www.aiida.net/
 
 The waterEntropy Python package for molecular dynamics
-=====================================================
+======================================================
 
 ``waterEntropy`` is available at https://github.com/jkalayan/waterEntropy
 
