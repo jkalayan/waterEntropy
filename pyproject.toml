@@ -54,8 +54,8 @@ docs = [
 [project.scripts]
 waterEntropy = "waterEntropy.cli.runWaterEntropy:main"
 
-#[project.entry-points."aiida.data"]
-#"gromacs.pdb2gmx" = "aiida_gromacs.data.pdb2gmx:Pdb2gmxParameters"
+#[project.entry-points."waterEntropy.neighbours"]
+#"gromacs.pdb2gmx" = "waterEntropy.neighbours.RAD:RAD"
 
 #[project.entry-points."aiida.calculations"]
 #"gromacs.pdb2gmx" = "aiida_gromacs.calculations.pdb2gmx:Pdb2gmxCalculation"
