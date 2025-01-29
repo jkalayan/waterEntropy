@@ -10,7 +10,7 @@ from waterEntropy.utils.helpers import nested_dict
 import waterEntropy.utils.selections as Select
 
 
-def get_interfacial_water_orient_entropy(system, start, end, step):
+def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int):
     """
     For a given system, containing the topology and coordinates of molecules,
     find the interfacial water molecules around solutes and calculate their
@@ -18,6 +18,9 @@ def get_interfacial_water_orient_entropy(system, start, end, step):
     shell.
 
     :param system: mdanalysis instance of atoms in a frame
+    :param start: starting frame number
+    :param end: end frame number
+    :param step: steps between frames
     """
     frame_solvent_indices = nested_dict()
     for ts in system.trajectory[start:end:step]:
