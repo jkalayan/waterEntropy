@@ -5,7 +5,7 @@ where united atoms (heavy atom + bonded Hydrogens) are defined as neighbours if
 they fulfil the following condition:
 
 .. math::
-    \\Bigg(\frac{1}{r_{ij}}\\Bigg)^2>\\Bigg(\frac{1}{r_{ik}}\\Bigg)^2 \\cos \theta_{jik}
+    \Bigg(\frac{1}{r_{ij}}\Bigg)^2>\Bigg(\frac{1}{r_{ik}}\Bigg)^2 \cos \theta_{jik}
 
 For a given particle i, neighbour j is in its coordination shell if k is not
 blocking particle j. In this implementation of RAD, we enforce symmetry, whereby
@@ -180,10 +180,14 @@ def get_shell_labels(atom_idx, system, shell):
     Get the shell labels
     For a central UA, rank its coordination shell by proximity to that
     central UA's nearest non-like molecule UA.
-    #_RESNAME = RAD shell from same molecule type, when nearest nonlike resid is the same as the reference.
-    'X_RESNAME' = when same molecule type has different nearest nonlike resid.
-    'RESNAME' = when molecule of different type is in RAD shell.
-    '0_RESNAME' = closest different type molecule in RAD shell. (the one its assigned to, its nearest non-like!)
+
+    * '#_RESNAME' = RAD shell from same molecule type, when nearest nonlike resid is the same as the reference.
+
+    * 'X_RESNAME' = when same molecule type has different nearest nonlike resid.
+
+    * 'RESNAME' = when molecule of different type is in RAD shell.
+
+    * '0_RESNAME' = closest different type molecule in RAD shell. (the one its assigned to, its nearest non-like!)
 
     :param atom_idx: atom index of central atom in coordination shell
     :param system: mdanalysis instance of atoms in a frame

@@ -172,18 +172,17 @@ def get_running_average(
 
 
 def get_resid_orientational_entropy_from_dict(resid_labelled_dict: dict):
-    r"""
+    """
     For a given dictionary containing labelled shells and HBing within the
     shell with format:
 
-    ```
     RADShell.Labels.resid_labelled_shell_counts
+
     dict2 = {"nearest_resid": {"resname":
-    ........{("labelled_shell"): {"shell_count": 0,
-    ........"donates_to": {"labelled_donators": 0,},
-    ........"accepts_from": {"labelled_acceptors": 0,}
-    ........}}}
-    ```
+            {("labelled_shell"): {"shell_count": 0,
+            "donates_to": {"labelled_donators": 0,},
+            "accepts_from": {"labelled_acceptors": 0,}
+            }}}
 
     Get the orientational entropy of the molecules in this dict
 
@@ -240,37 +239,41 @@ def get_orientational_entropy_from_dict(labelled_dict: dict):
 
 
 def get_orientation_S(Nc_eff: float, pbias_ave: float):
-    """
+    r"""
     Get the orientational entropy of water molecules, or any single UA molecule
     containing two hydrogen bond donors.
 
-    S_orient = np.log((Nc_eff) ** (3 / 2) * np.pi ** 0.5 * pbias_ave / 2)
+    .. math::
+        S_\mathrm{orient} = \ln \Bigg(N_{c_\mathrm{eff}} ^ {(3 / 2)} \times \pi ^ {0.5}
+        \times \frac{p_\mathrm{bias\_ave}}{2} \Bigg)
 
     This equation is modified from the previous theory of water molecule
     orientational entropy, where hydrogen bonding is accounted for by reducing
     the number of available neighbours.
     Here, the coordination shell neighbours available to hydrogen bond with
-    are reduced to $Nc_eff$. The reduction in available HBing neighbours is
+    are reduced to :math:`N_{c_\mathrm{eff}}`. The reduction in available HBing neighbours is
     calculated from statistics gathered from simulation trajectories, where
     neighbour types that are donated to or accepted from are counted.
 
-    Nc_eff = sum_i((ppD_i * ppA_i) * N_i / 0.25)
+    .. math::
+        N_{c_\mathrm{eff}} = \sum_i \bigg((ppD_i \times ppA_i) \times \frac{N_i}{0.25} \bigg)
 
-    where $ppD_i$ is the probability to donate to a given neighbour type i
-    compared to accepting from the same neighbour type. $ppA_i$ is the
-    equivalent probability for accepting from neighbour type i.
+    where :math:`ppD_i` is the probability to donate to a given neighbour type :math:`i`
+    compared to accepting from the same neighbour type.
+    :math:`ppA_i` is the equivalent probability for accepting from neighbour type :math:`i`.
 
-    $pbias_ave$ is the average bias in accepting from and donating to
-    a given neighbour type i. If it is equally likely to donate to and
-    accept from all neighbour types, then $pbias_ave=0.25$, but if there is
+    :math:`p_\mathrm{bias\_ave}` is the average bias in accepting from and donating to
+    a given neighbour type :math:`i`. If it is equally likely to donate to and
+    accept from all neighbour types, then :math:`p_\mathrm{bias\_ave}=0.25`, but if there is
     any bias in preferentially donating to, accepting from or not HBing to a
-    neighbour at all, then $pbias_ave < 0.25$.
+    neighbour at all, then :math:`p_\mathrm{bias\_ave} < 0.25`.
 
-    $pbias_ave$ = sum_i(ppD_i * ppA_i) / Nc
+    .. math::
+        p_\mathrm{bias\_ave} = \frac{\sum_i(ppD_i * ppA_i)}{N_c}
 
-    Both $Nc_eff$ and $pbias_ave$ are used to reduce the orientational entropy
-    of the central molecule by accounting for the HBing observed in a
-    simulation.
+    Both :math:`N_{c_\mathrm{eff}}` and :math:`p_\mathrm{bias\_ave}` are
+    used to reduce the orientational entropy of the central molecule by
+    accounting for the HBing observed in a simulation.
 
     :param Nc_eff: effective number of available neighbours to rotate around
     :param pbias_ave: the average biasing in hydrogen bonding donating or
@@ -285,12 +288,14 @@ def get_orientation_S(Nc_eff: float, pbias_ave: float):
 
 def get_reduced_neighbours_biases(degeneracy: dict, pD_dict: dict, pA_dict: dict):
     # pylint: disable=too-many-locals
-    """
+    r"""
     For a given labelled shell and the dictionary containing the counts for
     each neighbour type in the shell, the dictionaries for the acceptor and
     donator probabilities, use these to find the probability of accepting from
     or donating to over all other HBing to that particular neighbour type i:
-    ppD_i = pD_i / (pD_i + pA_i)
+
+    .. math::
+        ppD_i = \frac{pD_i}{(pD_i + pA_i)}
 
     :param degeneracy: dictionary of shell constituent and count
     :param pD_dict: dictionary of neighbours donated to and how often that occurs
@@ -393,11 +398,18 @@ def get_shell_degeneracy(shell_label):
 
 
 def get_hb_probability(count: int, total_count: int):
-    """
+    r"""
     For a given HB donor/acceptor, find the probablity of that HB occurring
     in a given unique labelled shell over all the other acceptors or donors,
-    so pA_i = N_i_A / sum_i(N_i_A)
-    or pD_i = N_i_D / sum_i(N_i_D)
+    so
+
+    .. math::
+        pA_i = \frac{N_{i_A}}{\sum_i(N_{i_A})}
+
+    or
+
+    .. math::
+        pD_i = \frac{N_{i_D}}{\sum_i(N_{i_D})}
 
     :param count: number of HB donors/acceptors for a given neighbour type
     :param total_count: total number of either acceptor or donor counts over

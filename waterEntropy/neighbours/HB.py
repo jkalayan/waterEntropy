@@ -208,8 +208,10 @@ def get_HB_terms(heavy_atom, donator, acceptor, DA_distance, dimensions):
     Get two terms for calculating the hydrogen bond between a donator and
     potential acceptor in a coordination shell.
     For a hydrogen bond to form, the following criteria need to be met:
+
     1. Angle between heavy atom bonded to donator (X), the donator (D) and
     the acceptor (A) is over 90 degrees
+
     2. The relative charge is most negative over all other neighbours in a
     coordination shell
 

@@ -91,7 +91,7 @@ def get_covariance_matrix(ft, halve=True):
 
     :param ft: (3,) array of either mass weighted forces or torques
     :param halve: Boolean to set weather covariance matrix should be halved
-        (i.e. divide by 2**2)
+        (i.e. divide by :math:`2^2`)
     """
     cov_matrix = np.outer(ft, ft)
     if halve:
@@ -132,12 +132,12 @@ def get_custom_axes(a, b_list, c, dimensions):
     This case is used when atoms a and b are heavy atoms and c is a
     hydrogen atom:
 
-    ```
-    ......a          1 = norm_ab
-    ...../ \         2 = |_ norm ab and norm_ac
-    ..../   \        3 = |_ 1 and 2
-    ..b       c
-    ```
+    ::
+
+          a          1 = norm_ab
+         / \         2 = |_ norm ab and norm_ac
+        /   \        3 = |_ 1 and 2
+      b       c
 
     """
     axis1 = np.zeros(3)
@@ -245,16 +245,22 @@ def get_atoms_masses(coords, include_Hs=True):
 
 
 def get_bonded_axes(system, atom, dimensions, include_Hs=True):
-    r"""
+    """
     Few scenarios for choosing united atom axes:
 
-    X -- H = bonded to one light atom
-    X -- R = bonded to one heavy atom
-    R -- X -- H = bonded to one heavy and one light atom
-    R -- X -- R = bonded to two heavy atoms
-    R -- X -- R = bonded to more than two heavy atoms
-    .....|
-    .....R
+    ::
+
+        X -- H = bonded to one light atom
+
+        X -- R = bonded to one heavy atom
+
+        R -- X -- H = bonded to one heavy and one light atom
+
+        R -- X -- R = bonded to two heavy atoms
+
+        R -- X -- R = bonded to more than two heavy atoms
+             |
+             R
 
     """
     # check atom is a heavy atom
