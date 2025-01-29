@@ -132,12 +132,14 @@ def get_custom_axes(a, b_list, c, dimensions):
     the vector perpendicular to ab and ac as axis2 and the vector
     perpendicular to axis1 and axis2 as axis3.
     This case is used when atoms a and b are heavy atoms and c is a
-    hydrogen atom,
+    hydrogen atom:
 
-          a          1 = norm_ab
-         / \         2 = |_ norm ab and norm_ac
-        /   \        3 = |_ 1 and 2
-      b       c
+    ```
+    ......a          1 = norm_ab
+    ...../ \         2 = |_ norm ab and norm_ac
+    ..../   \        3 = |_ 1 and 2
+    ..b       c
+    ```
 
     """
     axis1 = np.zeros(3)
@@ -247,13 +249,14 @@ def get_atoms_masses(coords, include_Hs=True):
 def get_bonded_axes(system, atom, dimensions, include_Hs=True):
     r"""
     Few scenarios for choosing united atom axes:
+
     X -- H = bonded to one light atom
     X -- R = bonded to one heavy atom
     R -- X -- H = bonded to one heavy and one light atom
     R -- X -- R = bonded to two heavy atoms
     R -- X -- R = bonded to more than two heavy atoms
-         |
-         R
+    .....|
+    .....R
 
     """
     # check atom is a heavy atom

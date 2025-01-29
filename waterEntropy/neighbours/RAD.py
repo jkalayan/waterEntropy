@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""
+r"""
 These functions calculate coordination shells using RAD the relative
 angular distance, as defined first in DOI:10.1063/1.4961439
 where united atoms (heavy atom + bonded Hydrogens) are defined as neighbours if
@@ -182,12 +182,10 @@ def get_shell_labels(atom_idx, system, shell):
     Get the shell labels
     For a central UA, rank its coordination shell by proximity to that
     central UA's nearest non-like molecule UA.
-    #_RESNAME = RAD shell from same molecule type, when nearest nonlike
-        resid is the same as the reference.
+    #_RESNAME = RAD shell from same molecule type, when nearest nonlike resid is the same as the reference.
     'X_RESNAME' = when same molecule type has different nearest nonlike resid.
     'RESNAME' = when molecule of different type is in RAD shell.
-    '0_RESNAME' = closest different type molecule in RAD shell.
-            (the one its assigned to, its nearest non-like!)
+    '0_RESNAME' = closest different type molecule in RAD shell. (the one its assigned to, its nearest non-like!)
 
     :param atom_idx: atom index of central atom in coordination shell
     :param system: mdanalysis instance of atoms in a frame
