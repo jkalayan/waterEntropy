@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 These functions are generally here to help with saving stats of simulation
 data

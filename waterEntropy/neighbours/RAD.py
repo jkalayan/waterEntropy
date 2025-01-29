@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 r"""
 These functions calculate coordination shells using RAD the relative
 angular distance, as defined first in DOI:10.1063/1.4961439

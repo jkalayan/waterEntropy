@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 These functions calculate hydrogen bonding.
 """

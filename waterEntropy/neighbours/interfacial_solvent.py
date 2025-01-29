@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 These functions calculate orientational entropy from labelled
 coordination shells
@@ -8,8 +6,8 @@ coordination shells
 import waterEntropy.neighbours.HB as HBond
 import waterEntropy.neighbours.RAD as RADShell
 import waterEntropy.statistics.orientations as Orient
-import waterEntropy.utils.selections as Select
 from waterEntropy.utils.helpers import nested_dict
+import waterEntropy.utils.selections as Select
 
 
 def get_interfacial_water_orient_entropy(system, start, end, step):

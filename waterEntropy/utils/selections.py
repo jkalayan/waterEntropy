@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 Functions for common MDAnalysis selections
 """

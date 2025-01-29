@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 These functions calculate orientational entropy from labelled
 coordination shells
@@ -174,16 +172,18 @@ def get_running_average(
 
 
 def get_resid_orientational_entropy_from_dict(resid_labelled_dict: dict):
-    """
+    r"""
     For a given dictionary containing labelled shells and HBing within the
     shell with format:
 
+    ```
     RADShell.Labels.resid_labelled_shell_counts
     dict2 = {"nearest_resid": {"resname":
-                                {("labelled_shell"): {"shell_count": 0,
-                                "donates_to": {"labelled_donators": 0,},
-                                "accepts_from": {"labelled_acceptors": 0,}
-                                }}}
+    ........{("labelled_shell"): {"shell_count": 0,
+    ........"donates_to": {"labelled_donators": 0,},
+    ........"accepts_from": {"labelled_acceptors": 0,}
+    ........}}}
+    ```
 
     Get the orientational entropy of the molecules in this dict
 

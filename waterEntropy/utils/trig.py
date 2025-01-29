@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 Functions for common trigonometric calculations
 """
@@ -52,21 +50,17 @@ def get_angle(a, b, c, dimensions):
     dist_ba = np.sqrt((ba**2).sum(axis=-1))
     dist_bc = np.sqrt((bc**2).sum(axis=-1))
     dist_ac = np.sqrt((ac**2).sum(axis=-1))
-    cosine_angle = (dist_ac**2 - dist_bc**2 - dist_ba**2) / (
-        -2 * dist_bc * dist_ba
-    )
+    cosine_angle = (dist_ac**2 - dist_bc**2 - dist_ba**2) / (-2 * dist_bc * dist_ba)
     return cosine_angle
 
 
 def get_distance(a, b, dimensions):
     """
-    calculates distance and accounts for PBCs.
+    Calculates distance and accounts for PBCs.
 
     :param a: (3,) array of atom cooordinates
     :param b: (3,) array of atom cooordinates
     :param dimensions: (3,) array of system box dimensions.
-    :type a: numpy array
-    :type b: numpy array
     """
     delta = np.abs(b - a)
     delta = np.where(delta > 0.5 * dimensions, delta - dimensions, delta)
@@ -81,8 +75,6 @@ def get_vector(a, b, dimensions):
     :param a: (3,) array of atom cooordinates
     :param b: (3,) array of atom cooordinates
     :param dimensions: (3,) array of system box dimensions.
-    :type a: numpy array
-    :type b: numpy array
     """
     delta = b - a
     delta_wrapped = []
