@@ -16,7 +16,7 @@ import time
 
 import waterEntropy
 
-sys.path.insert(0, os.path.abspath("../waterEntropy"))
+# sys.path.insert(0, os.path.abspath("../waterEntropy"))
 
 # -- AiiDA-related setup --------------------------------------------------
 
