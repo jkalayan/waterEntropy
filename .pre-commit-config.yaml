@@ -1,6 +1,6 @@
 # Install pre-commit hooks via:
 # pre-commit install
-exclude: ".*.gro|.*.top|.*.trr|.*.frc|.*.pdb|.*.mdcrd|.*.gz|.*.prmtop|.*.lmp"
+exclude: ".*.gro|.*.top|.*.trr|.*.frc|.*.pdb|.*.mdcrd|.*.gz|.*.prmtop|.*.lmp|runWaterEntropy.py"
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v5.0.0

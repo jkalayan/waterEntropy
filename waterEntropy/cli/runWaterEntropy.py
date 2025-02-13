@@ -4,20 +4,17 @@
 """
 
 import argparse
-import logging
-import sys
 from collections import defaultdict
 from datetime import datetime
+import logging
+import sys
 
 # import MDAnalysis
 from MDAnalysis import Universe
 from MDAnalysis.coordinates.LAMMPS import DumpReader
 
 import waterEntropy.neighbours.HB as HBond
-import waterEntropy.neighbours.interfacial_solvent as GetSolvent
 import waterEntropy.neighbours.RAD as RADShell
-import waterEntropy.statistics.orientations as Orient
-import waterEntropy.utils.selections as Select
 from waterEntropy.neighbours.force_torque import (
     get_atoms_masses,
     get_axes,
@@ -29,7 +26,10 @@ from waterEntropy.neighbours.force_torque import (
     get_mass_weighted_forces,
     get_torques,
 )
+import waterEntropy.neighbours.interfacial_solvent as GetSolvent
+import waterEntropy.statistics.orientations as Orient
 from waterEntropy.utils.helpers import nested_dict
+import waterEntropy.utils.selections as Select
 
 # nested_dict = lambda: defaultdict(nested_dict)  # create nested dict in one go
 
