@@ -31,7 +31,7 @@ def test_get_neighbourlist():
     )
 
     # check atom_i coords are not in the neighbour positions
-    assert (i_coords == neighbours.positions).all(axis=1).any() is False
+    assert not (i_coords == neighbours.positions).all(axis=1).any()
     assert list(sorted_indices[:10]) == [4, 6, 5, 621, 1143, 8, 1800, 1413, 888, 10]
     assert list(sorted_distances[:10]) == pytest.approx(
         [
