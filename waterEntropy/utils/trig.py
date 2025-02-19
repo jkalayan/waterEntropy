@@ -16,20 +16,25 @@ def get_neighbourlist(atom, neighbours, dimensions, max_cutoff=9e9):
         not the atom itself and not bonded to the atom.
     :param dimensions: (6,) array of system box dimensions.
     """
-    pairs, distances = MDAnalysis.lib.distances.capped_distance(
-        atom,
-        neighbours.positions,
-        max_cutoff=max_cutoff,
-        min_cutoff=None,
-        box=dimensions,
-        method=None,
-        return_distances=True,
+    # check atom coords are not in neighbour coords list
+    if not (atom == neighbours.positions).all(axis=1).any():
+        pairs, distances = MDAnalysis.lib.distances.capped_distance(
+            atom,
+            neighbours.positions,
+            max_cutoff=max_cutoff,
+            min_cutoff=None,
+            box=dimensions,
+            method=None,
+            return_distances=True,
+        )
+        neighbour_indices = neighbours[pairs[:][:, 1]].indices
+        sorted_distances, sorted_indices = zip(
+            *sorted(zip(distances, neighbour_indices), key=lambda x: x[0])
+        )
+        return np.array(sorted_indices), np.array(sorted_distances)
+    raise ValueError(
+        f"Atom coordinates {atom} in neighbour list {neighbours.positions[:10]}"
     )
-    neighbour_indices = neighbours[pairs[:][:, 1]].indices
-    sorted_distances, sorted_indices = zip(
-        *sorted(zip(distances, neighbour_indices), key=lambda x: x[0])
-    )
-    return np.array(sorted_indices), np.array(sorted_distances)
 
 
 def get_angle(a, b, c, dimensions):

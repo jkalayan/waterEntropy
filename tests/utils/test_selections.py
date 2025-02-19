@@ -3,54 +3,26 @@
 from tests.input_files import load_inputs
 import waterEntropy.utils.selections as Select
 
-# get mda universe for arginine is solution
+# get mda universe for arginine in solution
 system = load_inputs.get_amber_arginine_soln_universe()
+resid_list = [1, 2, 3]
+# select all molecules above 1 UA in size
+system_solutes = Select.get_selection(system, "resid", resid_list)
 
 
-def test_various_selections():
-    """Test various selection functions"""
-
+def test_find_solute_molecules():
+    """Test the find solute molecules function"""
     # find all molecule resids larger than 1 UA in size
-    resid_list = Select.find_solute_molecules(system)
+    resid_list_solutes = Select.find_solute_molecules(system)
+
+    assert resid_list_solutes == [1, 2, 3]
+
+
+def test_get_selection():
+    """Test the get selection function"""
     # select all molecules above 1 UA in size
     solutes = Select.get_selection(system, "resid", resid_list)
-    # pre-defined list of solvent atom numbers
-    solvent_indices = [
-        621,
-        1143,
-        1800,
-        1737,
-        1413,
-        888,
-        1038,
-        834,
-        237,
-        2004,
-        1878,
-        2688,
-        2640,
-        1797,
-        747,
-        369,
-        2646,
-        2019,
-        168,
-        2262,
-        54,
-        2130,
-        486,
-        984,
-        489,
-        879,
-    ]
-    # find the resids from the atom numbers above
-    first_shell_solvent = Select.get_selection(system, "index", solvent_indices)
-    # find all heavy atoms bonded to a hydrogen
-    bonded_to_H = Select.find_bonded_heavy_atom(0, solutes)
-    # find all UAs in a selection of molecules
-    UAs = Select.find_molecule_UAs(solutes)
 
-    assert resid_list == [1, 2, 3]
     assert list(solutes.names) == [
         "H1",
         "CH3",
@@ -89,6 +61,44 @@ def test_various_selections():
         "HH32",
         "HH33",
     ]
+
+
+def test_find_bonded_heavy_atom():
+    """Test the find bonded heavy atom function"""
+    # pre-defined list of solvent atom numbers
+    solvent_indices = [
+        621,
+        1143,
+        1800,
+        1737,
+        1413,
+        888,
+        1038,
+        834,
+        237,
+        2004,
+        1878,
+        2688,
+        2640,
+        1797,
+        747,
+        369,
+        2646,
+        2019,
+        168,
+        2262,
+        54,
+        2130,
+        486,
+        984,
+        489,
+        879,
+    ]
+    # find the resids from the atom numbers above
+    first_shell_solvent = Select.get_selection(system, "index", solvent_indices)
+    # find all heavy atoms bonded to a hydrogen
+    bonded_to_H = Select.find_bonded_heavy_atom(0, system_solutes)
+
     assert list(first_shell_solvent.resids) == [
         10,
         48,
@@ -118,6 +128,13 @@ def test_various_selections():
         888,
     ]
     assert bonded_to_H.name == "CH3"
+
+
+def test_find_molecule_UAs():
+    """Test find molecule UAs function"""
+    # find all UAs in a selection of molecules
+    UAs = Select.find_molecule_UAs(system_solutes)
+
     assert list(UAs.names) == [
         "CH3",
         "C",
