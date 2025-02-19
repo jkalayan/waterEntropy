@@ -1,33 +1,15 @@
 """ Tests for waterEntropy selections functions in utils."""
 
-import os
-
-from MDAnalysis import Universe
-
+from tests.input_files import load_inputs
 import waterEntropy.utils.selections as Select
 
-from .. import TEST_DIR
-
-
-def get_arginine_soln_universe():
-    """Create a MDAnalysis universe from the arginine simulation"""
-
-    topology = os.path.join(
-        TEST_DIR, "input_files", "amber", "arginine_solution", "system.prmtop"
-    )
-    coordinates = os.path.join(
-        TEST_DIR, "input_files", "amber", "arginine_solution", "system.mdcrd"
-    )
-
-    u = Universe(topology, coordinates)
-    return u
+# get mda universe for arginine is solution
+system = load_inputs.get_amber_arginine_soln_universe()
 
 
 def test_various_selections():
     """Test various selection functions"""
 
-    # get universe for arginine is solution
-    system = get_arginine_soln_universe()
     # find all molecule resids larger than 1 UA in size
     resid_list = Select.find_solute_molecules(system)
     # select all molecules above 1 UA in size

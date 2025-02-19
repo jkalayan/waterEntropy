@@ -21,7 +21,7 @@ classifiers = [
 keywords = ["water", "entropy", "molecular dynamics", "forces"]
 requires-python = ">=3.8"
 dependencies = [
-    "mdanalysis==2.6.1",
+    "mdanalysis==2.7.0",
     "numpy==1.26.2",
 ]
 

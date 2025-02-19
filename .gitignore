@@ -173,3 +173,7 @@ cython_debug/
 # docs
 docs/source/apidoc/
 docs/build/
+
+#tests
+.system*
+.DS_Store
