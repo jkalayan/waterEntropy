@@ -72,8 +72,9 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
     Sorient_dict = Orient.get_resid_orientational_entropy_from_dict(
         Orient.Labels.resid_labelled_shell_counts
     )
-    print_Sorient_dicts(Sorient_dict)
-    print_frame_solvent_dicts(frame_solvent_indices)
+    # print_Sorient_dicts(Sorient_dict)
+    # print_frame_solvent_dicts(frame_solvent_indices)
+    return Sorient_dict, frame_solvent_indices
 
 
 def get_solvent_vibrational_entropy(system, frame_solvent_indices):

@@ -79,7 +79,9 @@ def run_waterEntropy(
     start, end, step = 0, 10, 1
     print(coords.trajectory)
 
-    GetSolvent.get_interfacial_water_orient_entropy(coords, start, end, step)
+    Sorient_dict, frame_solvent_indices = GetSolvent.get_interfacial_water_orient_entropy(coords, start, end, step)
+    GetSolvent.print_Sorient_dicts(Sorient_dict)
+    GetSolvent.print_frame_solvent_dicts(frame_solvent_indices)
 
     sys.exit()
     # forces = Universe(file_topology, file_forces, format="TRJ")
