@@ -192,46 +192,6 @@ def get_UA_masses(molecule):
     return UA_masses
 
 
-# def MOI2(CoM, positions, masses):
-#     # pylint: disable=too-many-locals
-#     """
-#     Use this function to calculate moment of inertia for cases where the
-#     mass list will contain masses of UAs rather than individual atoms and
-#     the postions will be those for the UAs only (excluding the H atoms
-#     coordinates).
-#     """
-#     x_cm, y_cm, z_cm = CoM[0], CoM[1], CoM[2]
-
-#     I_xx = 0
-#     I_xy = 0
-#     I_yx = 0
-
-#     I_yy = 0
-#     I_xz = 0
-#     I_zx = 0
-
-#     I_zz = 0
-#     I_yz = 0
-#     I_zy = 0
-
-#     for coord, mass in zip(positions, masses):
-#         I_xx += (abs(coord[1] - y_cm) ** 2 + abs(coord[2] - z_cm) ** 2) * mass
-#         I_xy += (coord[0] - x_cm) * (coord[1] - y_cm) * mass
-#         I_yx += (coord[0] - x_cm) * (coord[1] - y_cm) * mass
-
-#         I_yy += (abs(coord[0] - x_cm) ** 2 + abs(coord[2] - z_cm) ** 2) * mass
-#         I_xz += (coord[0] - x_cm) * (coord[2] - z_cm) * mass
-#         I_zx += (coord[0] - x_cm) * (coord[2] - z_cm) * mass
-
-#         I_zz += (abs(coord[0] - x_cm) ** 2 + abs(coord[1] - y_cm) ** 2) * mass
-#         I_yz += (coord[1] - y_cm) * (coord[2] - z_cm) * mass
-#         I_zy += (coord[1] - y_cm) * (coord[2] - z_cm) * mass
-
-#     I = np.array([[I_xx, -I_xy, -I_xz], [-I_yx, I_yy, -I_yz], [-I_zx, -I_zy, I_zz]])
-
-#     return I
-
-
 def MOI(CoM, positions, masses):
     """
     Use this function to calculate moment of inertia for cases where the
@@ -455,6 +415,7 @@ def guess_length_scale(molecule):
 
 
 def get_forces_torques(covariances, molecule, nearest, system):
+    # pylint: disable=too-many-locals
     """
     Calculate the covariance matrices of molecules and populate these
     in the covariances instance.
