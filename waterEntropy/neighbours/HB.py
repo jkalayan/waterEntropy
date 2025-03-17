@@ -107,7 +107,6 @@ def get_HB_labels(atom_idx: int, system):
     donates_to_labels = []
     if shell:
         if shell.labels:
-            # print(shell.labels)
             # check if HB donating to and accepting from have previously
             # been found
             donates_to = HB.find_acceptor(atom_idx)
@@ -117,10 +116,8 @@ def get_HB_labels(atom_idx: int, system):
                     # check if UA being accepted from is in shell of
                     # central UA
                     bonded_UA = find_bonded_heavy_atom(d_idx, system)
-                    # print("accepts_from", bonded_UA.index)
                     if bonded_UA.index in shell.UA_shell:
                         shell_idx = shell.UA_shell.index(bonded_UA.index)
-                        # print(shell_idx, shell.labels[shell_idx])
                         accepts_from_labels.append(shell.labels[shell_idx])
                     else:
                         # don't add donating neighbour if not in central UA
@@ -138,7 +135,6 @@ def get_HB_labels(atom_idx: int, system):
                     donates_to_labels.append(shell.labels[shell_idx])
     shell.donates_to_labels = donates_to_labels
     shell.accepts_from_labels = accepts_from_labels
-    # print(accepts_from_labels, donates_to_labels)
 
 
 def get_shell_HB_acceptors(shell, system):
@@ -195,8 +191,15 @@ def get_shell_neighbour_selection(shell, donator, system):
     :param donator: the mdanalysis object for the donator
     :param system: mdanalysis instance of all atoms in current frame
     """
-    # can only donate to heavy atoms in the shell
+    # heavy atoms in the shell
     neighbours = get_selection(system, "index", shell.UA_shell)
+    # get all atoms in the shell, included bonded to
+    all_shell_bonded = neighbours[:].bonds.indices
+    all_shell_indices = list(set().union(*all_shell_bonded))
+    # can donate to any atom in the shell
+    neighbours = get_selection(system, "index", all_shell_indices)
+    # can donate to any neighbours
+    # neighbours = system.select_atoms(f"all and not index {donator.index} and not bonded index {donator.index}")
     sorted_indices, sorted_distances = get_neighbourlist(
         donator.position, neighbours, system.dimensions, max_cutoff=10
     )

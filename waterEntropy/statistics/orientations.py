@@ -215,7 +215,6 @@ def get_orientational_entropy_from_dict(labelled_dict: dict):
     """
     Sorient_dict = nested_dict()
     for resname, shell_label_key in sorted(list(labelled_dict.items())):
-        # print("resname", resname)
         Sorient_ave, tot_count = 0, 0
         for shell_label, vals1 in sorted(list(shell_label_key.items())):
             # print(shell_label, len(shell_label))
@@ -230,6 +229,7 @@ def get_orientational_entropy_from_dict(labelled_dict: dict):
             # print('Nc_eff', round(Nc_eff, 5))
             S_orient = get_orientation_S(Nc_eff, pbias_ave)
             # print('S_orient', round(S_orient, 5))
+            # print("***", resname, shell_label, Nc, S_orient, vals1["shell_count"])
             Sorient_ave, tot_count = get_running_average(
                 S_orient, vals1["shell_count"], Sorient_ave, tot_count
             )
