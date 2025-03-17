@@ -135,7 +135,7 @@ def get_covariance_matrix(ft, halve=0.5):
     """
     cov_matrix = np.outer(ft, ft)
     if halve:
-        cov_matrix = cov_matrix * (halve**2)
+        cov_matrix *= halve**2
     return cov_matrix
 
 
@@ -456,7 +456,7 @@ def get_forces_torques(covariances, molecule, nearest, system):
                 # set the center of mass as the coordinates of the UA
                 center_of_mass = UA.position
                 # calcuate the torques using the custom axes based on bonds
-                torque = get_torques(
+                inertia_wieghted_torque = get_torques(
                     molecule, center_of_mass, custom_axes, position_vector
                 )
                 # calcuate the mass weighted forces using the custom axes based on bonds
@@ -465,7 +465,9 @@ def get_forces_torques(covariances, molecule, nearest, system):
                 F_cov_matrix = get_covariance_matrix(
                     mass_weighted_force, scale_covariance
                 )
-                T_cov_matrix = get_covariance_matrix(torque, scale_covariance)
+                T_cov_matrix = get_covariance_matrix(
+                    inertia_wieghted_torque, scale_covariance
+                )
                 F_cov_matrices.append([F_cov_matrix])
                 T_cov_matrices.append([T_cov_matrix])
         # populate the covariances to the class instance
