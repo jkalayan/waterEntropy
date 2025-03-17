@@ -5,7 +5,9 @@ coordination shells
 
 import waterEntropy.neighbours.HB as HBond
 import waterEntropy.neighbours.RAD as RADShell
+from waterEntropy.neighbours.force_torque import Covariance, get_forces_torques
 import waterEntropy.statistics.orientations as Orient
+from waterEntropy.statistics.vibrations import Vibrations
 import waterEntropy.utils.selections as Select
 
 
@@ -25,7 +27,8 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
     # don't need to include the frame_solvent_indices dictionary
     # frame_solvent_indices = nested_dict()
     # initialise the Covariance class instance to store covariance matrices
-    # covariances = Covariance()
+    covariances = Covariance()
+    vibrations = Vibrations(temperature=298, force_units="kcal")
     # pylint: disable=unused-variable
     for ts in system.trajectory[start:end:step]:
         # 1. find > 1 UA molecules in system, these are the solutes
@@ -69,13 +72,13 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
                 # )
                 # 3f. calculate the running average of force and torque
                 # covariance matrices
-                # solvent_molecule = system.atoms[solvent.index].fragment  # get molecule
-                # get_forces_torques(
-                #     covariances,
-                #     solvent_molecule,
-                #     f"{nearest_resname}_{nearest_resid}",
-                #     system,
-                # )
+                solvent_molecule = system.atoms[solvent.index].fragment  # get molecule
+                get_forces_torques(
+                    covariances,
+                    solvent_molecule,
+                    f"{nearest_resname}_{nearest_resid}",
+                    system,
+                )
         # 4. clear each shell and HB dictionary ready for the next frame.
         RADShell.RAD.shells.clear()
         HBond.HB.donating_to.clear()
@@ -87,7 +90,10 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
     Sorient_dict = Orient.get_resid_orientational_entropy_from_dict(
         Orient.Labels.resid_labelled_shell_counts
     )
-    return Sorient_dict  # , covariances  # frame_solvent_indices,
+    # 6. Get the vibrational entropy of interfacial waters
+    vibrations.add_data(covariances)
+    print(vibrations.frequencies)
+    return Sorient_dict, covariances  # frame_solvent_indices,
 
 
 def get_solvent_vibrational_entropy(system, frame_solvent_indices):

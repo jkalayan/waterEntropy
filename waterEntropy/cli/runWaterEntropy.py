@@ -53,15 +53,15 @@ def run_waterEntropy(
     print(u.trajectory)
     # u.trajectory[frame] # move to a particular frame using this
 
-    Sorient_dict= GetSolvent.get_interfacial_water_orient_entropy(u, start, end, step)
+    Sorient_dict, covariances = GetSolvent.get_interfacial_water_orient_entropy(u, start, end, step)
     GetSolvent.print_Sorient_dicts(Sorient_dict)
     # GetSolvent.print_frame_solvent_dicts(frame_solvent_indices)
-    # for near_solvent_name, forces in covariances.forces.items():
-    #     near = near_solvent_name[0]
-    #     solvent_name = near_solvent_name[1]
-    #     torques = covariances.torques[near_solvent_name]
-    #     counts = covariances.counts[near_solvent_name]
-    #     print(near, solvent_name, forces, torques, counts)
+    for near_solvent_name, forces in covariances.forces.items():
+        near = near_solvent_name[0]
+        solvent_name = near_solvent_name[1]
+        torques = covariances.torques[near_solvent_name]
+        counts = covariances.counts[near_solvent_name]
+        print(near, solvent_name, forces, torques, counts)
 
 
     sys.stdout.flush()

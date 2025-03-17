@@ -191,12 +191,12 @@ def get_resid_orientational_entropy_from_dict(resid_labelled_dict: dict):
     """
     Sorient_dict = nested_dict()
     for resid, shell_label_key in sorted(list(resid_labelled_dict.items())):
-        # print("resid", resid)
         Sorient_dict[resid] = get_orientational_entropy_from_dict(shell_label_key)
     return Sorient_dict
 
 
 def get_orientational_entropy_from_dict(labelled_dict: dict):
+    # pylint: disable=too-many-locals
     """
     For a given dictionary containing labelled shells and HBing within the
     shell with format:
@@ -225,6 +225,7 @@ def get_orientational_entropy_from_dict(labelled_dict: dict):
             Nc_eff, pbias_ave = get_reduced_neighbours_biases(
                 degeneracy, pD_dict, pA_dict
             )
+            # Nc = len(shell_label)
             # print('pbias_ave', round(pbias_ave, 5))
             # print('Nc_eff', round(Nc_eff, 5))
             S_orient = get_orientation_S(Nc_eff, pbias_ave)
