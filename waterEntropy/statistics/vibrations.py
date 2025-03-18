@@ -113,7 +113,9 @@ class Vibrations:
             S^{\mathrm{vib}} = k_{\mathrm{B}} \sum_{i=1}^{N_\mathrm{vib}} \\
             \Bigg( \frac{h\nu_i/k_{\mathrm{B}}T}{e^{h\nu_i/k_{\mathrm{B}}T}-1} \\
             - \ln(1 - e^{-h\nu_i/k_{\mathrm{B}}T} ) \Bigg)
+
         where:
+
         - :math:`k_{\mathrm{B}}` is the Boltzmann constant :math:`\mathrm{J/K}` (Joule per Kelvin),
         """
         frequency = Vibrations.calculate_frequencies(self, covariance)

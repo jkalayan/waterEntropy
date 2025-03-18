@@ -135,7 +135,7 @@ def get_covariance_matrix(ft, halve=0.5):
     """
     cov_matrix = np.outer(ft, ft)
     if halve:
-        cov_matrix = cov_matrix * (halve**2)
+        cov_matrix *= halve**2
     return cov_matrix
 
 
