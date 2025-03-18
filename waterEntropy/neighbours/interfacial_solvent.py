@@ -5,7 +5,7 @@ coordination shells
 
 import waterEntropy.neighbours.HB as HBond
 import waterEntropy.neighbours.RAD as RADShell
-from waterEntropy.neighbours.force_torque import Covariance, get_forces_torques
+from waterEntropy.statistics.convariances import Covariances, get_forces_torques
 import waterEntropy.statistics.orientations as Orient
 from waterEntropy.statistics.vibrations import Vibrations
 import waterEntropy.utils.selections as Select
@@ -27,7 +27,7 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
     # don't need to include the frame_solvent_indices dictionary
     # frame_solvent_indices = nested_dict()
     # initialise the Covariance class instance to store covariance matrices
-    covariances = Covariance()
+    covariances = Covariances()
     vibrations = Vibrations(temperature=298, force_units="kcal")
     # pylint: disable=unused-variable
     for ts in system.trajectory[start:end:step]:
@@ -92,7 +92,6 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
     )
     # 6. Get the vibrational entropy of interfacial waters
     vibrations.add_data(covariances, diagonalise=True)
-    # print(vibrations.frequencies)
     return Sorient_dict, covariances, vibrations  # frame_solvent_indices,
 
 

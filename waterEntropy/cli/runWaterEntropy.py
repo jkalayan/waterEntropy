@@ -11,7 +11,7 @@ import sys
 from MDAnalysis import Universe
 
 import waterEntropy.neighbours.interfacial_solvent as GetSolvent
-
+import waterEntropy.statistics.vibrations as GetVibrations
 
 def run_waterEntropy(
     file_topology="file_topology",
@@ -56,16 +56,7 @@ def run_waterEntropy(
     Sorient_dict, covariances, vibrations = GetSolvent.get_interfacial_water_orient_entropy(u, start, end, step)
     GetSolvent.print_Sorient_dicts(Sorient_dict)
     # GetSolvent.print_frame_solvent_dicts(frame_solvent_indices)
-    for near_solvent_name, forces in covariances.forces.items():
-        near = near_solvent_name[0]
-        solvent_name = near_solvent_name[1]
-        torques = covariances.torques[near_solvent_name]
-        Strans = vibrations.translational_S[near_solvent_name]
-        Srot = vibrations.rotational_S[near_solvent_name]
-        trans_freqs = vibrations.translational_freq[near_solvent_name]
-        rot_freqs = vibrations.rotational_freq[near_solvent_name]
-        counts = covariances.counts[near_solvent_name]
-        print(near, solvent_name, forces, torques, trans_freqs, sum(Strans), rot_freqs, sum(Srot), counts)
+    GetVibrations.print_Svib_data(vibrations, covariances)
 
 
     sys.stdout.flush()

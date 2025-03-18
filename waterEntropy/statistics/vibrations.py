@@ -5,12 +5,19 @@ These functions calculate vibrational entropy from covariance matrices
 import numpy as np
 from numpy import linalg as LA
 
+from waterEntropy.statistics.convariances import Covariances
 from waterEntropy.utils.helpers import nested_dict
 
 
 class Vibrations:
-    """
-    Store molecule vibrational entropy information here
+    r"""
+    Store molecule vibrational entropy information here, where
+
+    .. math::
+        S^{\mathrm{vib}} = S^{\mathrm{trans}} + S^{\mathrm{rot}}
+
+    Entropies are calculated from the covariance matrices inputted in the
+    add_data method.
     """
 
     # constants
@@ -69,7 +76,6 @@ class Vibrations:
         else:
             covariance *= self.kcal_conversion()
         Svib, frequency = Vibrations.calculate_entropies(self, covariance, diagonalise)
-        # print(Svib, frequency)
 
         return Svib, frequency
 
@@ -148,3 +154,20 @@ class Vibrations:
         frequency = (filtered_eigenvalues / (self.BOLTZMANN * self.temperature)) ** 0.5
 
         return frequency, eigenvalues
+
+
+def print_Svib_data(vibrations: Vibrations, covariances: Covariances):
+    """
+    Print the orientational entropies of interfacial solvent
+    """
+    for near_solvent_name, Strans in vibrations.translational_S.items():
+        near = near_solvent_name[0]
+        solvent_name = near_solvent_name[1]
+        # forces = covariances.forces[near_solvent_name]
+        # torques = covariances.torques[near_solvent_name]
+        Strans = vibrations.translational_S[near_solvent_name]
+        Srot = vibrations.rotational_S[near_solvent_name]
+        # trans_freqs = vibrations.translational_freq[near_solvent_name]
+        # rot_freqs = vibrations.rotational_freq[near_solvent_name]
+        counts = covariances.counts[near_solvent_name]
+        print(near, solvent_name, sum(Strans), sum(Srot), counts)
