@@ -28,46 +28,47 @@ class Vibrations:
     def __init__(self, temperature, force_units):
         self.temperature = temperature
         self.force_units = force_units
-        self.frequencies = nested_dict()
-        self.entropies = nested_dict()
+        self.translational_freq = nested_dict()
+        self.rotational_freq = nested_dict()
+        self.translational_S = nested_dict()
+        self.rotational_S = nested_dict()
 
-    def add_data(self, covariances):
+    def add_data(self, covariances, diagonalise=True):
         """
         Calculate and add the frequencies and vibrational entropies to class
         instance
         """
         for (nearest, molecule_name), force_covariance in covariances.forces.items():
             torque_covariance = covariances.torques[(nearest, molecule_name)]
-            force_Svib, force_frequency = Vibrations.get_data(self, force_covariance)
-            torque_Svib, torque_frequency = Vibrations.get_data(self, torque_covariance)
-            Vibrations.populate_dicts(
-                self, nearest, molecule_name, force_Svib, self.entropies
+            force_Svib, force_frequency = Vibrations.get_data(
+                self, force_covariance, diagonalise
+            )
+            torque_Svib, torque_frequency = Vibrations.get_data(
+                self, torque_covariance, diagonalise
             )
             Vibrations.populate_dicts(
-                self, nearest, molecule_name, torque_Svib, self.entropies
+                self, nearest, molecule_name, force_Svib, self.translational_S
             )
             Vibrations.populate_dicts(
-                self, nearest, molecule_name, force_frequency, self.frequencies
+                self, nearest, molecule_name, torque_Svib, self.rotational_S
             )
             Vibrations.populate_dicts(
-                self, nearest, molecule_name, torque_frequency, self.frequencies
+                self, nearest, molecule_name, force_frequency, self.translational_freq
+            )
+            Vibrations.populate_dicts(
+                self, nearest, molecule_name, torque_frequency, self.rotational_freq
             )
 
-    def get_data(self, covariance):
+    def get_data(self, covariance, diagonalise):
         """
         Get the frequencies and vibrational entropies from the covariance matrix
         """
         # convert the covariance matrix to the correct units
         if self.force_units == "gromacs":
-            covariance *= 1  # self.kJ_conversion()
+            covariance *= self.kJ_conversion()
         else:
-            # constant = Vibrations.forceUnitConversion(self, "kcal")
-            # print("constant", constant)
-            # print("kcal_conversion", self.kcal_conversion())
-            # print(covariance)
-            # print(covariance * self.kcal_conversion())
-            covariance *= 1  # self.kcal_conversion()
-        Svib, frequency = Vibrations.calculate_entropies(self, covariance)
+            covariance *= self.kcal_conversion()
+        Svib, frequency = Vibrations.calculate_entropies(self, covariance, diagonalise)
         # print(Svib, frequency)
 
         return Svib, frequency
@@ -105,7 +106,7 @@ class Vibrations:
 
         return conversion
 
-    def calculate_entropies(self, covariance):
+    def calculate_entropies(self, covariance, diagonalise):
         r"""
         Calculate the vibrational entropies from the equation of a quantum
         harmonic oscillator:
@@ -118,21 +119,25 @@ class Vibrations:
 
         - :math:`k_{\mathrm{B}}` is the Boltzmann constant :math:`\mathrm{J/K}` (Joule per Kelvin),
         """
-        frequency = Vibrations.calculate_frequencies(self, covariance)
+        frequency, eigenvalues = Vibrations.calculate_frequencies(
+            self, covariance, diagonalise
+        )
         a = (self.HBAR * frequency) / (self.BOLTZMANN * self.temperature)
         b = np.where(a != 0, np.exp(a) - 1, 0.0)
         c = np.where(a != 0, np.log(1 - np.exp(-a)), 0.0)
         Svib = np.where((b != 0) & (c != 0), a / b - c, 0)
 
-        return Svib, frequency
+        return Svib, eigenvalues
 
-    def calculate_frequencies(self, covariance):
+    def calculate_frequencies(self, covariance, diagonalise):
         """
         Calculate the frequencies for each molecule from the force and torque
         covariance matrices.
         """
-        # eigenvalues = covariance.diagonal() # get matrix diagonals only
-        eigenvalues, _eigenvectors = LA.eig(covariance)
+        if diagonalise:
+            eigenvalues = covariance.diagonal()  # get matrix diagonals only
+        else:
+            eigenvalues, _eigenvectors = LA.eig(covariance)
         # Replace eigenvalues numbers with 0
         filtered_eigenvalues = np.where(np.isreal(eigenvalues), eigenvalues.real, 0)
         # Replace negative eigenvalues with 0
@@ -142,4 +147,4 @@ class Vibrations:
         # calculate frequencies from filtered eigenvalues
         frequency = (filtered_eigenvalues / (self.BOLTZMANN * self.temperature)) ** 0.5
 
-        return frequency
+        return frequency, eigenvalues

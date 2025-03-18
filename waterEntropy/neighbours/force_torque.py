@@ -158,7 +158,7 @@ def get_axes(molecule, molecule_scale):
     principal_axes = molecule.principal_axes()
     # diagonalise moment of inertia tensor here
     # pylint: disable=unused-variable
-    eigenvalues, eigenvectors = LA.eig(moment_of_inertia)
+    eigenvalues, _eigenvectors = LA.eig(moment_of_inertia)
     # principal axes = eigenvectors.T[order])
     # comment: could get principal axes from transformed eigenvectors
     #           but would need to sort out directions, so use MDAnalysis
@@ -166,7 +166,7 @@ def get_axes(molecule, molecule_scale):
 
     # sort eigenvalues of moi tensor by largest to smallest magnitude
     order = abs(eigenvalues).argsort()[::-1]  # decending order
-    principal_axes = principal_axes[order]
+    # principal_axes = principal_axes[order] # PI already ordered correctly
     MOI_axis = eigenvalues[order]
 
     return principal_axes, MOI_axis
@@ -442,6 +442,15 @@ def get_forces_torques(covariances, molecule, nearest, system):
     T_cov_matrix = get_covariance_matrix(torque, scale_covariance)
     # add the covariances to the class instance
     covariances.add_data(nearest, molecule.resnames[0], F_cov_matrix, T_cov_matrix)
+    # print("***", molecule.resids[0], molecule.resnames[0])
+    # print("forces", molecule.forces)
+    # print("positions", molecule.positions)
+    # print("F_cov_matrix", F_cov_matrix)
+    # print("T_cov_matrix", T_cov_matrix)
+    # print("principal_axes", principal_axes)
+    # print("MOI_axis", MOI_axis)
+    # print("center_of_mass", center_of_mass)
+    # print()
 
     # not applicable to water
     if molecule_scale == "multiple_UAs":

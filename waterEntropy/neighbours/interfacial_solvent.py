@@ -91,9 +91,9 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
         Orient.Labels.resid_labelled_shell_counts
     )
     # 6. Get the vibrational entropy of interfacial waters
-    vibrations.add_data(covariances)
-    print(vibrations.frequencies)
-    return Sorient_dict, covariances  # frame_solvent_indices,
+    vibrations.add_data(covariances, diagonalise=True)
+    # print(vibrations.frequencies)
+    return Sorient_dict, covariances, vibrations  # frame_solvent_indices,
 
 
 def get_solvent_vibrational_entropy(system, frame_solvent_indices):
