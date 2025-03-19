@@ -130,7 +130,6 @@ def get_HB_labels(atom_idx: int, system):
                     acceptor = system.atoms[a_idx]
                     if acceptor.mass < 1.1:
                         acceptor = find_bonded_heavy_atom(a_idx, system)
-                    # print("donates_to", acceptor.index)
                     shell_idx = shell.UA_shell.index(acceptor.index)
                     donates_to_labels.append(shell.labels[shell_idx])
     shell.donates_to_labels = donates_to_labels

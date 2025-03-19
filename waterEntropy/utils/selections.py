@@ -69,3 +69,16 @@ def find_bonded_heavy_atom(atom_idx: int, system):
     else:
         bonded_heavy_atom = atom
     return bonded_heavy_atom
+
+
+def find_bonded_atoms(atom_idx: int, system):
+    """
+    for a given atom, find its bonded heavy and H atoms
+
+    :param atom_idx: atom index to find bonded heavy atom for
+    :param system: mdanalysis instance of all atoms in current frame
+    """
+    bonded_atoms = system.select_atoms(f"bonded index {atom_idx}")
+    bonded_heavy_atoms = bonded_atoms.select_atoms("mass 2 to 999")
+    bonded_H_atoms = bonded_atoms.select_atoms("mass 1 to 1.1")
+    return bonded_heavy_atoms, bonded_H_atoms
