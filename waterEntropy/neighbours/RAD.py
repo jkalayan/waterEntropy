@@ -186,7 +186,7 @@ def get_RAD_neighbours(i_coords, sorted_indices, sorted_distances, system):
     return shell
 
 
-def get_shell_labels(atom_idx, system, shell):
+def get_shell_labels(atom_idx: int, system, shell):
     """
     Get the shell labels
     For a central UA, rank its coordination shell by proximity to that
