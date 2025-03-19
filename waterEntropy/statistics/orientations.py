@@ -9,6 +9,8 @@ import numpy as np
 
 from waterEntropy.utils.helpers import nested_dict
 
+GAS_CONSTANT = 8.314  # (J/ (K mol)
+
 
 class Labels:
     """
@@ -284,7 +286,7 @@ def get_orientation_S(Nc_eff: float, pbias_ave: float):
     if Nc_eff != 0:
         S_orient = np.log((Nc_eff) ** (3 / 2) * np.pi**0.5 * pbias_ave / 2)
     S_orient = max(S_orient, 0)
-    return S_orient
+    return S_orient * GAS_CONSTANT
 
 
 def get_reduced_neighbours_biases(degeneracy: dict, pD_dict: dict, pA_dict: dict):

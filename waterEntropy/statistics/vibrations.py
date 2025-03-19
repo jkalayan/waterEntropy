@@ -24,6 +24,7 @@ class Vibrations:
     BOLTZMANN = 1.38064852e-23  # (J / K)
     HBAR = 1.0545718e-34  # (J s)
     AVOGADRO = 6.022e23
+    GAS_CONSTANT = 8.314  # (J/ (K mol)
     # conversions
     CALORIE_TO_JOULE = 4184
     KG_TO_AMU = 6.02214086e26
@@ -134,7 +135,7 @@ class Vibrations:
         c = np.where(a != 0, np.log(1 - np.exp(-a)), 0.0)
         Svib = np.where((b != 0) & (c != 0), a / b - c, 0)
 
-        return Svib, eigenvalues
+        return Svib * self.GAS_CONSTANT, eigenvalues
 
     def calculate_frequencies(self, covariance, diagonalise):
         """

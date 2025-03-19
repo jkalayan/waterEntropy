@@ -49,11 +49,11 @@ def run_waterEntropy(
     # add the forces (which are saved as positions be default) from uf to u
     u.atoms.forces = uf.atoms.positions
     # set the frames to be analysed
-    start, end, step = 0, 1, 1
+    start, end, step = 0, 4, 2
     print(u.trajectory)
     # u.trajectory[frame] # move to a particular frame using this
 
-    Sorient_dict, covariances, vibrations = GetSolvent.get_interfacial_water_orient_entropy(u, start, end, step)
+    Sorient_dict, covariances, vibrations, frame_solvent_indices = GetSolvent.get_interfacial_water_orient_entropy(u, start, end, step)
     GetSolvent.print_Sorient_dicts(Sorient_dict)
     # GetSolvent.print_frame_solvent_dicts(frame_solvent_indices)
     GetVibrations.print_Svib_data(vibrations, covariances)
