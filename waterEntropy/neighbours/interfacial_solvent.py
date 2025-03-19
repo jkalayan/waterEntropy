@@ -8,6 +8,7 @@ import waterEntropy.neighbours.RAD as RADShell
 from waterEntropy.statistics.convariances import Covariances, get_forces_torques
 import waterEntropy.statistics.orientations as Orient
 from waterEntropy.statistics.vibrations import Vibrations
+from waterEntropy.utils.helpers import nested_dict
 import waterEntropy.utils.selections as Select
 
 
@@ -25,7 +26,7 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
     :param step: steps between frames
     """
     # don't need to include the frame_solvent_indices dictionary
-    # frame_solvent_indices = nested_dict()
+    frame_solvent_indices = nested_dict()
     # initialise the Covariance class instance to store covariance matrices
     covariances = Covariances()
     vibrations = Vibrations(temperature=298, force_units="kcal")
@@ -63,13 +64,13 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
                     shell.donates_to_labels,
                     shell.accepts_from_labels,
                 )
-                # frame_solvent_indices = save_solvent_indices(
-                #     ts.frame,
-                #     shell.atom_idx,
-                #     nearest_resid,
-                #     nearest_resname,
-                #     frame_solvent_indices,
-                # )
+                frame_solvent_indices = save_solvent_indices(
+                    ts.frame,
+                    shell.atom_idx,
+                    nearest_resid,
+                    nearest_resname,
+                    frame_solvent_indices,
+                )
                 # 3f. calculate the running average of force and torque
                 # covariance matrices
                 solvent_molecule = system.atoms[solvent.index].fragment  # get molecule
@@ -92,7 +93,12 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
     )
     # 6. Get the vibrational entropy of interfacial waters
     vibrations.add_data(covariances, diagonalise=True)
-    return Sorient_dict, covariances, vibrations  # frame_solvent_indices,
+    return (
+        Sorient_dict,
+        covariances,
+        vibrations,
+        frame_solvent_indices,
+    )
 
 
 def get_solvent_vibrational_entropy(system, frame_solvent_indices):
@@ -133,7 +139,7 @@ def print_Sorient_dicts(Sorient_dict: dict):
     """
     for resid, resname_key in sorted(list(Sorient_dict.items())):
         for resname, [Sor, count] in sorted(list(resname_key.items())):
-            print(resid, resname, Sor * 8.314, count)
+            print(resid, resname, Sor, count)
 
 
 def print_frame_solvent_dicts(frame_solvent_indices: dict):

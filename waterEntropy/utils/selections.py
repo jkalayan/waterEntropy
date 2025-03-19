@@ -47,6 +47,7 @@ def find_solute_molecules(system):
             UAs = atom.select_atoms(f"resid {res.resid} and mass 2 to 999")
             if len(UAs) > 1:
                 solute_molecule_resid_list.append(res.resid)
+            # if heavy atom is not oxygen, treat as solute
             if len(UAs) == 1 and math.floor(UAs[0].mass) != 16:
                 solute_molecule_resid_list.append(res.resid)
 
