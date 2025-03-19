@@ -6,11 +6,11 @@ coordination shells
 import waterEntropy.neighbours.HB as HBond
 import waterEntropy.neighbours.RAD as RADShell
 import waterEntropy.statistics.orientations as Orient
-from waterEntropy.utils.helpers import nested_dict
 import waterEntropy.utils.selections as Select
 
 
 def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int):
+    # pylint: disable=too-many-locals
     """
     For a given system, containing the topology and coordinates of molecules,
     find the interfacial water molecules around solutes and calculate their
@@ -22,7 +22,11 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
     :param end: end frame number
     :param step: steps between frames
     """
-    frame_solvent_indices = nested_dict()
+    # don't need to include the frame_solvent_indices dictionary
+    # frame_solvent_indices = nested_dict()
+    # initialise the Covariance class instance to store covariance matrices
+    # covariances = Covariance()
+    # pylint: disable=unused-variable
     for ts in system.trajectory[start:end:step]:
         # 1. find > 1 UA molecules in system, these are the solutes
         resid_list = Select.find_solute_molecules(system)
@@ -46,8 +50,9 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
             if shell.nearest_nonlike_idx is not None:
                 # 3e. populate the labels into a dictionary for stats
                 # only if a different atom is in the RAD shell
-                nearest_resid = system.atoms[shell.nearest_nonlike_idx].resid
-                nearest_resname = system.atoms[shell.nearest_nonlike_idx].resname
+                nearest = system.atoms[shell.nearest_nonlike_idx]
+                nearest_resid = nearest.resid
+                nearest_resname = nearest.resname
                 Orient.Labels(
                     nearest_resid,
                     nearest_resname,
@@ -55,13 +60,22 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
                     shell.donates_to_labels,
                     shell.accepts_from_labels,
                 )
-                frame_solvent_indices = save_solvent_indices(
-                    ts.frame,
-                    shell.atom_idx,
-                    nearest_resid,
-                    nearest_resname,
-                    frame_solvent_indices,
-                )
+                # frame_solvent_indices = save_solvent_indices(
+                #     ts.frame,
+                #     shell.atom_idx,
+                #     nearest_resid,
+                #     nearest_resname,
+                #     frame_solvent_indices,
+                # )
+                # 3f. calculate the running average of force and torque
+                # covariance matrices
+                # solvent_molecule = system.atoms[solvent.index].fragment  # get molecule
+                # get_forces_torques(
+                #     covariances,
+                #     solvent_molecule,
+                #     f"{nearest_resname}_{nearest_resid}",
+                #     system,
+                # )
         # 4. clear each shell and HB dictionary ready for the next frame.
         RADShell.RAD.shells.clear()
         HBond.HB.donating_to.clear()
@@ -69,12 +83,11 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
 
     # 5. get the orientational entropy of interfacial waters and save
     #   them to a dictionary
+    # TO-DO: add average Nc in Sorient dict
     Sorient_dict = Orient.get_resid_orientational_entropy_from_dict(
         Orient.Labels.resid_labelled_shell_counts
     )
-    # print_Sorient_dicts(Sorient_dict)
-    # print_frame_solvent_dicts(frame_solvent_indices)
-    return Sorient_dict, frame_solvent_indices
+    return Sorient_dict  # , covariances  # frame_solvent_indices,
 
 
 def get_solvent_vibrational_entropy(system, frame_solvent_indices):
@@ -114,8 +127,8 @@ def print_Sorient_dicts(Sorient_dict: dict):
     Print the orientational entropies of interfacial solvent
     """
     for resid, resname_key in sorted(list(Sorient_dict.items())):
-        for resname, Sor_count in sorted(list(resname_key.items())):
-            print(resid, resname, Sor_count)
+        for resname, [Sor, count] in sorted(list(resname_key.items())):
+            print(resid, resname, Sor * 8.314, count)
 
 
 def print_frame_solvent_dicts(frame_solvent_indices: dict):

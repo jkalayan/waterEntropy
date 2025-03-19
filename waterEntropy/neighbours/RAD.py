@@ -52,7 +52,7 @@ def find_interfacial_solvent(solutes, system):
     For a given set of solute molecules, find the RAD shells for each UA in the
     molecules, if a solvent molecule is in the RAD shell, then save the solvent
     atom index to a list. A solvent is defined as molecule that constitutes a
-    single UA.
+    single UA. These solvent molecule are defined as interfacial molecules.
 
     :param solutes: mdanalysis instance of a selection of atoms in solute
         molecules that are greater than one UA
@@ -63,16 +63,27 @@ def find_interfacial_solvent(solutes, system):
     for molecule in molecules:
         # find heavy atoms in the molecule
         UAs = find_molecule_UAs(molecule)
-        for UA in UAs:
-            shell = get_RAD_shell(UA, system)  # get the molecule UA shell
-            RAD(UA.index, shell)  # add shell to class
+        for atom in UAs:
+            shell_indices = get_RAD_shell(atom, system)  # get the molecule UA shell
+            RAD(atom.index, shell_indices)  # add shell to class
             # for each neighbour in the RAD shell, find single UA molecules
-            for n in shell:
-                n_UA = get_selection(system, "index", [n])
-                UAs = find_molecule_UAs(n_UA.fragments[0])  # 1 length list
-                if len(UAs) == 1:  # single UA molecule is a solvent
-                    if n_UA.indices[0] not in solvent_indices:
-                        solvent_indices.append(n_UA.indices[0])
+            shell = get_selection(system, "index", shell_indices)
+            for neighbour_atom in shell:
+                # need to create an atom group to find molecule/fragment
+                neighbour_atomGroup = get_selection(
+                    system, "index", [neighbour_atom.index]
+                )
+                neighbour_molecule = neighbour_atomGroup.fragments[0]
+                neighbour_UAs = find_molecule_UAs(
+                    neighbour_molecule.fragments[0]
+                )  # 1 length list
+                if len(neighbour_UAs) == 1:  # single UA molecule is a solvent
+                    if neighbour_atom.index not in solvent_indices:
+                        solvent_indices.append(neighbour_atom.index)
+                    else:
+                        continue
+                else:
+                    continue
     return solvent_indices
 
 
@@ -116,9 +127,9 @@ def get_sorted_neighbours(i_idx: int, system):
     #       Should the central atom bonded UAs be allowed to block?
     #       I would think yes, but this was not done in original code
     neighbours = system.select_atoms(
-        # f"""mass 2 to 999 and not index {i_idx}
-        #                             and not bonded index {i_idx}"""
-        f"""mass 2 to 999 and not index {i_idx}"""  # bonded UAs can block
+        f"""mass 2 to 999 and not index {i_idx}
+                                    and not bonded index {i_idx}"""
+        # f"""mass 2 to 999 and not index {i_idx}"""  # bonded UAs can block
     )
     sorted_indices, sorted_distances = get_neighbourlist(
         i_coords, neighbours.atoms, system.dimensions, max_cutoff=25
@@ -197,6 +208,7 @@ def get_shell_labels(atom_idx, system, shell):
     nearest_nonlike_idx = get_nearest_nonlike(shell, system)
     # only find labels if a solute is in the shell
     if nearest_nonlike_idx is not None:
+        nearest_nonlike = system.atoms[nearest_nonlike_idx]
         shell_labels = []
         for n in shell.UA_shell:
             neighbour = system.atoms[n]
@@ -221,17 +233,23 @@ def get_shell_labels(atom_idx, system, shell):
                 # if neighbour has a pure shell, then it is in the second
                 # shell of the nearest nonlike
                 if neighbour_nearest_nonlike_idx is None:
-                    shell_labels.append(f"2_{center.resname}")
+                    shell_labels.append(f"2_{neighbour.resname}")
                 else:
                     # if neighbours nearest nonlike is the same atom as
                     # central atom, assume it is in the first shell
-                    if neighbour_nearest_nonlike_idx == nearest_nonlike_idx:
-                        shell_labels.append(f"1_{center.resname}")
+                    # if neighbour_nearest_nonlike_idx == nearest_nonlike_idx:
+                    neighbour_nearest_nonlike = system.atoms[
+                        neighbour_nearest_nonlike_idx
+                    ]
+                    # if neighbours nearest nonlike is in the same resid as
+                    # central atom, assume it is in the first shell
+                    if neighbour_nearest_nonlike.resid == nearest_nonlike.resid:
+                        shell_labels.append(f"1_{neighbour.resname}")
                     else:
-                        # if neighbours nearest nonlike is not the same atom
-                        # as central atom,  it is in the first shell
-                        # of a different atom and labelled as "X_RESNAME"
-                        shell_labels.append(f"X_{center.resname}")
+                        # if neighbours nearest nonlike is not the same resid
+                        # as central nearest resid,  it is in the first shell
+                        # of a different resid and labelled as "X_RESNAME"
+                        shell_labels.append(f"X_{neighbour.resname}")
         shell.labels = shell_labels  # sorted(shell_labels) #don't sort yet
         shell.nearest_nonlike_idx = nearest_nonlike_idx
     return shell
