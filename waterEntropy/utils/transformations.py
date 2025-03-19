@@ -157,14 +157,17 @@ def MOI(CoM, positions, masses):
 def get_custom_axes(a, b_list, c, dimensions):
     r"""
     For atoms a, b_list and c, calculate the axis to rotate forces around:
+
     - axis1: use the normalised vector ab as axis1. If there is more than one bonded
       heavy atom (HA), average over all the normalised vectors calculated from b_list
       and use this as axis1). b_list contains all the bonded heavy atom
       coordinates.
+
     - axis2: use cross product of normalised vector ac and axis1 as axis2.
       If there are more than two bonded heavy atoms, then use normalised vector
       b[0]c to cross product with axis1, this gives the axis perpendicular to
       axis1.
+
     - axis3: the cross product of axis1 and axis2, which is perpendicular to
       axis1 and axis2.
 
@@ -284,11 +287,16 @@ def get_bonded_axes(system, atom, dimensions):
 
     Note that axis2 is calculated by taking the cross product between axis1 and
     the vector chosen for each case, dependent on bonding:
+
     - case1: if all the bonded atoms are hydrogens, then just use the moment of
       inertia as all the axes.
+
     - case2: no axes required to rotate forces.
+
     - case3: use XR vector as axis1, vector XH to calculate axis2
+
     - case4: use vector XR1 as axis1, and XR2 to calculate axis2
+
     - case5: get the sum of all XR normalised vectors as axis1, then use vector
       R1R2 to calculate axis2
 

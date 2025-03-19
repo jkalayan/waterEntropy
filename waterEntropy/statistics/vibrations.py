@@ -116,6 +116,7 @@ class Vibrations:
         r"""
         Calculate the vibrational entropies from the equation of a quantum
         harmonic oscillator:
+
         .. math::
             S^{\mathrm{vib}} = k_{\mathrm{B}} \sum_{i=1}^{N_\mathrm{vib}} \\
             \Bigg( \frac{h\nu_i/k_{\mathrm{B}}T}{e^{h\nu_i/k_{\mathrm{B}}T}-1} \\
