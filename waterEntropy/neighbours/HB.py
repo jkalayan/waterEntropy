@@ -15,13 +15,14 @@ class HB:
     Class for hydrogen bond donors, their acceptors and distance of HB
     """
 
-    donating_to = nested_dict()  # structure: UA_idx[donating_idx] = accepting_idx
-    accepting_from = (
-        nested_dict()
-    )  # structure: UA_idx[accepting_idx] = [donating_idx1,]
-
-    def __init__(self, UA_idx: int, donator_idx: int, acceptor_idx: int):
-        HB.populate_dicts(self, UA_idx, donator_idx, acceptor_idx)
+    def __init__(self):
+        self.donating_to = (
+            nested_dict()
+        )  # structure: UA_idx[donating_idx] = accepting_idx
+        self.accepting_from = (
+            nested_dict()
+        )  # structure: UA_idx[accepting_idx] = [donating_idx1,]
+        # HB.populate_dicts(self, UA_idx, donator_idx, acceptor_idx)
 
     def populate_dicts(self, UA_idx: int, donator_idx: int, acceptor_idx: int):
         """
@@ -35,15 +36,14 @@ class HB:
         :param acceptor_idx: atom index of the UA accepting the
             hydrogen bond in the coordination shell
         """
-        if donator_idx not in HB.donating_to[UA_idx]:
-            HB.donating_to[UA_idx][donator_idx] = acceptor_idx
-        if acceptor_idx not in HB.accepting_from:
-            HB.accepting_from[acceptor_idx] = []
-        if donator_idx not in HB.accepting_from[acceptor_idx]:
-            HB.accepting_from[acceptor_idx].append(donator_idx)
+        if donator_idx not in self.donating_to[UA_idx]:
+            self.donating_to[UA_idx][donator_idx] = acceptor_idx
+        if acceptor_idx not in self.accepting_from:
+            self.accepting_from[acceptor_idx] = []
+        if donator_idx not in self.accepting_from[acceptor_idx]:
+            self.accepting_from[acceptor_idx].append(donator_idx)
 
-    @classmethod  # access to the class, but not to the instance
-    def find_donators(cls, UA_idx: int):
+    def find_donators(self, UA_idx: int):
         """
         Find the donators for a given residue, this returns a dict where the
         key is the accepting atom index and the value is a list of the atom
@@ -52,10 +52,9 @@ class HB:
         :param cls: class instance
         :param UA_idx: atom index of UA being donated to
         """
-        return HB.accepting_from.get(UA_idx, None)
+        return self.accepting_from.get(UA_idx, None)
 
-    @classmethod  # access to the class, but not to the instance
-    def find_acceptor(cls, UA_idx: int):
+    def find_acceptor(self, UA_idx: int):
         """
         Find the acceptors for a given resid, this returns a dictionary where
         the key is the donator index and the value is the acceptor index
@@ -63,10 +62,10 @@ class HB:
         :param cls: class instance
         :param UA_idx: atom index of UA accepting HBs
         """
-        return HB.donating_to.get(UA_idx, None)
+        return self.donating_to.get(UA_idx, None)
 
 
-def get_shell_HBs(shell, system):
+def get_shell_HBs(shell, system, HBs, shells):
     """
     For a given UA and its coordination shell neighbours, find what the central
     UA donates to and accepts from in its shell.
@@ -76,25 +75,26 @@ def get_shell_HBs(shell, system):
     :param system: mdanalysis instance of all atoms in current frame
     """
     # first check that HB donations haven't already been found
-    donates_to = HB.find_acceptor(shell.atom_idx)
+    donates_to = HBs.find_acceptor(shell.atom_idx)
     if not donates_to:
-        get_shell_HB_acceptors(shell, system)
-        donates_to = HB.find_acceptor(shell.atom_idx)
+        get_shell_HB_acceptors(shell, system, HBs)
+        donates_to = HBs.find_acceptor(shell.atom_idx)
     # now iterate through shell and find shells of shell neighbours
     for n_idx in shell.UA_shell:
-        neighbour_shell = RADShell.RAD.find_shell(n_idx)
+        neighbour_shell = shells.find_shell(n_idx)
         if not neighbour_shell:
-            neighbour_shell = RADShell.get_RAD_shell(system.atoms[n_idx], system)
-            neighbour_shell = RADShell.RAD(n_idx, neighbour_shell)
+            neighbour_shell = RADShell.get_RAD_shell(
+                system.atoms[n_idx], system, shells
+            )
         # find what each shell neighbour donates to in their shell
-        neighbour_donates_to = HB.find_acceptor(n_idx)
+        neighbour_donates_to = HBs.find_acceptor(n_idx)
         if not neighbour_donates_to:
-            get_shell_HB_acceptors(neighbour_shell, system)
-            neighbour_donates_to = HB.find_acceptor(n_idx)
-    # accepts_from = HB.find_donators(shell.atom_idx)
+            get_shell_HB_acceptors(neighbour_shell, system, HBs)
+            neighbour_donates_to = HBs.find_acceptor(n_idx)
+    # accepts_from = HBs.find_donators(shell.atom_idx)
 
 
-def get_HB_labels(atom_idx: int, system):
+def get_HB_labels(atom_idx: int, system, HBs, shells):
     """
     For a given central atom, get what UA it donates and accepts from, then
     find what shell labels these correspond to.
@@ -102,15 +102,15 @@ def get_HB_labels(atom_idx: int, system):
     :param atom_idx: atom index to find HB labels for
     :param system: mdanalysis instance of all atoms in current frame
     """
-    shell = RADShell.RAD.find_shell(atom_idx)
+    shell = shells.find_shell(atom_idx)
     accepts_from_labels = []
     donates_to_labels = []
     if shell:
         if shell.labels:
             # check if HB donating to and accepting from have previously
             # been found
-            donates_to = HB.find_acceptor(atom_idx)
-            accepts_from = HB.find_donators(atom_idx)
+            donates_to = HBs.find_acceptor(atom_idx)
+            accepts_from = HBs.find_donators(atom_idx)
             if accepts_from:
                 for d_idx in accepts_from:
                     # check if UA being accepted from is in shell of
@@ -136,7 +136,7 @@ def get_HB_labels(atom_idx: int, system):
     shell.accepts_from_labels = accepts_from_labels
 
 
-def get_shell_HB_acceptors(shell, system):
+def get_shell_HB_acceptors(shell, system, HBs):
     # pylint: disable=too-many-locals
     """
     Find the hydrogen bond acceptors for the central UA hydrogens that are
@@ -177,7 +177,7 @@ def get_shell_HB_acceptors(shell, system):
                     current_relative_charge = relative_charge
                     current_acceptor = acceptor
             # create a new object for hydrogen bonding in a RAD shell
-            HB(X_idx, D_idx, current_acceptor.index)
+            HBs.populate_dicts(X_idx, D_idx, current_acceptor.index)
 
 
 def get_shell_neighbour_selection(shell, donator, system):

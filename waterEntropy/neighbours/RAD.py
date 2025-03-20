@@ -18,36 +18,69 @@ from waterEntropy.utils.selections import find_molecule_UAs, get_selection
 from waterEntropy.utils.trig import get_angle, get_neighbourlist
 
 
-class RAD:  # pylint: disable=too-few-public-methods
-    """
-    Class for coordination shells defined using the RAD implementation
-    The shells dictionary contains the central atom_idx as the key and
-    the instance of the RAD class as the value.
-    """
+class Shell:
+    """Represents a single atom shell with dynamic properties."""
 
-    shells = {}  # save shell instances in here
+    def __init__(self, atom_idx):
+        object.__setattr__(self, "atom_idx", atom_idx)  # Store atom index directly
+        object.__setattr__(self, "properties", {})  # Internal dictionary
 
-    def __init__(self, atom_idx: int, UA_shell: list[int]):
-        self.atom_idx = atom_idx
-        self.UA_shell = UA_shell
-        self.nearest_nonlike_idx = None
-        self.labels = None
-        self.donates_to_labels = None
-        self.accepts_from_labels = None
-        RAD.shells[self.atom_idx] = self  # add instance to shell dict
+    def __getattr__(self, key):
+        """Allow dot notation access to stored properties."""
+        if key in self.properties:
+            return self.properties[key]
+        raise AttributeError(f"Property '{key}' not found for atom {self.atom_idx}")
 
-    @classmethod  # access to the class, but not to the instance
-    def find_shell(cls, atom_idx: int):
+    def __setattr__(self, key, value):
+        """Allow adding properties dynamically, except for 'atom_idx'."""
+        if key == "atom_idx":  # Ensure atom index remains immutable
+            object.__setattr__(self, key, value)
+        else:
+            self.properties[key] = value  # Store additional properties
+
+    def __repr__(self):
+        """Print the atom and its properties."""
+        return f"Shell(atom_idx={self.atom_idx}, properties={self.properties})"
+
+
+class ShellCollection:
+    """Manages multiple atom shells and allows adding/updating properties."""
+
+    def __init__(self):
+        self.shells = {}  # Dictionary storing Atom objects indexed by atom index
+
+    def add_data(self, atom_idx: int, UA_shell: list[int]):
+        """Add a new atom shell to the collection if it doesn't exist."""
+        if atom_idx not in self.shells:
+            self.shells[atom_idx] = Shell(atom_idx)
+            self.set_property(atom_idx, "atom_idx", atom_idx)
+            self.set_property(atom_idx, "UA_shell", UA_shell)
+            self.set_property(atom_idx, "nearest_nonlike_idx", None)
+            self.set_property(atom_idx, "labels", None)
+            self.set_property(atom_idx, "donates_to_labels", None)
+            self.set_property(atom_idx, "accepts_from_labels", None)
+
+    def set_property(self, atom_idx, key, value):
+        """Set a property for a specific atom shell, ensuring it exists first."""
+        if atom_idx not in self.shells:
+            self.shells[atom_idx] = Shell(atom_idx)  # Auto-create atom if missing
+        setattr(self.shells[atom_idx], key, value)
+
+    def find_shell(self, atom_idx: int):
         """
         Get the shell instance if atom_idx is a key in shells dictionary
 
         :param cls: instance of RAD class
         :param atom_idx: index of central atom in shell
         """
-        return RAD.shells.get(atom_idx, None)
+        return self.shells.get(atom_idx, None)
+
+    def __repr__(self):
+        """Return a dictionary-like representation of stored atoms."""
+        return repr(self.shells)
 
 
-def find_interfacial_solvent(solutes, system):
+def find_interfacial_solvent(solutes, system, shells):
     """
     For a given set of solute molecules, find the RAD shells for each UA in the
     molecules, if a solvent molecule is in the RAD shell, then save the solvent
@@ -64,11 +97,15 @@ def find_interfacial_solvent(solutes, system):
         # find heavy atoms in the molecule
         UAs = find_molecule_UAs(molecule)
         for atom in UAs:
-            shell_indices = get_RAD_shell(atom, system)  # get the molecule UA shell
-            RAD(atom.index, shell_indices)  # add shell to class
+            # print(atom.resid, atom.index, atom.name, atom.resname)
+            shell = get_RAD_shell(atom, system, shells)  # get the molecule UA shell
+            shell_indices = shell.UA_shell
+            # print(shell_indices)
+            # print(shells.find_shell(UAs[0].index).UA_shell)
             # for each neighbour in the RAD shell, find single UA molecules
-            shell = get_selection(system, "index", shell_indices)
-            for neighbour_atom in shell:
+            shell_atoms = get_selection(system, "index", shell_indices)
+            # print(shell_atoms.indices)
+            for neighbour_atom in shell_atoms:
                 # need to create an atom group to find molecule/fragment
                 neighbour_atomGroup = get_selection(
                     system, "index", [neighbour_atom.index]
@@ -87,7 +124,7 @@ def find_interfacial_solvent(solutes, system):
     return solvent_indices
 
 
-def get_RAD_shell(UA, system):
+def get_RAD_shell(UA, system, shells):
     """
     For a given united atom, find its RAD shell, returning the atom indices
     for the heavy atoms that are in its shell.
@@ -96,19 +133,20 @@ def get_RAD_shell(UA, system):
     :param system: mdanalysis instance of atoms in a frame
     """
     # first check if a shell has already been found for this UA
-    shell = RAD.find_shell(UA.index)
+    shell = shells.find_shell(UA.index)
     if not shell:
         # get the nearest neighbours for the UA, sorted from closest to
         # furthest
         sorted_indices, sorted_distances = get_sorted_neighbours(UA.index, system)
         # now find the RAD shell
-        shell = get_RAD_neighbours(
+        shell_indices = get_RAD_neighbours(
             UA.position, sorted_indices, sorted_distances, system
         )
         # populate the class instance for RAD shells
-        RAD(UA.index, shell)
-    else:
-        shell = shell.UA_shell
+        shells.add_data(UA.index, shell_indices)
+        shell = shells.find_shell(UA.index)
+    # else:
+    #     shell = shell.UA_shell
     return shell
 
 
@@ -186,7 +224,7 @@ def get_RAD_neighbours(i_coords, sorted_indices, sorted_distances, system):
     return shell
 
 
-def get_shell_labels(atom_idx: int, system, shell):
+def get_shell_labels(atom_idx: int, system, shell, shells):
     """
     Get the shell labels
     For a central UA, rank its coordination shell by proximity to that
@@ -206,6 +244,8 @@ def get_shell_labels(atom_idx: int, system, shell):
     center = system.atoms[atom_idx]
     # find the closest different UA in a shell
     nearest_nonlike_idx = get_nearest_nonlike(shell, system)
+    # print(atom_idx, shells.find_shell(atom_idx).UA_shell, shell.UA_shell)
+    # print("\t", nearest_nonlike_idx)
     # only find labels if a solute is in the shell
     if nearest_nonlike_idx is not None:
         nearest_nonlike = system.atoms[nearest_nonlike_idx]
@@ -221,10 +261,9 @@ def get_shell_labels(atom_idx: int, system, shell):
             # find RAD shells for shell constituents with same resname
             # as central atom
             if n != nearest_nonlike_idx and neighbour.resname == center.resname:
-                neighbour_shell = RAD.find_shell(n)
+                neighbour_shell = shells.find_shell(n)
                 if not neighbour_shell:
-                    neighbour_shell = get_RAD_shell(neighbour, system)
-                    neighbour_shell = RAD(n, neighbour_shell)
+                    neighbour_shell = get_RAD_shell(neighbour, system, shells)
                 # find nearest nonlike of neighbours with same resname
                 # as central atom
                 neighbour_nearest_nonlike_idx = get_nearest_nonlike(
@@ -265,6 +304,7 @@ def get_nearest_nonlike(shell, system):
     """
     nearest_nonlike_idx = None
     center = system.atoms[shell.atom_idx]
+    # print("NN:", center.index, shell.atom_idx, shell.UA_shell)
     for n in shell.UA_shell:
         neighbour = system.atoms[n]
         if neighbour.resname != center.resname and neighbour.type != center.type:

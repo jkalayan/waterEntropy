@@ -63,12 +63,16 @@ def test_get_RAD_shell():
     # pylint: disable=pointless-statement
     # got to first frame of trajectory
     system.trajectory[0]
+    # create ShellCollection instance
+    shells = RADShell.ShellCollection()
     # get the shell of a solvent UA
-    shell = RADShell.get_RAD_shell(solvent_UA, system)
+    shell_indices = RADShell.get_RAD_shell(solvent_UA, system, shells)
     # add shell to the RAD class
-    shell = RADShell.RAD(solvent_UA.index, shell)
+    shells.add_data(solvent_UA.index, shell_indices)
+    # get the shell back
+    shell = shells.find_shell(solvent_UA.index)
     # get the shell labels
-    shell = RADShell.get_shell_labels(solvent_UA.index, system, shell)
+    shell = RADShell.get_shell_labels(solvent_UA.index, system, shell, shells)
 
     assert shell.UA_shell == [2517, 1353, 1800, 1, 5, 1038, 1464, 888, 1017]
     assert shell.labels == [
@@ -86,7 +90,8 @@ def test_get_RAD_shell():
 
 def test_find_interfacial_solvent():
     """Test the find interfacial solvent function"""
-    solvent_indices = RADShell.find_interfacial_solvent(system_solutes, system)
+    shells = RADShell.ShellCollection()
+    solvent_indices = RADShell.find_interfacial_solvent(system_solutes, system, shells)
 
     assert solvent_indices == [
         621,

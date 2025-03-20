@@ -32,25 +32,40 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
     vibrations = Vibrations(temperature=298, force_units="kcal")
     # pylint: disable=unused-variable
     for ts in system.trajectory[start:end:step]:
+        # initialise the RAD and HB class instances to store shell information
+        shells = RADShell.ShellCollection()
+        HBs = HBond.HB()
         # 1. find > 1 UA molecules in system, these are the solutes
         resid_list = Select.find_solute_molecules(system)
         solutes = Select.get_selection(system, "resid", resid_list)
         # 2. find the interfacial solvent molecules that are 1 UA in size
         #   and are in the RAD shell of any solute
-        solvent_indices = RADShell.find_interfacial_solvent(solutes, system)
+        solvent_indices = RADShell.find_interfacial_solvent(solutes, system, shells)
         first_shell_solvent = Select.get_selection(system, "index", solvent_indices)
         # 3. iterate through first shell solvent and find their RAD shells,
         #   HBing in the shells and shell labels
+        # print(solutes.indices)
+        # indices = shells.get_values_as_list()[0].keys()
+        # print(shells.get_values_as_list()[0].keys())
+        # for i in list(solutes.indices):
+        #     print(solutes[i].index, solutes[i].name, solutes[i].resname)
+        #     try:
+        #         s = shells.find_shell(i)
+        #         print(s.atom_idx, s.UA_shell)
+        #     except:
+        #         pass
         for solvent in first_shell_solvent:
+            # print(solvent)
             # 3a. find RAD shell of interfacial solvent
-            shell = RADShell.get_RAD_shell(solvent, system)
-            shell = RADShell.RAD(solvent.index, shell)
+            shell = RADShell.get_RAD_shell(solvent, system, shells)
+            # print(">>>", shell, shell.atom_idx, solvent.index)
             # 3b. find HBing in the shell
-            HBond.get_shell_HBs(shell, system)
+            HBond.get_shell_HBs(shell, system, HBs, shells)
             # 3c. find RAD shell labels
-            shell = RADShell.get_shell_labels(solvent.index, system, shell)
+            shell = RADShell.get_shell_labels(solvent.index, system, shell, shells)
+            # print(">>>", shell, shell.atom_idx)
             # 3d. find HB labels
-            HBond.get_HB_labels(solvent.index, system)
+            HBond.get_HB_labels(solvent.index, system, HBs, shells)
             if shell.nearest_nonlike_idx is not None:
                 # 3e. populate the labels into a dictionary for stats
                 # only if a different atom is in the RAD shell
@@ -81,9 +96,9 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
                     system,
                 )
         # 4. clear each shell and HB dictionary ready for the next frame.
-        RADShell.RAD.shells.clear()
-        HBond.HB.donating_to.clear()
-        HBond.HB.accepting_from.clear()
+        # RADShell.RAD.shells.clear()
+        # HBond.HB.donating_to.clear()
+        # HBond.HB.accepting_from.clear()
 
     # 5. get the orientational entropy of interfacial waters and save
     #   them to a dictionary
