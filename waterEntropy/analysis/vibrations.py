@@ -5,7 +5,7 @@ These functions calculate vibrational entropy from covariance matrices
 import numpy as np
 from numpy import linalg as LA
 
-from waterEntropy.entropy.convariances import Covariances
+from waterEntropy.entropy.convariances import CovarianceCollection
 from waterEntropy.utils.helpers import nested_dict
 
 
@@ -158,7 +158,7 @@ class Vibrations:
         return frequency, eigenvalues
 
 
-def print_Svib_data(vibrations: Vibrations, covariances: Covariances):
+def print_Svib_data(vibrations: Vibrations, covariances: CovarianceCollection):
     """
     Print the orientational entropies of interfacial solvent
     """

@@ -6,8 +6,9 @@ coordination shells
 import waterEntropy.analysis.HB as HBond
 import waterEntropy.analysis.RAD as RADShell
 from waterEntropy.analysis.vibrations import Vibrations
-from waterEntropy.entropy.convariances import Covariances, get_forces_torques
+from waterEntropy.entropy.convariances import CovarianceCollection
 import waterEntropy.entropy.orientations as Orient
+from waterEntropy.recipes.forces_torques import get_forces_torques
 from waterEntropy.utils.helpers import nested_dict
 import waterEntropy.utils.selections as Select
 
@@ -28,7 +29,8 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
     # don't need to include the frame_solvent_indices dictionary
     frame_solvent_indices = nested_dict()
     # initialise the Covariance class instance to store covariance matrices
-    covariances = Covariances()
+    covariances = CovarianceCollection()
+    # initialise the Vibrations class instance to store vibrational entropies
     vibrations = Vibrations(temperature=298, force_units="kcal")
     # pylint: disable=unused-variable
     for ts in system.trajectory[start:end:step]:
@@ -48,12 +50,10 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
             # print(solvent)
             # 3a. find RAD shell of interfacial solvent
             shell = RADShell.get_RAD_shell(solvent, system, shells)
-            # print(">>>", shell, shell.atom_idx, shell.UA_shell, shells)
             # 3b. find HBing in the shell
             HBond.get_shell_HBs(shell, system, HBs, shells)
             # 3c. find RAD shell labels
             shell = RADShell.get_shell_labels(solvent.index, system, shell, shells)
-            # print(">>>", shell, shell.atom_idx)
             # 3d. find HB labels
             HBond.get_HB_labels(solvent.index, system, HBs, shells)
             if shell.nearest_nonlike_idx is not None:
@@ -103,16 +103,6 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
     )
 
 
-def get_solvent_vibrational_entropy(system, frame_solvent_indices):
-    # pylint: disable=unused-argument
-    """
-    This function will be used to get the vibrational entropies of solvent
-    molecules collected from orientational entropy calculations. The
-    interfacial waters in this dict are the indices of the UA in the water.
-    """
-    return None
-
-
 def save_solvent_indices(
     frame: int,
     atom_idx: int,
@@ -138,6 +128,8 @@ def save_solvent_indices(
 def print_Sorient_dicts(Sorient_dict: dict):
     """
     Print the orientational entropies of interfacial solvent
+
+    :param Sorient_dict: dictionary containing orientational entropy values
     """
     for resid, resname_key in sorted(list(Sorient_dict.items())):
         for resname, [Sor, count] in sorted(list(resname_key.items())):
@@ -147,6 +139,9 @@ def print_Sorient_dicts(Sorient_dict: dict):
 def print_frame_solvent_dicts(frame_solvent_indices: dict):
     """
     Print the interfacial solvent for each analysed frame
+
+    :param frame_solvent_indices: dictionary containing solvent indices in the
+        first shell of solute atoms over each frame analysed
     """
     for frame, resname_key in sorted(list(frame_solvent_indices.items())):
         for resname, resid_key in sorted(list(resname_key.items())):

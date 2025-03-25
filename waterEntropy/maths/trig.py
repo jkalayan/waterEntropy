@@ -6,7 +6,9 @@ import MDAnalysis
 import numpy as np
 
 
-def get_neighbourlist(atom, neighbours, dimensions, max_cutoff=9e9):
+def get_neighbourlist(
+    atom: np.ndarray, neighbours, dimensions: np.ndarray, max_cutoff=9e9
+):
     """
     Use MDAnalysis to get distances between an atom and neighbours within
     a given cutoff. Each atom index pair sorted by distance are outputted.
@@ -37,7 +39,7 @@ def get_neighbourlist(atom, neighbours, dimensions, max_cutoff=9e9):
     )
 
 
-def get_angle(a, b, c, dimensions):
+def get_angle(a: np.ndarray, b: np.ndarray, c: np.ndarray, dimensions: np.ndarray):
     """
     Get the angle between three atoms, taking into account PBC.
 
@@ -59,7 +61,7 @@ def get_angle(a, b, c, dimensions):
     return cosine_angle
 
 
-def get_distance(a, b, dimensions):
+def get_distance(a: np.ndarray, b: np.ndarray, dimensions: np.ndarray):
     """
     Calculates distance and accounts for PBCs.
 
@@ -73,7 +75,7 @@ def get_distance(a, b, dimensions):
     return distance
 
 
-def get_vector(a, b, dimensions):
+def get_vector(a: np.ndarray, b: np.ndarray, dimensions: np.ndarray):
     """
     get vector of two coordinates over PBCs.
 
