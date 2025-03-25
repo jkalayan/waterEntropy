@@ -3,7 +3,7 @@
 import pytest
 
 from tests.input_files import load_inputs
-import waterEntropy.neighbours.RAD as RADShell
+import waterEntropy.analysis.RAD as RADShell
 import waterEntropy.utils.selections as Select
 
 # get mda universe for arginine in solution

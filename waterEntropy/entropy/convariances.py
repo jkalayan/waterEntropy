@@ -6,9 +6,9 @@ in a Covariances class instance.
 
 import numpy as np
 
+import waterEntropy.maths.transformations as Transformation
 from waterEntropy.utils.helpers import nested_dict
 from waterEntropy.utils.selections import find_molecule_UAs
-import waterEntropy.utils.transformations as Transformation
 
 
 class Covariances:

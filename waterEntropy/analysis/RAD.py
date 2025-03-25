@@ -5,8 +5,8 @@ angular distance.
 
 import numpy as np
 
+import waterEntropy.maths.trig as Trig
 import waterEntropy.utils.selections as Selections
-import waterEntropy.utils.trig as Trig
 
 
 class Shell:

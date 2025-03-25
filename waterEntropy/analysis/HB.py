@@ -4,10 +4,10 @@ These functions calculate hydrogen bonding within a shell.
 
 import numpy as np
 
-import waterEntropy.neighbours.RAD as RADShell
+import waterEntropy.analysis.RAD as RADShell
+import waterEntropy.maths.trig as Trig
 from waterEntropy.utils.helpers import nested_dict
 import waterEntropy.utils.selections as Selections
-import waterEntropy.utils.trig as Trig
 
 
 class HBCollection:
