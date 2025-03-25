@@ -9,7 +9,9 @@ import waterEntropy.maths.trig as Trig
 import waterEntropy.utils.selections as Selections
 
 
-def get_torques(molecule, center_of_mass, rotation_axes, MI_axis):
+def get_torques(
+    molecule, center_of_mass: np.ndarray, rotation_axes: np.ndarray, MI_axis: np.ndarray
+):
     """
     For a selection of atoms, use their positions and forces to get the
     torque (3,) for that selection of atoms. The positions are first translated
@@ -35,7 +37,7 @@ def get_torques(molecule, center_of_mass, rotation_axes, MI_axis):
     return torque
 
 
-def get_rotated_sum_forces(molecule, rotation_axes):
+def get_rotated_sum_forces(molecule, rotation_axes: np.ndarray):
     """
     Rotated the forces for a given seletion of atoms along a particular rotation
     axes (3,3)
@@ -48,7 +50,7 @@ def get_rotated_sum_forces(molecule, rotation_axes):
     return rotated_sum_forces
 
 
-def get_mass_weighted_forces(molecule, rotation_axes):
+def get_mass_weighted_forces(molecule, rotation_axes: np.ndarray):
     """
     For a given set of atoms, sum their forces and rotate these summed forces
     using the rotation axes (3,3)
@@ -62,7 +64,7 @@ def get_mass_weighted_forces(molecule, rotation_axes):
     return mass_weighted_force  # (3,)
 
 
-def get_covariance_matrix(ft, halve=0.5):
+def get_covariance_matrix(ft: np.ndarray, halve=0.5):
     """
     Get the outer product of the mass weighted forces or torques (ft) and
     half values if halve=True
@@ -82,6 +84,8 @@ def get_UA_masses(molecule):
     For a given molecule, return a list of masses of UAs
     (combination of the heavy atoms + bonded hydrogen atoms. This list is used to
     get the moment of inertia tensor for molecules larger than one UA
+
+    :param molecule: mdanalysis instance of molecule
     """
     UA_masses = []
     for atom in molecule:
@@ -97,12 +101,13 @@ def get_UA_masses(molecule):
     return UA_masses
 
 
-def get_axes(molecule, molecule_scale):
+def get_axes(molecule, molecule_scale: str):
     """
     From a selection of atoms, get the ordered principal axes (3,3) and
     the ordered moment of inertia axes (3,) for that selection of atoms
 
     :param molecule: mdanalysis instance of molecule
+    :param molecule_scale: the length scale of molecule
     """
     # default moment of inertia
     moment_of_inertia = molecule.moment_of_inertia()
@@ -130,12 +135,16 @@ def get_axes(molecule, molecule_scale):
     return principal_axes, MOI_axis
 
 
-def MOI(CoM, positions, masses):
+def MOI(CoM: np.ndarray, positions: np.ndarray, masses: list):
     """
     Use this function to calculate moment of inertia for cases where the
     mass list will contain masses of UAs rather than individual atoms and
     the postions will be those for the UAs only (excluding the H atoms
     coordinates).
+
+    :param CoM: a (3,) array of the chosen center of mass
+    :param positions: a (N,3) array of point positions
+    :param masses: a (N,) list of point masses
     """
     I = np.zeros((3, 3))
     for coord, mass in zip(positions, masses):
@@ -154,7 +163,7 @@ def MOI(CoM, positions, masses):
     return I
 
 
-def get_custom_axes(a, b_list, c, dimensions):
+def get_custom_axes(a: np.ndarray, b_list: list, c: np.ndarray, dimensions: np.ndarray):
     r"""
     For atoms a, b_list and c, calculate the axis to rotate forces around:
 
@@ -213,7 +222,7 @@ def get_custom_axes(a, b_list, c, dimensions):
     return custom_axes
 
 
-def get_flipped_axes(coords, custom_axes, center_of_mass, dimensions):
+def get_flipped_axes(positions, custom_axes, center_of_mass, dimensions):
     """
     For a given set of custom axes, ensure the axes are pointing in the
     correct direction wrt the heavy atom position and the chosen center
@@ -225,7 +234,7 @@ def get_flipped_axes(coords, custom_axes, center_of_mass, dimensions):
 
     # get dot product of Paxis1 and CoM->atom1 vect
     # will just be [0,0,0]
-    RRaxis = Trig.get_vector(coords[0], center_of_mass, dimensions)
+    RRaxis = Trig.get_vector(positions[0], center_of_mass, dimensions)
     # flip each Paxis if its pointing out of UA
     for i in range(3):
         dotProd1 = np.dot(PIaxes[i], RRaxis)

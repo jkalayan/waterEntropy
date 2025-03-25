@@ -193,7 +193,7 @@ def get_RAD_neighbours(i_coords, sorted_indices, sorted_distances, system):
     they fulfil the following condition:
 
     .. math::
-        \Bigg(\frac{1}{r_{ij}}\Bigg)^2>\Bigg(\frac{1}{r_{ik}}\Bigg)^2 \\cos \theta_{jik}
+        \Bigg(\frac{1}{r_{ij}}\Bigg)^2>\Bigg(\frac{1}{r_{ik}}\Bigg)^2 \cos \theta_{jik}
 
     For a given particle :math:`i`, neighbour :math:`j` is in its coordination
     shell if :math:`k` is not blocking particle :math:`j`. In this implementation

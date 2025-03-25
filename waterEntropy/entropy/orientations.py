@@ -1,6 +1,5 @@
 """
-These functions calculate orientational entropy from labelled
-coordination shells
+Store orientational entropies here
 """
 
 from collections import Counter
@@ -12,189 +11,18 @@ from waterEntropy.utils.helpers import nested_dict
 GAS_CONSTANT = 8.314  # (J/ (K mol)
 
 
-class Labels:
+class Orientations:
     """
-    Labelled shell counts used for Sorient and Smix.
-    The counts are placed into two dictionaries used for statistics later,
-    the structure of these two dictionaries are as follows:
-
-    dict1 = {"resname": {("labelled_shell"): {"shell_count": 0,
-                                "donates_to": {"labelled_donators": 0,},
-                                "accepts_from": {"labelled_acceptors": 0,}
-                                }}}
-    dict2 = {"nearest_resid": {"resname":
-                                {("labelled_shell"): {"shell_count": 0,
-                                "donates_to": {"labelled_donators": 0,},
-                                "accepts_from": {"labelled_acceptors": 0,}
-                                }}}
+    Store orientational entropies here
     """
 
-    labelled_shell_counts = nested_dict()  # save shell instances in here
-    resid_labelled_shell_counts = nested_dict()  # save shell instances in here
+    # pylint: disable=too-few-public-methods
+    def __init__(self):
+        self.resid_labelled_Sorient = nested_dict()
+        self.resname_labelled_Sorient = nested_dict()
 
-    def __init__(self, resid, resname, labelled_shell, donates_to, accepts_from):
-        # pylint: disable=too-many-arguments
-        Labels.add_shell_counts(self, resid, resname, labelled_shell)
-        Labels.add_donates_to(self, resid, resname, labelled_shell, donates_to)
-        Labels.add_accepts_from(self, resid, resname, labelled_shell, accepts_from)
-
-    def add_shell_counts(self, resid, resname, labelled_shell):
-        """
-        Add a labelled shell to a dictionary that keeps track of the counts
-        for each labelled shell type with constituents alpha-numerically
-        ordered
-
-        :param self: class instance
-        :param resid: residue id of nearest nonlike atom in the labelled shell
-        :param resname: residue name of nearest nonlike atom in the labelled shell
-        :param labelled_shell: coordination shell with labelled neighbours
-        """
-        labelled_shell = tuple(sorted(labelled_shell))
-        if "shell_count" not in Labels.labelled_shell_counts[resname][labelled_shell]:
-            Labels.labelled_shell_counts[resname][labelled_shell]["shell_count"] = 1
-        else:
-            Labels.labelled_shell_counts[resname][labelled_shell]["shell_count"] += 1
-
-        if (
-            "shell_count"
-            not in Labels.resid_labelled_shell_counts[resid][resname][labelled_shell]
-        ):
-            Labels.resid_labelled_shell_counts[resid][resname][labelled_shell][
-                "shell_count"
-            ] = 1
-        else:
-            Labels.resid_labelled_shell_counts[resid][resname][labelled_shell][
-                "shell_count"
-            ] += 1
-
-    def add_donates_to(self, resid, resname, labelled_shell, donates_to):
-        """
-        Add a labelled neighbours donated to in a dictionary that keeps
-        track of the counts for each labelled shell type with
-        constituents alpha-numerically ordered
-
-        :param self: class instance
-        :param resid: residue id of nearest nonlike atom in the labelled shell
-        :param resname: residue name of nearest nonlike atom in the labelled shell
-        :param labelled_shell: coordination shell with labelled neighbours
-        :param donates_to: list of labelled neighbours that are donated to
-        """
-        labelled_shell = tuple(sorted(labelled_shell))
-        # donates_to = tuple(sorted(donates_to))
-        for a in donates_to:
-            if (
-                a
-                not in Labels.labelled_shell_counts[resname][labelled_shell][
-                    "donates_to"
-                ]
-            ):
-                Labels.labelled_shell_counts[resname][labelled_shell]["donates_to"][
-                    a
-                ] = 1
-            else:
-                Labels.labelled_shell_counts[resname][labelled_shell]["donates_to"][
-                    a
-                ] += 1
-
-            if (
-                a
-                not in Labels.resid_labelled_shell_counts[resid][resname][
-                    labelled_shell
-                ]["donates_to"]
-            ):
-                Labels.resid_labelled_shell_counts[resid][resname][labelled_shell][
-                    "donates_to"
-                ][a] = 1
-            else:
-                Labels.resid_labelled_shell_counts[resid][resname][labelled_shell][
-                    "donates_to"
-                ][a] += 1
-
-    def add_accepts_from(self, resid, resname, labelled_shell, accepts_from):
-        """
-        Add a labelled neighbours accepted from to in a dictionary that keeps
-        track of the counts for each labelled shell type with
-        constituents alpha-numerically ordered
-
-        :param self: class instance
-        :param resid: residue id of nearest nonlike atom in the labelled shell
-        :param resname: residue name of nearest nonlike atom in the labelled shell
-        :param labelled_shell: coordination shell with labelled neighbours
-        :param accepts_from: list of labelled neighbours that are accepted_from
-        """
-        labelled_shell = tuple(sorted(labelled_shell))
-        # accepts_from = tuple(sorted(accepts_from))
-        for d in accepts_from:
-            if (
-                d
-                not in Labels.labelled_shell_counts[resname][labelled_shell][
-                    "accepts_from"
-                ]
-            ):
-                Labels.labelled_shell_counts[resname][labelled_shell]["accepts_from"][
-                    d
-                ] = 1
-            else:
-                Labels.labelled_shell_counts[resname][labelled_shell]["accepts_from"][
-                    d
-                ] += 1
-
-            if (
-                d
-                not in Labels.resid_labelled_shell_counts[resid][resname][
-                    labelled_shell
-                ]["accepts_from"]
-            ):
-                Labels.resid_labelled_shell_counts[resid][resname][labelled_shell][
-                    "accepts_from"
-                ][d] = 1
-            else:
-                Labels.resid_labelled_shell_counts[resid][resname][labelled_shell][
-                    "accepts_from"
-                ][d] += 1
-
-
-def get_running_average(
-    value: float, count: int, running_average_value: float, count_stored: int
-):
-    """
-    For a given value, get it's running average from the current value
-
-    :param value: the value that needs to be added to the running average
-    :param count: the number of times the value occurs from statistics
-    :param running_average_value: the currently stored running average
-    :param count_stored: the currently stored count for the running average
-    """
-    new_count_stored = count_stored + count
-    new_running_average = (
-        value * count + running_average_value * count_stored
-    ) / new_count_stored
-
-    return new_running_average, new_count_stored
-
-
-def get_resid_orientational_entropy_from_dict(resid_labelled_dict: dict):
-    """
-    For a given dictionary containing labelled shells and HBing within the
-    shell with format:
-
-    RADShell.Labels.resid_labelled_shell_counts
-
-    dict2 = {"nearest_resid": {"resname":
-            {("labelled_shell"): {"shell_count": 0,
-            "donates_to": {"labelled_donators": 0,},
-            "accepts_from": {"labelled_acceptors": 0,}
-            }}}
-
-    Get the orientational entropy of the molecules in this dict
-
-    :param resid_labelled_dict: dictionary of format dict2 containing labelled
-        coordination shells and HB donating and accepting
-    """
-    Sorient_dict = nested_dict()
-    for resid, shell_label_key in sorted(list(resid_labelled_dict.items())):
-        Sorient_dict[resid] = get_orientational_entropy_from_dict(shell_label_key)
-    return Sorient_dict
+    def add_data(self, labelled_dict: dict):
+        """Add orientational entropy data"""
 
 
 def get_orientational_entropy_from_dict(labelled_dict: dict):
@@ -238,6 +66,49 @@ def get_orientational_entropy_from_dict(labelled_dict: dict):
             )
             # print(">>>", Sorient_ave, tot_count)
         Sorient_dict[resname] = [Sorient_ave, tot_count]
+    return Sorient_dict
+
+
+def get_running_average(
+    value: float, count: int, running_average_value: float, count_stored: int
+):
+    """
+    For a given value, get it's running average from the current value
+
+    :param value: the value that needs to be added to the running average
+    :param count: the number of times the value occurs from statistics
+    :param running_average_value: the currently stored running average
+    :param count_stored: the currently stored count for the running average
+    """
+    new_count_stored = count_stored + count
+    new_running_average = (
+        value * count + running_average_value * count_stored
+    ) / new_count_stored
+
+    return new_running_average, new_count_stored
+
+
+def get_resid_orientational_entropy_from_dict(resid_labelled_dict: dict):
+    """
+    For a given dictionary containing labelled shells and HBing within the
+    shell with format:
+
+    RADShell.Labels.resid_labelled_shell_counts
+
+    dict2 = {"nearest_resid": {"resname":
+            {("labelled_shell"): {"shell_count": 0,
+            "donates_to": {"labelled_donators": 0,},
+            "accepts_from": {"labelled_acceptors": 0,}
+            }}}
+
+    Get the orientational entropy of the molecules in this dict
+
+    :param resid_labelled_dict: dictionary of format dict2 containing labelled
+        coordination shells and HB donating and accepting
+    """
+    Sorient_dict = nested_dict()
+    for resid, shell_label_key in sorted(list(resid_labelled_dict.items())):
+        Sorient_dict[resid] = get_orientational_entropy_from_dict(shell_label_key)
     return Sorient_dict
 
 

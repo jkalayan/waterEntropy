@@ -11,7 +11,7 @@ import sys
 from MDAnalysis import Universe
 
 import waterEntropy.recipes.interfacial_solvent as GetSolvent
-import waterEntropy.analysis.vibrations as GetVibrations
+import waterEntropy.entropy.vibrations as GetVibrations
 
 def run_waterEntropy(
     file_topology="file_topology",
