@@ -183,7 +183,7 @@ def get_sorted_neighbours(i_idx: int, system):
 
 def get_RAD_neighbours(i_coords, sorted_indices, sorted_distances, system):
     # pylint: disable=too-many-locals
-    """
+    r"""
     For a given set of atom coordinates, find its RAD shell from the distance
     sorted atom list, truncated to the closests 30 atoms.
 
