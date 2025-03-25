@@ -44,21 +44,11 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
         first_shell_solvent = Select.get_selection(system, "index", solvent_indices)
         # 3. iterate through first shell solvent and find their RAD shells,
         #   HBing in the shells and shell labels
-        # print(solutes.indices)
-        # indices = shells.get_values_as_list()[0].keys()
-        # print(shells.get_values_as_list()[0].keys())
-        # for i in list(solutes.indices):
-        #     print(solutes[i].index, solutes[i].name, solutes[i].resname)
-        #     try:
-        #         s = shells.find_shell(i)
-        #         print(s.atom_idx, s.UA_shell)
-        #     except:
-        #         pass
         for solvent in first_shell_solvent:
             # print(solvent)
             # 3a. find RAD shell of interfacial solvent
             shell = RADShell.get_RAD_shell(solvent, system, shells)
-            # print(">>>", shell, shell.atom_idx, solvent.index)
+            # print(">>>", shell, shell.atom_idx, shell.UA_shell, shells)
             # 3b. find HBing in the shell
             HBond.get_shell_HBs(shell, system, HBs, shells)
             # 3c. find RAD shell labels
