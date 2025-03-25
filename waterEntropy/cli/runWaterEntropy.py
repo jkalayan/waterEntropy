@@ -19,6 +19,9 @@ def run_waterEntropy(
     file_forces="file_forces",
     file_energies="file_energies",
     list_files="list_files",
+    start="start",
+    end="end",
+    step="step",
 ):
     # pylint: disable=all
     """
@@ -49,7 +52,7 @@ def run_waterEntropy(
     # add the forces (which are saved as positions be default) from uf to u
     u.atoms.forces = uf.atoms.positions
     # set the frames to be analysed
-    start, end, step = 0, 4, 2
+    #start, end, step = 0, 4, 2
     print(u.trajectory)
     # u.trajectory[frame] # move to a particular frame using this
 
@@ -76,28 +79,28 @@ def main():
         )
         parser.add_argument_group("Options")
         parser.add_argument(
-            "-t",
+            "-top",
             "--file_topology",
             metavar="file",
             default=None,
             help="name of file containing system topology.",
         )
         parser.add_argument(
-            "-c",
+            "-crd",
             "--file_coords",
             metavar="file",
             default=None,
             help="name of file containing coordinates.",
         )
         parser.add_argument(
-            "-f",
+            "-frc",
             "--file_forces",
             metavar="file",
             default=None,
             help="name of file containing forces.",
         )
         parser.add_argument(
-            "-e",
+            "-ener",
             "--file_energies",
             metavar="file",
             default=None,
@@ -110,6 +113,30 @@ def main():
             metavar="file",
             default=False,
             help="file containing list of file paths.",
+        )
+        parser.add_argument(
+            "-s",
+            "--start",
+            action="store",
+            metavar="int",
+            default=0,
+            help="frame number to start analysis from.",
+        )
+        parser.add_argument(
+            "-e",
+            "--end",
+            action="store",
+            metavar="int",
+            default=1,
+            help="frame number to end analysis at.",
+        )
+        parser.add_argument(
+            "-dt",
+            "--step",
+            action="store",
+            metavar="int",
+            default=1,
+            help="steps to take between start and end frame selections.",
         )
         op = parser.parse_args()
     except argparse.ArgumentError:
@@ -125,6 +152,9 @@ def main():
         file_forces=op.file_forces,
         file_energies=op.file_energies,
         list_files=op.list_files,
+        start=op.start, 
+        end=op.end, 
+        step=op.step,
     )
 
 
