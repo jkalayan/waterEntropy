@@ -5,8 +5,8 @@ Functions for transforming atomic positions and forces
 import numpy as np
 from numpy import linalg as LA
 
-from waterEntropy.utils.selections import find_bonded_atoms, find_molecule_UAs
-from waterEntropy.utils.trig import get_vector
+import waterEntropy.maths.trig as Trig
+import waterEntropy.utils.selections as Selections
 
 
 def get_torques(molecule, center_of_mass, rotation_axes, MI_axis):
@@ -109,7 +109,7 @@ def get_axes(molecule, molecule_scale):
     if molecule_scale == "single_UA":
         pass  # moment_of_inertia = molecule.moment_of_inertia()
     if molecule_scale == "multiple_UAs":
-        UAs = find_molecule_UAs(molecule)
+        UAs = Selections.find_molecule_UAs(molecule)
         center_of_mass = molecule.center_of_mass()
         masses = get_UA_masses(molecule)
         moment_of_inertia = MOI(center_of_mass, UAs.positions, masses)
@@ -189,16 +189,16 @@ def get_custom_axes(a, b_list, c, dimensions):
     axis1 = np.zeros(3)
     # average of all heavy atom covalent bond vectors for axis1
     for b in b_list:
-        ab_vector = get_vector(a, b, dimensions)
+        ab_vector = Trig.get_vector(a, b, dimensions)
         # scale vector with distance
         ab_dist = np.sqrt((ab_vector**2).sum(axis=-1))
         scaled_vector = np.divide(ab_vector, ab_dist)
         axis1 += scaled_vector  # ab_vector
 
     if len(b_list) > 2:
-        ac_vector = get_vector(b_list[0], c, dimensions)
+        ac_vector = Trig.get_vector(b_list[0], c, dimensions)
     else:
-        ac_vector = get_vector(a, c, dimensions)
+        ac_vector = Trig.get_vector(a, c, dimensions)
     ac_dist = np.sqrt((ac_vector**2).sum(axis=-1))
     ac_vector_norm = np.divide(ac_vector, ac_dist)
 
@@ -225,7 +225,7 @@ def get_flipped_axes(coords, custom_axes, center_of_mass, dimensions):
 
     # get dot product of Paxis1 and CoM->atom1 vect
     # will just be [0,0,0]
-    RRaxis = get_vector(coords[0], center_of_mass, dimensions)
+    RRaxis = Trig.get_vector(coords[0], center_of_mass, dimensions)
     # flip each Paxis if its pointing out of UA
     for i in range(3):
         dotProd1 = np.dot(PIaxes[i], RRaxis)
@@ -307,7 +307,7 @@ def get_bonded_axes(system, atom, dimensions):
     position_vector = atom.position
     custom_axes = None
     # find the heavy bonded atoms and light bonded atoms
-    heavy_bonded, light_bonded = find_bonded_atoms(atom.index, system)
+    heavy_bonded, light_bonded = Selections.find_bonded_atoms(atom.index, system)
     UA_all = atom + heavy_bonded + light_bonded
     # now find which atoms to select to find the axes for rotating forces
     if len(heavy_bonded) == 2:

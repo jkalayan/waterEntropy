@@ -5,7 +5,7 @@ These functions calculate vibrational entropy from covariance matrices
 import numpy as np
 from numpy import linalg as LA
 
-from waterEntropy.statistics.convariances import Covariances
+from waterEntropy.entropy.convariances import Covariances
 from waterEntropy.utils.helpers import nested_dict
 
 

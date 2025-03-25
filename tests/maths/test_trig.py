@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from tests.input_files import load_inputs
-from waterEntropy.utils import trig
+from waterEntropy.maths import trig
 
 # get mda universe for arginine in solution
 system = load_inputs.get_amber_arginine_soln_universe()

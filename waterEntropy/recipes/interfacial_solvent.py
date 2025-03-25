@@ -3,11 +3,11 @@ These functions calculate orientational entropy from labelled
 coordination shells
 """
 
-import waterEntropy.neighbours.HB as HBond
-import waterEntropy.neighbours.RAD as RADShell
-from waterEntropy.statistics.convariances import Covariances, get_forces_torques
-import waterEntropy.statistics.orientations as Orient
-from waterEntropy.statistics.vibrations import Vibrations
+import waterEntropy.analysis.HB as HBond
+import waterEntropy.analysis.RAD as RADShell
+from waterEntropy.analysis.vibrations import Vibrations
+from waterEntropy.entropy.convariances import Covariances, get_forces_torques
+import waterEntropy.entropy.orientations as Orient
 from waterEntropy.utils.helpers import nested_dict
 import waterEntropy.utils.selections as Select
 
