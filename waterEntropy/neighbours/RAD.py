@@ -1,16 +1,6 @@
 r"""
 These functions calculate coordination shells using RAD the relative
-angular distance, as defined first in DOI:10.1063/1.4961439
-where united atoms (heavy atom + bonded Hydrogens) are defined as neighbours if
-they fulfil the following condition:
-
-.. math::
-    \Bigg(\frac{1}{r_{ij}}\Bigg)^2>\Bigg(\frac{1}{r_{ik}}\Bigg)^2 \cos \theta_{jik}
-
-For a given particle :math:`i`, neighbour :math:`j` is in its coordination
-shell if :math:`k` is not blocking particle :math:`j`. In this implementation
-of RAD, we enforce symmetry, whereby neighbouring particles must be in each
-others coordination shells.
+angular distance.
 """
 
 import numpy as np
@@ -197,7 +187,20 @@ def get_RAD_neighbours(i_coords, sorted_indices, sorted_distances, system):
     For a given set of atom coordinates, find its RAD shell from the distance
     sorted atom list, truncated to the closests 30 atoms.
 
-    :param i_coords: xyz coordinates of an atom
+    This function calculates coordination shells using RAD the relative
+    angular distance, as defined first in DOI:10.1063/1.4961439
+    where united atoms (heavy atom + bonded Hydrogens) are defined as neighbours if
+    they fulfil the following condition:
+
+    .. math::
+        \\Bigg(\frac{1}{r_{ij}}\\Bigg)^2>\\Bigg(\frac{1}{r_{ik}}\\Bigg)^2 \\cos \theta_{jik}
+
+    For a given particle :math:`i`, neighbour :math:`j` is in its coordination
+    shell if :math:`k` is not blocking particle :math:`j`. In this implementation
+    of RAD, we enforce symmetry, whereby neighbouring particles must be in each
+    others coordination shells.
+
+    :param i_coords: xyz coordinates of atom i
     :param sorted_indices: list of atom indices sorted from closest to
         furthest from atom i
     :param sorted_distances: list of atom distances sorted from closest to

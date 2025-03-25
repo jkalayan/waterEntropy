@@ -34,7 +34,7 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
     for ts in system.trajectory[start:end:step]:
         # initialise the RAD and HB class instances to store shell information
         shells = RADShell.ShellCollection()
-        HBs = HBond.HB()
+        HBs = HBond.HBCollection()
         # 1. find > 1 UA molecules in system, these are the solutes
         resid_list = Select.find_solute_molecules(system)
         solutes = Select.get_selection(system, "resid", resid_list)
@@ -85,19 +85,16 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
                     f"{nearest_resname}_{nearest_resid}",
                     system,
                 )
-        # 4. clear each shell and HB dictionary ready for the next frame.
-        # RADShell.RAD.shells.clear()
-        # HBond.HB.donating_to.clear()
-        # HBond.HB.accepting_from.clear()
 
-    # 5. get the orientational entropy of interfacial waters and save
+    # 4. get the orientational entropy of interfacial waters and save
     #   them to a dictionary
     # TO-DO: add average Nc in Sorient dict
     Sorient_dict = Orient.get_resid_orientational_entropy_from_dict(
         Orient.Labels.resid_labelled_shell_counts
     )
-    # 6. Get the vibrational entropy of interfacial waters
+    # 5. Get the vibrational entropy of interfacial waters
     vibrations.add_data(covariances, diagonalise=True)
+
     return (
         Sorient_dict,
         covariances,
