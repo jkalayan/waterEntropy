@@ -4,12 +4,12 @@ coordination shells
 """
 
 import waterEntropy.analysis.HB as HBond
-from waterEntropy.analysis.HB_labels import HBLabels
+import waterEntropy.analysis.HB_labels as HBLabels
 import waterEntropy.analysis.RAD as RADShell
 import waterEntropy.analysis.shell_labels as RADLabels
 from waterEntropy.analysis.shells import ShellCollection
 from waterEntropy.entropy.convariances import CovarianceCollection
-import waterEntropy.entropy.orientations as Orient
+from waterEntropy.entropy.orientations import Orientations
 from waterEntropy.entropy.vibrations import Vibrations
 from waterEntropy.recipes.forces_torques import get_forces_torques
 from waterEntropy.utils.helpers import nested_dict
@@ -80,7 +80,7 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
     covariances = CovarianceCollection()
     # initialise the Vibrations class instance to store vibrational entropies
     vibrations = Vibrations(temperature=298, force_units="kcal")
-    hb_labels = HBLabels()
+    hb_labels = HBLabels.HBLabelCollection()
     # pylint: disable=unused-variable
     for ts in system.trajectory[start:end:step]:
         # initialise the RAD and HB class instances to store shell information
@@ -104,7 +104,7 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
             # 3c. find RAD shell labels
             shell = RADLabels.get_shell_labels(solvent.index, system, shell, shells)
             # 3d. find HB labels
-            HBond.get_HB_labels(solvent.index, system, HBs, shells)
+            HBLabels.get_HB_labels(solvent.index, system, HBs, shells)
             if shell.nearest_nonlike_idx is not None:
                 # 3e. populate the labels into a dictionary for stats
                 # only if a different atom is in the RAD shell
@@ -138,9 +138,12 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
     # 4. get the orientational entropy of interfacial waters and save
     #   them to a dictionary
     # TO-DO: add average Nc in Sorient dict
-    Sorient_dict = Orient.get_resid_orientational_entropy_from_dict(
-        hb_labels.resid_labelled_shell_counts
-    )
+    # Sorient_dict = Orient.get_resid_orientational_entropy_from_dict(
+    #     hb_labels.resid_labelled_shell_counts
+    # )
+    Sorients = Orientations()
+    Sorients.add_data(hb_labels)
+    Sorient_dict = Sorients.resid_labelled_Sorient
     # 5. Get the vibrational entropy of interfacial waters
     vibrations.add_data(covariances, diagonalise=True)
 
@@ -172,17 +175,6 @@ def save_solvent_indices(
         frame_solvent_indices[frame][nearest_resname][nearest_resid] = []
     frame_solvent_indices[frame][nearest_resname][nearest_resid].append(atom_idx)
     return frame_solvent_indices
-
-
-def print_Sorient_dicts(Sorient_dict: dict):
-    """
-    Print the orientational entropies of interfacial solvent
-
-    :param Sorient_dict: dictionary containing orientational entropy values
-    """
-    for resid, resname_key in sorted(list(Sorient_dict.items())):
-        for resname, [Sor, count] in sorted(list(resname_key.items())):
-            print(resid, resname, Sor, count)
 
 
 def print_frame_solvent_dicts(frame_solvent_indices: dict):

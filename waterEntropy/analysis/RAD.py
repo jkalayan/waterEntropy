@@ -9,31 +9,6 @@ from waterEntropy.analysis.shells import ShellCollection
 import waterEntropy.maths.trig as Trig
 
 
-def get_RAD_shell(UA, system, shells: ShellCollection):
-    """
-    For a given united atom, find its RAD shell, returning the atom indices
-    for the heavy atoms that are in its shell.
-
-    :param UA: mdanalysis instance of a united atom in a frame
-    :param system: mdanalysis instance of atoms in a frame
-    :param shells: ShellCollection instance
-    """
-    # 1. first check if a shell has already been found for this UA
-    shell = shells.find_shell(UA.index)
-    if not shell:
-        # 2. get the nearest neighbours for the UA, sorted from closest to
-        # furthest
-        sorted_indices, sorted_distances = Trig.get_sorted_neighbours(UA.index, system)
-        # 3. now find the RAD shell of the UA
-        shell_indices = get_RAD_neighbours(
-            UA.position, sorted_indices, sorted_distances, system
-        )
-        # 4. populate the class instance for RAD shells
-        shells.add_data(UA.index, shell_indices)
-        shell = shells.find_shell(UA.index)
-    return shell
-
-
 def get_RAD_neighbours(i_coords, sorted_indices, sorted_distances, system):
     # pylint: disable=too-many-locals
     r"""
@@ -53,11 +28,11 @@ def get_RAD_neighbours(i_coords, sorted_indices, sorted_distances, system):
     of RAD, we enforce symmetry, whereby neighbouring particles must be in each
     others coordination shells.
 
-    :param i_coords: xyz coordinates of atom i
+    :param i_coords: xyz coordinates of atom :math:`i`
     :param sorted_indices: list of atom indices sorted from closest to
-        furthest from atom i
+        furthest from atom :math:`i`
     :param sorted_distances: list of atom distances sorted from closest to
-        furthest from atom i
+        furthest from atom :math:`i`
     :param system: mdanalysis instance of atoms in a frame
     """
     # 1. truncate neighbour list to closest 30 united atoms
@@ -93,4 +68,29 @@ def get_RAD_neighbours(i_coords, sorted_indices, sorted_distances, system):
         # 6. if j is not blocked from i by k, then its in i's shell
         if blocked is False:
             shell.append(j)
+    return shell
+
+
+def get_RAD_shell(UA, system, shells: ShellCollection):
+    """
+    For a given united atom, find its RAD shell, returning the atom indices
+    for the heavy atoms that are in its shell.
+
+    :param UA: mdanalysis instance of a united atom in a frame
+    :param system: mdanalysis instance of atoms in a frame
+    :param shells: ShellCollection instance
+    """
+    # 1. first check if a shell has already been found for this UA
+    shell = shells.find_shell(UA.index)
+    if not shell:
+        # 2. get the nearest neighbours for the UA, sorted from closest to
+        # furthest
+        sorted_indices, sorted_distances = Trig.get_sorted_neighbours(UA.index, system)
+        # 3. now find the RAD shell of the UA
+        shell_indices = get_RAD_neighbours(
+            UA.position, sorted_indices, sorted_distances, system
+        )
+        # 4. populate the class instance for RAD shells
+        shells.add_data(UA.index, shell_indices)
+        shell = shells.find_shell(UA.index)
     return shell

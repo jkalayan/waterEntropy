@@ -11,7 +11,8 @@ import sys
 from MDAnalysis import Universe
 
 import waterEntropy.recipes.interfacial_solvent as GetSolvent
-import waterEntropy.entropy.vibrations as GetVibrations
+import waterEntropy.entropy.vibrations as VIB
+import waterEntropy.entropy.orientations as OR
 
 def run_waterEntropy(
     file_topology="file_topology",
@@ -57,9 +58,9 @@ def run_waterEntropy(
     # u.trajectory[frame] # move to a particular frame using this
 
     Sorient_dict, covariances, vibrations, frame_solvent_indices = GetSolvent.get_interfacial_water_orient_entropy(u, start, end, step)
-    GetSolvent.print_Sorient_dicts(Sorient_dict)
+    OR.print_Sorient_dicts(Sorient_dict)
     # GetSolvent.print_frame_solvent_dicts(frame_solvent_indices)
-    GetVibrations.print_Svib_data(vibrations, covariances)
+    VIB.print_Svib_data(vibrations, covariances)
 
 
     sys.stdout.flush()
