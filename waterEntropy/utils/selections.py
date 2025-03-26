@@ -2,7 +2,7 @@
 Functions for common MDAnalysis selections
 """
 
-import math
+import numpy as np
 
 
 def get_selection(system, selection_type: str, indices: list[int]):
@@ -48,7 +48,7 @@ def find_solute_molecules(system):
             if len(UAs) > 1:
                 solute_molecule_resid_list.append(res.resid)
             # if heavy atom is not oxygen, treat as solute
-            if len(UAs) == 1 and math.floor(UAs[0].mass) != 16:
+            if len(UAs) == 1 and np.floor(UAs[0].mass) != 16:
                 solute_molecule_resid_list.append(res.resid)
 
     return solute_molecule_resid_list
@@ -82,3 +82,22 @@ def find_bonded_atoms(atom_idx: int, system):
     bonded_heavy_atoms = bonded_atoms.select_atoms("mass 2 to 999")
     bonded_H_atoms = bonded_atoms.select_atoms("mass 1 to 1.1")
     return bonded_heavy_atoms, bonded_H_atoms
+
+
+def guess_length_scale(molecule):
+    """Guess what the length scale of the molecule is
+
+    :param molecule: MDAnalysis instance of molecule
+    """
+    molecule_scale = None
+    UAs = find_molecule_UAs(molecule)
+    if len(UAs) == 1:
+        molecule_scale = "single_UA"
+    elif len(UAs) > 1:
+        if len(molecule.atoms.residues) > 1:
+            molecule_scale = "polymer"
+        else:
+            molecule_scale = "multiple_UAs"
+    else:
+        molecule_scale = "no_UA"
+    return molecule_scale

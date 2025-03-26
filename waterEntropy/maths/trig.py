@@ -5,8 +5,12 @@ Functions for common trigonometric calculations
 import MDAnalysis
 import numpy as np
 
+import waterEntropy.utils.selections as Selections
 
-def get_neighbourlist(atom, neighbours, dimensions, max_cutoff=9e9):
+
+def get_neighbourlist(
+    atom: np.ndarray, neighbours, dimensions: np.ndarray, max_cutoff=9e9
+):
     """
     Use MDAnalysis to get distances between an atom and neighbours within
     a given cutoff. Each atom index pair sorted by distance are outputted.
@@ -15,6 +19,7 @@ def get_neighbourlist(atom, neighbours, dimensions, max_cutoff=9e9):
     :param neighbours: MDAnalysis array of heavy atoms in the system,
         not the atom itself and not bonded to the atom.
     :param dimensions: (6,) array of system box dimensions.
+    :param max_cutoff: set the maximum cutoff value for finding neighbour distances
     """
     # check atom coords are not in neighbour coords list
     if not (atom == neighbours.positions).all(axis=1).any():
@@ -37,7 +42,65 @@ def get_neighbourlist(atom, neighbours, dimensions, max_cutoff=9e9):
     )
 
 
-def get_angle(a, b, c, dimensions):
+def get_sorted_neighbours(i_idx: int, system, max_cutoff=25):
+    """
+    For a given atom, find neighbouring united atoms from closest to furthest
+    within a given cutoff.
+
+    :param i_idx: idx of atom i
+    :param system: mdanalysis instance of atoms in a frame
+    :param max_cutoff: set the maximum cutoff value for finding neighbours
+    """
+    i_coords = system.atoms.positions[i_idx]
+    # 1. get the heavy atom neighbour distances within a given distance cutoff
+    # CHECK Find out which of the options below is better for RAD shells
+    #       Should the central atom bonded UAs be allowed to block?
+    #       This was not done in original code, keep the same here
+    neighbours = system.select_atoms(
+        f"""mass 2 to 999 and not index {i_idx}
+                                    and not bonded index {i_idx}"""
+        # f"""mass 2 to 999 and not index {i_idx}"""  # bonded UAs can block
+    )
+    # 2. Get the neighbours sorted from closest to furthest
+    sorted_indices, sorted_distances = get_neighbourlist(
+        i_coords, neighbours.atoms, system.dimensions, max_cutoff
+    )
+    return sorted_indices, sorted_distances
+
+
+def get_shell_neighbour_selection(
+    shell, donator, system, heavy_atoms=True, max_cutoff=10
+):
+    """
+    get shell neighbours ordered by ascending distance, this is used for
+    finding possible hydrogen bonding neighbours.
+
+    :param shell: the instance for class waterEntropy.neighbours.RAD.RAD
+        containing coordination shell neighbours
+    :param donator: the mdanalysis object for the donator
+    :param system: mdanalysis instance of all atoms in current frame
+    :param heavy_atoms: consider heavy atoms in a shell as neighbours
+    :max_cutoff: set the maximum cutoff value for finding neighbours
+    """
+    # 1a. Select heavy atoms in shell, can only donate to heavy atoms in the shell
+    neighbours = Selections.get_selection(system, "index", shell.UA_shell)
+    if not heavy_atoms:
+        # 1b. Select all atoms in the shell, included bonded to atoms (Hs included)
+        #   Can donate to any atoms in a shell
+        all_shell_bonded = neighbours[:].bonds.indices
+        all_shell_indices = list(set().union(*all_shell_bonded))
+        # can donate to any atom in the shell
+        neighbours = Selections.get_selection(system, "index", all_shell_indices)
+    # 1c. can donate to any neighbours outside a shell, not used
+    # neighbours = system.select_atoms(f"all and not index {donator.index} and not bonded index {donator.index}")
+    # 2. Get the neighbours sorted from closest to furthest
+    sorted_indices, sorted_distances = get_neighbourlist(
+        donator.position, neighbours, system.dimensions, max_cutoff
+    )
+    return sorted_indices, sorted_distances
+
+
+def get_angle(a: np.ndarray, b: np.ndarray, c: np.ndarray, dimensions: np.ndarray):
     """
     Get the angle between three atoms, taking into account PBC.
 
@@ -59,7 +122,7 @@ def get_angle(a, b, c, dimensions):
     return cosine_angle
 
 
-def get_distance(a, b, dimensions):
+def get_distance(a: np.ndarray, b: np.ndarray, dimensions: np.ndarray):
     """
     Calculates distance and accounts for PBCs.
 
@@ -73,7 +136,7 @@ def get_distance(a, b, dimensions):
     return distance
 
 
-def get_vector(a, b, dimensions):
+def get_vector(a: np.ndarray, b: np.ndarray, dimensions: np.ndarray):
     """
     get vector of two coordinates over PBCs.
 

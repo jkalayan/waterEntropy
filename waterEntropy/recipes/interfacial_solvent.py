@@ -4,12 +4,61 @@ coordination shells
 """
 
 import waterEntropy.analysis.HB as HBond
+import waterEntropy.analysis.HB_labels as HBLabels
 import waterEntropy.analysis.RAD as RADShell
-from waterEntropy.analysis.vibrations import Vibrations
-from waterEntropy.entropy.convariances import Covariances, get_forces_torques
-import waterEntropy.entropy.orientations as Orient
+import waterEntropy.analysis.shell_labels as RADLabels
+from waterEntropy.analysis.shells import ShellCollection
+from waterEntropy.entropy.convariances import CovarianceCollection
+from waterEntropy.entropy.orientations import Orientations
+from waterEntropy.entropy.vibrations import Vibrations
+from waterEntropy.recipes.forces_torques import get_forces_torques
 from waterEntropy.utils.helpers import nested_dict
-import waterEntropy.utils.selections as Select
+import waterEntropy.utils.selections as Selections
+
+
+def find_interfacial_solvent(solutes, system, shells: ShellCollection):
+    """
+    For a given set of solute molecules, find the RAD shells for each UA in the
+    molecules, if a solvent molecule is in the RAD shell, then save the solvent
+    atom index to a list. A solvent is defined as molecule that constitutes a
+    single UA. These solvent molecule are defined as interfacial molecules.
+
+    :param solutes: mdanalysis instance of a selection of atoms in solute
+        molecules that are greater than one UA
+    :param system: mdanalysis instance of atoms in a frame
+    :param shells: ShellCollection instance
+    """
+    solvent_indices = []
+    molecules = solutes.fragments  # fragments is mdanalysis equiv to molecules
+    for molecule in molecules:
+        # 1. find heavy atoms in the molecule
+        UAs = Selections.find_molecule_UAs(molecule)
+        for atom in UAs:
+            # 2. find the shell of each UA atom in a molecule
+            shell = RADShell.get_RAD_shell(
+                atom, system, shells
+            )  # get the molecule UA shell
+            shell_indices = shell.UA_shell
+            # 3. for each neighbour in the RAD shell, find single UA molecules
+            shell_atoms = Selections.get_selection(system, "index", shell_indices)
+            for neighbour_atom in shell_atoms:
+                # create an atom group to find molecule/fragment
+                neighbour_atomGroup = Selections.get_selection(
+                    system, "index", [neighbour_atom.index]
+                )
+                neighbour_molecule = neighbour_atomGroup.fragments[0]
+                neighbour_UAs = Selections.find_molecule_UAs(
+                    neighbour_molecule.fragments[0]
+                )  # 1 length list
+                if len(neighbour_UAs) == 1:  # single UA molecule is a solvent
+                    # 5. add single UA molecules into the solvent indices list
+                    if neighbour_atom.index not in solvent_indices:
+                        solvent_indices.append(neighbour_atom.index)
+                    else:
+                        continue
+                else:
+                    continue
+    return solvent_indices
 
 
 def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int):
@@ -28,41 +77,41 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
     # don't need to include the frame_solvent_indices dictionary
     frame_solvent_indices = nested_dict()
     # initialise the Covariance class instance to store covariance matrices
-    covariances = Covariances()
+    covariances = CovarianceCollection()
+    # initialise the Vibrations class instance to store vibrational entropies
     vibrations = Vibrations(temperature=298, force_units="kcal")
+    hb_labels = HBLabels.HBLabelCollection()
     # pylint: disable=unused-variable
     for ts in system.trajectory[start:end:step]:
         # initialise the RAD and HB class instances to store shell information
-        shells = RADShell.ShellCollection()
+        shells = ShellCollection()
         HBs = HBond.HBCollection()
         # 1. find > 1 UA molecules in system, these are the solutes
-        resid_list = Select.find_solute_molecules(system)
-        solutes = Select.get_selection(system, "resid", resid_list)
+        resid_list = Selections.find_solute_molecules(system)
+        solutes = Selections.get_selection(system, "resid", resid_list)
         # 2. find the interfacial solvent molecules that are 1 UA in size
         #   and are in the RAD shell of any solute
-        solvent_indices = RADShell.find_interfacial_solvent(solutes, system, shells)
-        first_shell_solvent = Select.get_selection(system, "index", solvent_indices)
+        solvent_indices = find_interfacial_solvent(solutes, system, shells)
+        first_shell_solvent = Selections.get_selection(system, "index", solvent_indices)
         # 3. iterate through first shell solvent and find their RAD shells,
         #   HBing in the shells and shell labels
         for solvent in first_shell_solvent:
             # print(solvent)
             # 3a. find RAD shell of interfacial solvent
             shell = RADShell.get_RAD_shell(solvent, system, shells)
-            # print(">>>", shell, shell.atom_idx, shell.UA_shell, shells)
             # 3b. find HBing in the shell
             HBond.get_shell_HBs(shell, system, HBs, shells)
             # 3c. find RAD shell labels
-            shell = RADShell.get_shell_labels(solvent.index, system, shell, shells)
-            # print(">>>", shell, shell.atom_idx)
+            shell = RADLabels.get_shell_labels(solvent.index, system, shell, shells)
             # 3d. find HB labels
-            HBond.get_HB_labels(solvent.index, system, HBs, shells)
+            HBLabels.get_HB_labels(solvent.index, system, HBs, shells)
             if shell.nearest_nonlike_idx is not None:
                 # 3e. populate the labels into a dictionary for stats
                 # only if a different atom is in the RAD shell
                 nearest = system.atoms[shell.nearest_nonlike_idx]
                 nearest_resid = nearest.resid
                 nearest_resname = nearest.resname
-                Orient.Labels(
+                hb_labels.add_data(
                     nearest_resid,
                     nearest_resname,
                     shell.labels,
@@ -89,9 +138,12 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
     # 4. get the orientational entropy of interfacial waters and save
     #   them to a dictionary
     # TO-DO: add average Nc in Sorient dict
-    Sorient_dict = Orient.get_resid_orientational_entropy_from_dict(
-        Orient.Labels.resid_labelled_shell_counts
-    )
+    # Sorient_dict = Orient.get_resid_orientational_entropy_from_dict(
+    #     hb_labels.resid_labelled_shell_counts
+    # )
+    Sorients = Orientations()
+    Sorients.add_data(hb_labels)
+    Sorient_dict = Sorients.resid_labelled_Sorient
     # 5. Get the vibrational entropy of interfacial waters
     vibrations.add_data(covariances, diagonalise=True)
 
@@ -101,16 +153,6 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
         vibrations,
         frame_solvent_indices,
     )
-
-
-def get_solvent_vibrational_entropy(system, frame_solvent_indices):
-    # pylint: disable=unused-argument
-    """
-    This function will be used to get the vibrational entropies of solvent
-    molecules collected from orientational entropy calculations. The
-    interfacial waters in this dict are the indices of the UA in the water.
-    """
-    return None
 
 
 def save_solvent_indices(
@@ -135,18 +177,12 @@ def save_solvent_indices(
     return frame_solvent_indices
 
 
-def print_Sorient_dicts(Sorient_dict: dict):
-    """
-    Print the orientational entropies of interfacial solvent
-    """
-    for resid, resname_key in sorted(list(Sorient_dict.items())):
-        for resname, [Sor, count] in sorted(list(resname_key.items())):
-            print(resid, resname, Sor, count)
-
-
 def print_frame_solvent_dicts(frame_solvent_indices: dict):
     """
     Print the interfacial solvent for each analysed frame
+
+    :param frame_solvent_indices: dictionary containing solvent indices in the
+        first shell of solute atoms over each frame analysed
     """
     for frame, resname_key in sorted(list(frame_solvent_indices.items())):
         for resname, resid_key in sorted(list(resname_key.items())):

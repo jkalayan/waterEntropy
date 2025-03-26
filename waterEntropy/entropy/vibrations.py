@@ -1,11 +1,11 @@
 """
-These functions calculate vibrational entropy from covariance matrices
+Store vibrational entropy from covariance matrices
 """
 
 import numpy as np
 from numpy import linalg as LA
 
-from waterEntropy.entropy.convariances import Covariances
+from waterEntropy.entropy.convariances import CovarianceCollection
 from waterEntropy.utils.helpers import nested_dict
 
 
@@ -41,10 +41,14 @@ class Vibrations:
         self.translational_S = nested_dict()
         self.rotational_S = nested_dict()
 
-    def add_data(self, covariances, diagonalise=True):
+    def add_data(self, covariances: CovarianceCollection, diagonalise=True):
         """
         Calculate and add the frequencies and vibrational entropies to class
         instance
+
+        :param covariances: instance of CovarianceCollection class
+        :param diagonalise: diagonalise the covariance matrix rather than getting
+            the eigenvalues and eigenvectors
         """
         for (nearest, molecule_name), force_covariance in covariances.forces.items():
             torque_covariance = covariances.torques[(nearest, molecule_name)]
@@ -67,9 +71,12 @@ class Vibrations:
                 self, nearest, molecule_name, torque_frequency, self.rotational_freq
             )
 
-    def get_data(self, covariance, diagonalise):
+    def get_data(self, covariance: CovarianceCollection, diagonalise: bool):
         """
         Get the frequencies and vibrational entropies from the covariance matrix
+
+        :param covariances: instance of CovarianceCollection class
+        :param diagonalise: whether to diagonalise the covariance matrix
         """
         # convert the covariance matrix to the correct units
         if self.force_units == "gromacs":
@@ -80,9 +87,16 @@ class Vibrations:
 
         return Svib, frequency
 
-    def populate_dicts(self, nearest, molecule_name, variable, variable_dict):
+    def populate_dicts(self, nearest, molecule_name: str, variable, variable_dict):
         """
         Add frequencies / entropies to class instance dictionaries
+
+        :param nearest: the value for grouping molecules into a class. e.g. the
+            name of the nearest molecule
+        :param molecule_name: the name of the molecule being populated into the
+            dictionaries
+        :param variable: the variable being added to the variable dictionary
+        :param variable_dict: the dictionary being updated with a variable
         """
         if (nearest, molecule_name) not in variable_dict:
             variable_dict[(nearest, molecule_name)] = variable
@@ -113,7 +127,7 @@ class Vibrations:
 
         return conversion
 
-    def calculate_entropies(self, covariance, diagonalise):
+    def calculate_entropies(self, covariance: CovarianceCollection, diagonalise: bool):
         r"""
         Calculate the vibrational entropies from the equation of a quantum
         harmonic oscillator:
@@ -126,6 +140,9 @@ class Vibrations:
         where:
 
         - :math:`k_{\mathrm{B}}` is the Boltzmann constant :math:`\mathrm{J/K}` (Joule per Kelvin),
+
+        :param covariances: instance of CovarianceCollection class
+        :param diagonalise: whether to diagonalise the covariance matrix
         """
         frequency, eigenvalues = Vibrations.calculate_frequencies(
             self, covariance, diagonalise
@@ -137,10 +154,15 @@ class Vibrations:
 
         return Svib * self.GAS_CONSTANT, eigenvalues
 
-    def calculate_frequencies(self, covariance, diagonalise):
+    def calculate_frequencies(
+        self, covariance: CovarianceCollection, diagonalise: bool
+    ):
         """
         Calculate the frequencies for each molecule from the force and torque
         covariance matrices.
+
+        :param covariances: instance of CovarianceCollection class
+        :param diagonalise: whether to diagonalise the covariance matrix
         """
         if diagonalise:
             eigenvalues = covariance.diagonal()  # get matrix diagonals only
@@ -158,9 +180,12 @@ class Vibrations:
         return frequency, eigenvalues
 
 
-def print_Svib_data(vibrations: Vibrations, covariances: Covariances):
+def print_Svib_data(vibrations: Vibrations, covariances: CovarianceCollection):
     """
     Print the orientational entropies of interfacial solvent
+
+    :param vibrations: instance of Vibrations class
+    :param covariances: instance of CovarianceCollection class
     """
     for near_solvent_name, Strans in vibrations.translational_S.items():
         near = near_solvent_name[0]
