@@ -6,6 +6,30 @@ import MDAnalysis
 import numpy as np
 
 
+def get_sorted_neighbours(i_idx: int, system):
+    """
+    For a given atom, find neighbouring united atoms from closest to furthest
+    within a given cutoff.
+
+    :param i_idx: idx of atom i
+    :param system: mdanalysis instance of atoms in a frame
+    """
+    i_coords = system.atoms.positions[i_idx]
+    # 1. get the heavy atom neighbour distances within a given distance cutoff
+    # CHECK Find out which of the options below is better for RAD shells
+    #       Should the central atom bonded UAs be allowed to block?
+    #       This was not done in original code, keep the same here
+    neighbours = system.select_atoms(
+        f"""mass 2 to 999 and not index {i_idx}
+                                    and not bonded index {i_idx}"""
+        # f"""mass 2 to 999 and not index {i_idx}"""  # bonded UAs can block
+    )
+    sorted_indices, sorted_distances = get_neighbourlist(
+        i_coords, neighbours.atoms, system.dimensions, max_cutoff=25
+    )
+    return sorted_indices, sorted_distances
+
+
 def get_neighbourlist(
     atom: np.ndarray, neighbours, dimensions: np.ndarray, max_cutoff=9e9
 ):
