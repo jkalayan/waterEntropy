@@ -41,6 +41,11 @@ def find_interfacial_solvent(solutes, system, shells: ShellCollection):
             shell_indices = shell.UA_shell
             # 3. for each neighbour in the RAD shell, find single UA molecules
             shell_atoms = Selections.get_selection(system, "index", shell_indices)
+            # print(atom.resname, atom.resid, shell_atoms.indices)
+            # waters = shell_atoms.select_atoms("water")
+            # # print(waters.indices)
+            # solvent_indices.extend(waters.indices)
+            # sys.exit()
             for neighbour_atom in shell_atoms:
                 # create an atom group to find molecule/fragment
                 neighbour_atomGroup = Selections.get_selection(
@@ -54,11 +59,12 @@ def find_interfacial_solvent(solutes, system, shells: ShellCollection):
                     # 5. add single UA molecules into the solvent indices list
                     if neighbour_atom.index not in solvent_indices:
                         solvent_indices.append(neighbour_atom.index)
+                        # print("neighbour_atom.index", neighbour_atom.index)
                     else:
                         continue
                 else:
                     continue
-    return solvent_indices
+    return list(set(solvent_indices))
 
 
 def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int):
@@ -92,6 +98,9 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
         # 2. find the interfacial solvent molecules that are 1 UA in size
         #   and are in the RAD shell of any solute
         solvent_indices = find_interfacial_solvent(solutes, system, shells)
+        # print("solvent_indices", solvent_indices)
+        # print(datetime.now())
+        # sys.exit()
         first_shell_solvent = Selections.get_selection(system, "index", solvent_indices)
         # 3. iterate through first shell solvent and find their RAD shells,
         #   HBing in the shells and shell labels

@@ -35,11 +35,13 @@ def find_solute_molecules(system):
     """
     For a given system, find molecules containing more than one UA or is not
     a single UA molecule that contains an oxygen atom and return
-    the resids for these molecules.
+    the resids for these molecules. Filter out MDAnalysis definition of water
+    molecules by default.
 
     :param system: mdanalysis instance of atoms in a frame
     """
-    atom = system.select_atoms("all")
+    atom = system.select_atoms("not water")
+    # atom = system.select_atoms("all")
     molecules = atom.fragments
     solute_molecule_resid_list = []
     for molecule in molecules:

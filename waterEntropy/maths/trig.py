@@ -42,7 +42,7 @@ def get_neighbourlist(
     )
 
 
-def get_sorted_neighbours(i_idx: int, system, max_cutoff=25):
+def get_sorted_neighbours(i_idx: int, system, max_cutoff=10):
     """
     For a given atom, find neighbouring united atoms from closest to furthest
     within a given cutoff.
