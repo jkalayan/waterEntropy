@@ -11,12 +11,14 @@ from waterEntropy.analysis.shells import ShellCollection
 from waterEntropy.entropy.convariances import CovarianceCollection
 from waterEntropy.entropy.orientations import Orientations
 from waterEntropy.entropy.vibrations import Vibrations
+import waterEntropy.maths.trig as Trig
 from waterEntropy.recipes.forces_torques import get_forces_torques
 from waterEntropy.utils.helpers import nested_dict
 import waterEntropy.utils.selections as Selections
 
 
 def find_interfacial_solvent(solutes, system, shells: ShellCollection):
+    # pylint: disable=too-many-locals
     """
     For a given set of solute molecules, find the RAD shells for each UA in the
     molecules, if a solvent molecule is in the RAD shell, then save the solvent
@@ -34,31 +36,29 @@ def find_interfacial_solvent(solutes, system, shells: ShellCollection):
         # 1. find heavy atoms in the molecule
         UAs = Selections.find_molecule_UAs(molecule)
         for atom in UAs:
-            # 2. find the shell of each UA atom in a molecule
-            shell = RADShell.get_RAD_shell(
-                atom, system, shells
-            )  # get the molecule UA shell
-            shell_indices = shell.UA_shell
-            # 3. for each neighbour in the RAD shell, find single UA molecules
-            shell_atoms = Selections.get_selection(system, "index", shell_indices)
-            for neighbour_atom in shell_atoms:
-                # create an atom group to find molecule/fragment
-                neighbour_atomGroup = Selections.get_selection(
-                    system, "index", [neighbour_atom.index]
-                )
-                neighbour_molecule = neighbour_atomGroup.fragments[0]
-                neighbour_UAs = Selections.find_molecule_UAs(
-                    neighbour_molecule.fragments[0]
-                )  # 1 length list
-                if len(neighbour_UAs) == 1:  # single UA molecule is a solvent
-                    # 5. add single UA molecules into the solvent indices list
-                    if neighbour_atom.index not in solvent_indices:
-                        solvent_indices.append(neighbour_atom.index)
-                    else:
-                        continue
-                else:
-                    continue
-    return solvent_indices
+            # 2. DON'T automatically look for RAD shell as this is slow,
+            # instead, check if waters are in the distance array before using
+            # RAD. Instead, find distances of neighbours first.
+            sorted_indices, sorted_distances = Trig.get_sorted_neighbours(
+                atom.index, system
+            )
+            sorted_atoms = Selections.get_selection(
+                system, "index", sorted_indices[:20]
+            )
+            sorted_waters = sorted_atoms.select_atoms("water")
+            # 2b. Only get RAD shells if there is a water in the closest X
+            # neighbours
+            if len(sorted_waters) > 0:
+                # 3. find the shell of each UA atom in a molecule
+                shell = RADShell.get_RAD_shell(
+                    atom, system, shells, sorted_indices, sorted_distances
+                )  # get the molecule UA shell
+                shell_indices = shell.UA_shell
+                # 4. for each neighbour in the RAD shell, find single UA molecules
+                shell_atoms = Selections.get_selection(system, "index", shell_indices)
+                waters = shell_atoms.select_atoms("water")
+                solvent_indices.extend(waters.indices)
+    return list(set(solvent_indices))
 
 
 def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int):

@@ -35,8 +35,8 @@ def get_RAD_neighbours(i_coords, sorted_indices, sorted_distances, system):
         furthest from atom :math:`i`
     :param system: mdanalysis instance of atoms in a frame
     """
-    # 1. truncate neighbour list to closest 30 united atoms
-    range_limit = min(len(sorted_distances), 30)
+    # 1. truncate neighbour list to closest 25 united atoms
+    range_limit = min(len(sorted_distances), 25)
     shell = []
     count = -1
     # 2. iterate through neighbours from closest to furthest
@@ -71,7 +71,9 @@ def get_RAD_neighbours(i_coords, sorted_indices, sorted_distances, system):
     return shell
 
 
-def get_RAD_shell(UA, system, shells: ShellCollection):
+def get_RAD_shell(
+    UA, system, shells: ShellCollection, sorted_indices=None, sorted_distances=None
+):
     """
     For a given united atom, find its RAD shell, returning the atom indices
     for the heavy atoms that are in its shell.
@@ -85,7 +87,10 @@ def get_RAD_shell(UA, system, shells: ShellCollection):
     if not shell:
         # 2. get the nearest neighbours for the UA, sorted from closest to
         # furthest
-        sorted_indices, sorted_distances = Trig.get_sorted_neighbours(UA.index, system)
+        if sorted_indices is None:
+            sorted_indices, sorted_distances = Trig.get_sorted_neighbours(
+                UA.index, system
+            )
         # 3. now find the RAD shell of the UA
         shell_indices = get_RAD_neighbours(
             UA.position, sorted_indices, sorted_distances, system
