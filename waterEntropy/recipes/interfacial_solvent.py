@@ -188,3 +188,81 @@ def print_frame_solvent_dicts(frame_solvent_indices: dict):
         for resname, resid_key in sorted(list(resname_key.items())):
             for resid, solvents in sorted(list(resid_key.items())):
                 print(frame, resname, resid, len(solvents), solvents)
+
+
+def get_interfacial_shells(system, start: int, end: int, step: int):
+    # pylint: disable=too-many-locals
+    """
+    For a given system, containing the topology and coordinates of molecules,
+    find the interfacial water molecules around solutes and calculate their
+    orientational entropy if there is a solute atom in the solvent coordination
+    shell.
+
+    :param system: mdanalysis instance of atoms in a frame
+    :param start: starting frame number
+    :param end: end frame number
+    :param step: steps between frames
+    """
+    # don't need to include the frame_solvent_indices dictionary
+    frame_solvent_shells = nested_dict()
+    # pylint: disable=unused-variable
+    for ts in system.trajectory[start:end:step]:
+        print(ts)
+        # initialise the RAD and HB class instances to store shell information
+        shells = ShellCollection()
+        # 1. find > 1 UA molecules in system, these are the solutes
+        resid_list = Selections.find_solute_molecules(system)
+        solutes = Selections.get_selection(system, "resid", resid_list)
+        # 2. find the interfacial solvent molecules that are 1 UA in size
+        #   and are in the RAD shell of any solute
+        solvent_indices = find_interfacial_solvent(solutes, system, shells)
+        first_shell_solvent = Selections.get_selection(system, "index", solvent_indices)
+        # 3. iterate through first shell solvent and find their RAD shells,
+        #   HBing in the shells and shell labels
+        for solvent in first_shell_solvent:
+            # 3a. find RAD shell of interfacial solvent
+            shell = RADShell.get_RAD_shell(solvent, system, shells)
+            shell.nearest_nonlike_idx = RADLabels.get_nearest_nonlike(shell, system)
+            if shell.nearest_nonlike_idx is not None:
+                # 3b. populate the shells into a dictionary for stats
+                # only if a different atom is in the RAD shell
+                nearest = system.atoms[shell.nearest_nonlike_idx]
+                frame_solvent_shells = save_solvent_shells(
+                    ts.frame,
+                    shell.atom_idx,
+                    shell.UA_shell,
+                    frame_solvent_shells,
+                )
+    return frame_solvent_shells
+
+
+def save_solvent_shells(
+    frame: int,
+    atom_idx: int,
+    shell_indices: list,
+    frame_solvent_shells: dict,
+):
+    """
+    Save the solvent indices at interfaces per frame into a dictionary
+
+    :param frame: frame number of analysed frame
+    :param atom_idx: solvent atom index
+    :param nearest_resid: residue of number of nearest solute molecule
+    :param nearest_resname: residue name of nearest solute molecule
+    :param frame_solvent_indices: the dictionary to populate
+    """
+    if atom_idx not in frame_solvent_shells[frame]:
+        frame_solvent_shells[frame][atom_idx] = shell_indices
+    return frame_solvent_shells
+
+
+def print_frame_solvent_shells(frame_solvent_shells: dict):
+    """
+    Print the interfacial solvent for each analysed frame
+
+    :param frame_solvent_indices: dictionary containing solvent indices in the
+        first shell of solute atoms over each frame analysed
+    """
+    for frame, atom_idx_key in sorted(list(frame_solvent_shells.items())):
+        for atom_idx, shell_indices in sorted(list(atom_idx_key.items())):
+            print(frame, atom_idx, shell_indices, len(shell_indices))

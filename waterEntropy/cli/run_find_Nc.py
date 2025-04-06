@@ -38,12 +38,10 @@ def run_waterEntropy(
     print(u.trajectory)
     # u.trajectory[frame] # move to a particular frame using this
 
-    Sorient_dict, covariances, vibrations, frame_solvent_indices = (
-        GetSolvent.get_interfacial_water_orient_entropy(u, start, end, step)
-    )
-    OR.print_Sorient_dicts(Sorient_dict)
-    # GetSolvent.print_frame_solvent_dicts(frame_solvent_indices)
-    VIB.print_Svib_data(vibrations, covariances)
+    # get the coordination shells of water molecules at interfaces
+    frame_solvent_shells = GetSolvent.get_interfacial_shells(u, start, end, step)
+    # print out the UA indices in the shells of each interfacial water index
+    GetSolvent.print_frame_solvent_shells(frame_solvent_shells)
 
     sys.stdout.flush()
     print(datetime.now() - startTime)
