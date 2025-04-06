@@ -11,6 +11,16 @@ system = load_inputs.get_amber_arginine_soln_universe()
 Sorient_dict, covariances, vibrations, frame_solvent_indices = (
     GetSolvent.get_interfacial_water_orient_entropy(system, start=0, end=4, step=2)
 )
+frame_solvent_shells = GetSolvent.get_interfacial_shells(system, start=0, end=4, step=2)
+
+
+def test_frame_solvent_shells():
+    """Test outputted shells outputted in frame_solvent_shells dictionary"""
+    # frame: {atom_idx: [shell_indices]}
+    assert len(frame_solvent_shells[0].keys()) == 26
+    assert len(frame_solvent_shells[2].keys()) == 35
+    assert frame_solvent_shells[0][54] == [726, 1662, 942, 2262, 29, 1200]
+    assert frame_solvent_shells[2][54] == [1983, 726, 29, 942, 2262, 843]
 
 
 def test_Sorient_dict():
