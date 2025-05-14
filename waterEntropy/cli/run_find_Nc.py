@@ -10,8 +10,6 @@ import sys
 
 from MDAnalysis import Universe
 
-import waterEntropy.entropy.orientations as OR
-import waterEntropy.entropy.vibrations as VIB
 import waterEntropy.recipes.interfacial_solvent as GetSolvent
 
 
