@@ -100,6 +100,56 @@ def get_shell_neighbour_selection(
     return sorted_indices, sorted_distances
 
 
+def get_all_sorted_neighbours(i_idx: int, system, max_cutoff=10):
+    """
+    For a given atom, find neighbouring united atoms from closest to furthest
+    within a given cutoff.
+
+    :param i_idx: idx of atom i
+    :param system: mdanalysis instance of atoms in a frame
+    :param max_cutoff: set the maximum cutoff value for finding neighbours
+    """
+    i_coords = system.atoms.positions[i_idx]
+    # 1. get the all atom neighbour distances within a given distance cutoff
+    neighbours = system.select_atoms(
+        f"all and not index {i_idx} and not bonded index {i_idx}"
+    )
+    # 2. Get the neighbours sorted from closest to furthest
+    all_sorted_indices, all_sorted_distances = get_neighbourlist(
+        i_coords, neighbours.atoms, system.dimensions, max_cutoff
+    )
+    return all_sorted_indices, all_sorted_distances
+
+
+def reduce_all_sorted_neighbours(
+    i_idx: int, system, all_sorted_indices: list, all_sorted_distances: list
+):
+    """
+    For a given atom, take a neighbour list and reduce it to just heavy atoms
+    and atoms not bonded to the given atom
+
+    :param i_idx: idx of atom i
+    :param system: mdanalysis instance of atoms in a frame
+    :param all_sorted_indices: list of all neighbour indices within a
+        given cutoff and sorted by distance
+    :param all_sorted_distances: list of all neighbour distances within a
+        given cutoff and sorted by distance
+    """
+    # get central atom
+    atom_i = system.atoms[i_idx]
+    # get all central atom bonded atom indices
+    i_bonded_atoms = np.unique(atom_i.bonds.indices.flatten())  # [:, 1]
+    sorted_indices, sorted_distances = [], []
+    # iterate over all the neighbours sorted by distance from atom i
+    for j, rij in zip(all_sorted_indices, all_sorted_distances):
+        atom_j = system.atoms[j]
+        # save only heavy atoms and not bonded to atom i
+        if atom_j.index not in i_bonded_atoms and atom_j.mass > 1.1:
+            sorted_indices.append(j)
+            sorted_distances.append(rij)
+    return sorted_indices, sorted_distances
+
+
 def get_angle(a: np.ndarray, b: np.ndarray, c: np.ndarray, dimensions: np.ndarray):
     """
     Get the angle between three atoms, taking into account PBC.
