@@ -19,10 +19,10 @@ classifiers = [
     "Development Status :: 3 - Alpha",
 ]
 keywords = ["water", "entropy", "molecular dynamics", "forces"]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
-    "mdanalysis==2.9.0",
-    "numpy==1.26.2",
+    "mdanalysis>=2.7.0",
+    "numpy==2.2.3",
 ]
 
 [project.urls]
