@@ -18,7 +18,14 @@ system_solutes = Selections.get_selection(system, "resid", resid_list)
 solvent_UA = system.select_atoms("index 621")[0]
 
 # find neighours around solvent UA, closest to furthest
-sorted_indices, sorted_distances = Trig.get_sorted_neighbours(solvent_UA.index, system)
+# sorted_indices, sorted_distances = Trig.get_sorted_neighbours(solvent_UA.index, system)
+
+all_sorted_indices, all_sorted_distances = Trig.get_all_sorted_neighbours(
+    solvent_UA.index, system
+)
+sorted_indices, sorted_distances = Trig.reduce_all_sorted_neighbours(
+    solvent_UA.index, system, all_sorted_indices, all_sorted_distances
+)
 
 
 def test_get_sorted_neighbours():
@@ -70,9 +77,18 @@ def test_get_RAD_shell():
     # get the shell of a solvent UA
     shell_indices = RADShell.get_RAD_shell(solvent_UA, system, shells)
     # add shell to the RAD class
-    shells.add_data(solvent_UA.index, shell_indices)
+    shells.add_data(
+        solvent_UA.index,
+        shell_indices,
+        sorted_indices,
+        sorted_distances,
+        all_sorted_indices,
+        all_sorted_distances,
+    )
     # get the shell back
     shell = shells.find_shell(solvent_UA.index)
+    # find nearest nonlike
+    shell.nearest_nonlike_idx = RADLabels.get_nearest_nonlike(shell, system)
     # get the shell labels
     shell = RADLabels.get_shell_labels(solvent_UA.index, system, shell, shells)
 

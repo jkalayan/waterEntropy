@@ -33,6 +33,9 @@ class Shell:
         """Print the atom and its properties."""
         return f"Shell(atom_idx={self.atom_idx}, properties={self.properties})"
 
+    def __str__(self):
+        return "Shell"
+
 
 class ShellCollection:
     """Manage multiple atom shells and allow adding/updating properties."""
@@ -40,7 +43,16 @@ class ShellCollection:
     def __init__(self):
         self.shells = {}  # Dictionary storing Shell objects indexed by atom index
 
-    def add_data(self, atom_idx: int, UA_shell: list[int]):
+    def add_data(
+        self,
+        atom_idx: int,
+        UA_shell: list[int],
+        sorted_indices: list[int],
+        sorted_distances: list,
+        all_sorted_indices: list[int],
+        all_sorted_distances: list,
+    ):
+        # pylint: disable=too-many-arguments
         """Add a new atom shell to the collection if it doesn't exist and set
         various properties used to describe the class.
 
@@ -51,6 +63,10 @@ class ShellCollection:
             self.shells[atom_idx] = Shell(atom_idx)
             self.set_property(atom_idx, "atom_idx", atom_idx)
             self.set_property(atom_idx, "UA_shell", UA_shell)
+            self.set_property(atom_idx, "sorted_indices", sorted_indices)
+            self.set_property(atom_idx, "sorted_distances", sorted_distances)
+            self.set_property(atom_idx, "all_sorted_indices", all_sorted_indices)
+            self.set_property(atom_idx, "all_sorted_distances", all_sorted_distances)
             self.set_property(atom_idx, "nearest_nonlike_idx", None)
             self.set_property(atom_idx, "labels", None)
             self.set_property(atom_idx, "donates_to_labels", None)
@@ -78,3 +94,6 @@ class ShellCollection:
     def __repr__(self):
         """Return a dictionary-like representation of stored atoms."""
         return repr(self.shells)
+
+    def __str__(self):
+        return "Shells"

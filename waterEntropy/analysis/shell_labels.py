@@ -8,6 +8,7 @@ from waterEntropy.analysis.shells import ShellCollection
 
 
 def get_shell_labels(atom_idx: int, system, shell, shells: ShellCollection):
+    # pylint: disable=too-many-branches
     """
     Get the shell labels of an atoms shell based on the following:
     For a central UA, rank its coordination shell by proximity to that
@@ -29,10 +30,10 @@ def get_shell_labels(atom_idx: int, system, shell, shells: ShellCollection):
     center = system.atoms[atom_idx]
     # 1. find the closest different UA in a shell
     #   different = not the same resname
-    nearest_nonlike_idx = get_nearest_nonlike(shell, system)
+    # nearest_nonlike_idx = get_nearest_nonlike(shell, system)
     # 2. only find labels if a solute is in the shell
-    if nearest_nonlike_idx is not None:
-        nearest_nonlike = system.atoms[nearest_nonlike_idx]
+    if shell.nearest_nonlike_idx is not None:
+        nearest_nonlike = system.atoms[shell.nearest_nonlike_idx]
         shell_labels = []
         for n in shell.UA_shell:
             neighbour = system.atoms[n]
@@ -40,19 +41,24 @@ def get_shell_labels(atom_idx: int, system, shell, shells: ShellCollection):
             if neighbour.index == nearest_nonlike.index:
                 shell_labels.append(f"0_{neighbour.resname}")
             # 3b. label other nonlike atoms as "RESNAME"
-            if (
+            elif (
                 neighbour.index != nearest_nonlike.index
                 and neighbour.resname != center.resname
             ):
                 shell_labels.append(neighbour.resname)
             # 3c. find RAD shells for shell constituents with same resname
             # as central atom
-            if (
+            elif (
                 neighbour.index != nearest_nonlike.index
                 and neighbour.resname == center.resname
             ):
                 neighbour_shell = shells.find_shell(neighbour.index)
-                if not neighbour_shell:
+                if neighbour_shell:
+                    if len(neighbour_shell.UA_shell) == 0:
+                        neighbour_shell = RADShell.get_RAD_shell(
+                            neighbour, system, shells
+                        )
+                else:
                     neighbour_shell = RADShell.get_RAD_shell(neighbour, system, shells)
                 # 3d. find nearest nonlike of neighbours with same resname
                 # as central atom
@@ -79,8 +85,10 @@ def get_shell_labels(atom_idx: int, system, shell, shells: ShellCollection):
                         # as central nearest resid,  it is in the first shell
                         # of a different resid and labelled as "X_RESNAME"
                         shell_labels.append(f"X_{neighbour.resname}")
+            else:
+                continue
         shell.labels = shell_labels  # sorted(shell_labels) #don't sort yet
-        shell.nearest_nonlike_idx = nearest_nonlike.index
+        # shell.nearest_nonlike_idx = nearest_nonlike.index
     return shell
 
 

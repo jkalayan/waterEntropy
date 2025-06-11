@@ -150,6 +150,42 @@ def reduce_all_sorted_neighbours(
     return sorted_indices, sorted_distances
 
 
+def reduce_sorted_neighbours_to_shell(shell, system, heavy_atoms=True):
+    """
+    get shell neighbours ordered by ascending distance, this is used for
+    finding possible hydrogen bonding neighbours.
+
+    :param shell: the instance for class waterEntropy.neighbours.RAD.RAD
+        containing coordination shell neighbours
+    :param donator: the mdanalysis object for the donator
+    :param system: mdanalysis instance of all atoms in current frame
+    :param heavy_atoms: consider heavy atoms in a shell as neighbours
+    :max_cutoff: set the maximum cutoff value for finding neighbours
+    """
+    sorted_indices, sorted_distances = [], []
+    # 1a. Select heavy atoms in shell, can only donate to heavy atoms in the shell
+    if shell:
+        if len(shell.UA_shell) > 0:
+            neighbours = Selections.get_selection(system, "index", shell.UA_shell)
+            if not heavy_atoms:
+                # 1b. Select all atoms in the shell, included bonded to atoms (Hs included)
+                #   Can donate to any atoms in a shell
+                all_shell_bonded = neighbours[:].bonds.indices
+                all_shell_indices = list(set().union(*all_shell_bonded))
+                # can donate to any atom in the shell
+                neighbours = Selections.get_selection(
+                    system, "index", all_shell_indices
+                )
+            for idx_j, rij in zip(shell.all_sorted_indices, shell.all_sorted_distances):
+                j = system.atoms[idx_j]
+                if j.index in neighbours.indices:
+                    sorted_indices.append(j.index)
+                    sorted_distances.append(rij)
+                else:
+                    continue
+    return sorted_indices, sorted_distances
+
+
 def get_angle(a: np.ndarray, b: np.ndarray, c: np.ndarray, dimensions: np.ndarray):
     """
     Get the angle between three atoms, taking into account PBC.

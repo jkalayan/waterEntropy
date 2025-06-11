@@ -167,3 +167,133 @@ def get_shell_HBs(shell, system, HBs: HBCollection, shells: RADShell.ShellCollec
         if not neighbour_donates_to:
             get_shell_HB_acceptors(neighbour_shell, system, HBs)
             neighbour_donates_to = HBs.find_acceptor(n_idx)
+
+
+def get_HB_acceptors(X_idx, system, HBs: HBCollection, shell, shells, use_shell=True):
+    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-arguments
+    # pylint: disable=too-many-branches
+    """
+    Find the hydrogen bond acceptors for the central UA hydrogens that are
+    electropositive. The assumption is made that hydrogen bonding can only
+    occur inside the coordination shell, this is needed for shell neighbour
+    labelling used in orientational entropy calculations
+
+    :param shell: the instance for containing coordination shell neighbours
+    :param system: mdanalysis instance of all atoms in current frame
+    :param HBs: instance of HBCollection class
+    """
+    heavy_atom = system.atoms[X_idx]
+    sorted_indices, sorted_distances = [], []
+    # 1. iterate over atoms bonded to atom X
+    for i in heavy_atom.bonds:
+        D_idx = i.indices[1]
+        bonded = system.atoms[D_idx]
+        # print(heavy_atom, heavy_atom.bonds.indices, bonded)
+        # 2. find hydrogen atoms bonded to heavy atom with positive charge
+        if bonded.mass < 1.1 and bonded.mass > 1.0 and bonded.charge > 0:
+            donator = system.atoms[D_idx]
+            # 3. set starting hydrogen bond term and possible acceptor to a large number
+            # the acceptor that gives the lowest relative charge is the acceptor
+            current_relative_charge = 99
+            current_acceptor = False
+            if use_shell:
+                if shell:
+                    if len(shell.UA_shell) == 0:
+                        shell = RADShell.get_RAD_shell(
+                            heavy_atom, system, shells
+                        )  # , skip_RAD_shell=True)
+                    sorted_indices, sorted_distances = (
+                        Trig.reduce_sorted_neighbours_to_shell(
+                            shell, system, heavy_atoms=False
+                        )
+                    )
+                    # all_sorted_indices, all_sorted_distances = shell.all_sorted_indices, shell.all_sorted_distances
+                if not shell:
+                    # 4. get shell neighbours ordered by ascending distance
+                    shell = RADShell.get_RAD_shell(
+                        heavy_atom, system, shells
+                    )  # , skip_RAD_shell=True)
+                    # all_sorted_indices, all_sorted_distances = Trig.get_all_sorted_neighbours(X_idx, system)
+                    # all_sorted_indices, all_sorted_distances = shell.all_sorted_indices, shell.all_sorted_distances
+                    # print(set(all_sorted_indices) == set(all_sorted_indices2))
+                    # sys.exit()
+                    sorted_indices, sorted_distances = (
+                        Trig.reduce_sorted_neighbours_to_shell(
+                            shell, system, heavy_atoms=False
+                        )
+                    )
+            else:
+                if shell:
+                    if len(shell.UA_shell) > 0:
+                        sorted_indices, sorted_distances = (
+                            Trig.reduce_sorted_neighbours_to_shell(
+                                shell, system, heavy_atoms=False
+                            )
+                        )
+                    else:
+                        sorted_indices, sorted_distances = (
+                            shell.all_sorted_indices,
+                            shell.all_sorted_distances,
+                        )
+                else:
+                    sorted_indices, sorted_distances = Trig.get_all_sorted_neighbours(
+                        X_idx, system
+                    )
+
+            # print(shell.UA_shell, sorted_indices[:10])
+            # for A_idx, DA_distance in zip(all_sorted_indices[:50], all_sorted_distances[:50]):
+            for A_idx, DA_distance in zip(sorted_indices[:50], sorted_distances[:50]):
+                # 5. check if neighbouring atom in shell is an acceptor,
+                # if so override current possible acceptor
+                acceptor = system.atoms[A_idx]
+                if not current_acceptor:
+                    current_acceptor = acceptor
+                relative_charge, XDA_angle = get_HB_terms(
+                    heavy_atom, donator, acceptor, DA_distance, system.dimensions[:3]
+                )
+                # 6. Check if an atom is a possible hydrogen bond acceptor
+                if relative_charge < current_relative_charge and float(XDA_angle) > 90:
+                    current_relative_charge = relative_charge
+                    current_acceptor = acceptor
+            # 7. create a new object for hydrogen bonding in a RAD shell
+            HBs.add_data(X_idx, D_idx, current_acceptor.index)
+
+
+def get_HBs(shell, system, HBs: HBCollection, shells: RADShell.ShellCollection):
+    """
+    For a given UA and its coordination shell neighbours, find what the central
+    UA donates to and accepts from in its shell.
+
+    :param shell: the instance for class waterEntropy.neighbours.RAD.RAD
+        containing coordination shell neighbours
+    :param system: mdanalysis instance of all atoms in current frame
+    :param HBs: HBCollection instance
+    :param shells: ShellCollection instance
+    """
+    # 1. first check that HB donations haven't already been found
+    donates_to = HBs.find_acceptor(shell.atom_idx)
+    if not donates_to:
+        get_HB_acceptors(shell.atom_idx, system, HBs, shell, shells)
+        donates_to = HBs.find_acceptor(shell.atom_idx)
+    # 2. now iterate through shell and find shells of shell neighbours
+    for n_idx in shell.UA_shell:
+        # only consider closest shell neighbours (UAs+bonddedHs) as possible HB donators to central
+        # UA
+        UA_bonded = system.atoms[n_idx].bonds.indices
+        all_UA_bonded = list(set().union(*UA_bonded))
+        common = set(all_UA_bonded) & set(shell.all_sorted_indices[:10])
+        # print(n_idx, all_UA_bonded, shell.all_sorted_indices[:10], common, bool(common))
+        if bool(common):
+            neighbour_shell = shells.find_shell(n_idx)
+            # if not neighbour_shell:
+            #     neighbour_shell = RADShell.get_RAD_shell(
+            #         system.atoms[n_idx], system, shells
+            #     )
+            # 3. find what each shell neighbour donates to in their shell
+            neighbour_donates_to = HBs.find_acceptor(n_idx)
+            if not neighbour_donates_to:
+                get_HB_acceptors(
+                    n_idx, system, HBs, neighbour_shell, shells, use_shell=False
+                )
+                neighbour_donates_to = HBs.find_acceptor(n_idx)

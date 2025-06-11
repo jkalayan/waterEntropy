@@ -39,9 +39,18 @@ def find_interfacial_solvent(solutes, system, shells: ShellCollection):
             # 2. DON'T automatically look for RAD shell as this is slow,
             # instead, check if waters are in the distance array before using
             # RAD. Instead, find distances of neighbours first.
-            sorted_indices, sorted_distances = Trig.get_sorted_neighbours(
+            # sorted_indices, sorted_distances = Trig.get_sorted_neighbours(
+            #     atom.index, system
+            # )
+
+            all_sorted_indices, all_sorted_distances = Trig.get_all_sorted_neighbours(
                 atom.index, system
             )
+
+            sorted_indices, sorted_distances = Trig.reduce_all_sorted_neighbours(
+                atom.index, system, all_sorted_indices, all_sorted_distances
+            )
+
             sorted_atoms = Selections.get_selection(
                 system, "index", sorted_indices[:20]
             )
@@ -51,7 +60,13 @@ def find_interfacial_solvent(solutes, system, shells: ShellCollection):
             if len(sorted_waters) > 0:
                 # 3. find the shell of each UA atom in a molecule
                 shell = RADShell.get_RAD_shell(
-                    atom, system, shells, sorted_indices, sorted_distances
+                    atom,
+                    system,
+                    shells,
+                    sorted_indices,
+                    sorted_distances,
+                    all_sorted_indices,
+                    all_sorted_distances,
                 )  # get the molecule UA shell
                 shell_indices = shell.UA_shell
                 # 4. for each neighbour in the RAD shell, find single UA molecules
@@ -96,16 +111,18 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
         # 3. iterate through first shell solvent and find their RAD shells,
         #   HBing in the shells and shell labels
         for solvent in first_shell_solvent:
-            # print(solvent)
             # 3a. find RAD shell of interfacial solvent
             shell = RADShell.get_RAD_shell(solvent, system, shells)
-            # 3b. find HBing in the shell
-            HBond.get_shell_HBs(shell, system, HBs, shells)
-            # 3c. find RAD shell labels
-            shell = RADLabels.get_shell_labels(solvent.index, system, shell, shells)
-            # 3d. find HB labels
-            HBLabels.get_HB_labels(solvent.index, system, HBs, shells)
+            shell.nearest_nonlike_idx = RADLabels.get_nearest_nonlike(shell, system)
             if shell.nearest_nonlike_idx is not None:
+                # 3b. find HBing in the shell
+                # If HBing is in shell, tests pass
+                HBond.get_shell_HBs(shell, system, HBs, shells)
+                # HBond.get_HBs(shell, system, HBs, shells)
+                # 3c. find RAD shell labels
+                shell = RADLabels.get_shell_labels(solvent.index, system, shell, shells)
+                # 3d. find HB labels
+                HBLabels.get_HB_labels(solvent.index, system, HBs, shells)
                 # 3e. populate the labels into a dictionary for stats
                 # only if a different atom is in the RAD shell
                 nearest = system.atoms[shell.nearest_nonlike_idx]
@@ -207,7 +224,7 @@ def get_interfacial_shells(system, start: int, end: int, step: int):
     frame_solvent_shells = nested_dict()
     # pylint: disable=unused-variable
     for ts in system.trajectory[start:end:step]:
-        print(ts)
+        # print(ts)
         # initialise the RAD and HB class instances to store shell information
         shells = ShellCollection()
         # 1. find > 1 UA molecules in system, these are the solutes

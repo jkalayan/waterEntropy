@@ -179,6 +179,9 @@ def get_HB_labels(atom_idx: int, system, HBs: HBCollection, shells: ShellCollect
                     # central UA and add label to list
                     bonded_UA = Selections.find_bonded_heavy_atom(d_idx, system)
                     if bonded_UA.index in shell.UA_shell:
+                        # print(shell.UA_shell, bonded_UA.index, shell.labels)
+                        # print(shell.UA_shell.index(bonded_UA.index))
+                        # print()
                         shell_idx = shell.UA_shell.index(bonded_UA.index)
                         accepts_from_labels.append(shell.labels[shell_idx])
                     else:
@@ -192,8 +195,12 @@ def get_HB_labels(atom_idx: int, system, HBs: HBCollection, shells: ShellCollect
                     acceptor = system.atoms[a_idx]
                     if acceptor.mass < 1.1:
                         acceptor = Selections.find_bonded_heavy_atom(a_idx, system)
-                    shell_idx = shell.UA_shell.index(acceptor.index)
-                    donates_to_labels.append(shell.labels[shell_idx])
+                    # add acceptor if it's in the shell, otherwise ignore
+                    try:
+                        shell_idx = shell.UA_shell.index(acceptor.index)
+                        donates_to_labels.append(shell.labels[shell_idx])
+                    except ValueError:
+                        pass
     # 5. Add labelled neighbours to shells instance
     shell.donates_to_labels = donates_to_labels
     shell.accepts_from_labels = accepts_from_labels

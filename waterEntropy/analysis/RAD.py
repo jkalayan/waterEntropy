@@ -72,8 +72,16 @@ def get_RAD_neighbours(i_coords, sorted_indices, sorted_distances, system):
 
 
 def get_RAD_shell(
-    UA, system, shells: ShellCollection, sorted_indices=None, sorted_distances=None
+    UA,
+    system,
+    shells: ShellCollection,
+    sorted_indices=None,
+    sorted_distances=None,
+    all_sorted_indices=None,
+    all_sorted_distances=None,
+    skip_RAD_shell=False,
 ):
+    # pylint: disable=too-many-arguments
     """
     For a given united atom, find its RAD shell, returning the atom indices
     for the heavy atoms that are in its shell.
@@ -88,14 +96,30 @@ def get_RAD_shell(
         # 2. get the nearest neighbours for the UA, sorted from closest to
         # furthest
         if sorted_indices is None:
-            sorted_indices, sorted_distances = Trig.get_sorted_neighbours(
+            # sorted_indices, sorted_distances = Trig.get_sorted_neighbours(
+            #     UA.index, system
+            # )
+            all_sorted_indices, all_sorted_distances = Trig.get_all_sorted_neighbours(
                 UA.index, system
             )
+            sorted_indices, sorted_distances = Trig.reduce_all_sorted_neighbours(
+                UA.index, system, all_sorted_indices, all_sorted_distances
+            )
         # 3. now find the RAD shell of the UA
-        shell_indices = get_RAD_neighbours(
-            UA.position, sorted_indices, sorted_distances, system
-        )
+        if not skip_RAD_shell:
+            shell_indices = get_RAD_neighbours(
+                UA.position, sorted_indices, sorted_distances, system
+            )
+        else:
+            shell_indices = []
         # 4. populate the class instance for RAD shells
-        shells.add_data(UA.index, shell_indices)
+        shells.add_data(
+            UA.index,
+            shell_indices,
+            sorted_indices,
+            sorted_distances,
+            all_sorted_indices,
+            all_sorted_distances,
+        )
         shell = shells.find_shell(UA.index)
     return shell
