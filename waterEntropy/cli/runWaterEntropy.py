@@ -45,17 +45,7 @@ def run_waterEntropy(
     print(startTime)
 
     # load topology and coordinates
-    u = Universe(file_topology, file_coords, format="MDCRD")
-    # seperate universe where forces are the loaded trajectory
-    uf = Universe(file_topology, file_forces, format="MDCRD")
-    # set the has_forces flag on the Timestep first
-    u.trajectory.ts.has_forces = True
-    # add the forces (which are saved as positions be default) from uf to u
-    u.atoms.forces = uf.atoms.positions
-    # set the frames to be analysed
-    #start, end, step = 0, 4, 2
-    print(u.trajectory)
-    # u.trajectory[frame] # move to a particular frame using this
+    u = Universe(file_topology, file_coords)
 
     Sorient_dict, covariances, vibrations, frame_solvent_indices = GetSolvent.get_interfacial_water_orient_entropy(u, start, end, step)
     OR.print_Sorient_dicts(Sorient_dict)
