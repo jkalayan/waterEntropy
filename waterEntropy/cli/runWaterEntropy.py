@@ -17,45 +17,18 @@ import waterEntropy.entropy.orientations as OR
 def run_waterEntropy(
     file_topology="file_topology",
     file_coords="file_coords",
-    file_forces="file_forces",
-    file_energies="file_energies",
-    list_files="list_files",
     start="start",
     end="end",
     step="step",
 ):
-    # pylint: disable=all
     """
-    Functions required:
-    [X] Force torque for whole molecule principal axes
-    [X] Force torque for custom axes
-    [X] Covariance matrices
-    [X] Nearest non-like
-    [X] RAD shell
-    [X] HB in shell
-    [X] neighbour list
-    [X] label RAD shell
-    [] molecule level RAD shell
-    [] save stats into multiple dicts
-    [] running averages
-    [] Dict for
     """
 
     startTime = datetime.now()
     print(startTime)
 
     # load topology and coordinates
-    u = Universe(file_topology, file_coords, format="MDCRD")
-    # seperate universe where forces are the loaded trajectory
-    uf = Universe(file_topology, file_forces, format="MDCRD")
-    # set the has_forces flag on the Timestep first
-    u.trajectory.ts.has_forces = True
-    # add the forces (which are saved as positions be default) from uf to u
-    u.atoms.forces = uf.atoms.positions
-    # set the frames to be analysed
-    #start, end, step = 0, 4, 2
-    print(u.trajectory)
-    # u.trajectory[frame] # move to a particular frame using this
+    u = Universe(file_topology, file_coords)
 
     Sorient_dict, covariances, vibrations, frame_solvent_indices = GetSolvent.get_interfacial_water_orient_entropy(u, start, end, step)
     OR.print_Sorient_dicts(Sorient_dict)
@@ -91,29 +64,7 @@ def main():
             "--file_coords",
             metavar="file",
             default=None,
-            help="name of file containing coordinates.",
-        )
-        parser.add_argument(
-            "-frc",
-            "--file_forces",
-            metavar="file",
-            default=None,
-            help="name of file containing forces.",
-        )
-        parser.add_argument(
-            "-ener",
-            "--file_energies",
-            metavar="file",
-            default=None,
-            help="name of file containing energies.",
-        )
-        parser.add_argument(
-            "-l",
-            "--list_files",
-            action="store",
-            metavar="file",
-            default=False,
-            help="file containing list of file paths.",
+            help="name of file containing positions and forces in a single file.",
         )
         parser.add_argument(
             "-s",
@@ -150,9 +101,6 @@ def main():
     run_waterEntropy(
         file_topology=op.file_topology,
         file_coords=op.file_coords,
-        file_forces=op.file_forces,
-        file_energies=op.file_energies,
-        list_files=op.list_files,
         start=op.start, 
         end=op.end, 
         step=op.step,

@@ -207,7 +207,7 @@ def get_interfacial_shells(system, start: int, end: int, step: int):
     frame_solvent_shells = nested_dict()
     # pylint: disable=unused-variable
     for ts in system.trajectory[start:end:step]:
-        print(ts)
+        # print(ts)
         # initialise the RAD and HB class instances to store shell information
         shells = ShellCollection()
         # 1. find > 1 UA molecules in system, these are the solutes
