@@ -1,2 +1,2 @@
 # arginine in water Amber MD simulation
-Capped arginine molecule in a box of water molecules.
+Capped charged arginine molecule and chlorine ion in a box of 900 water molecules.
