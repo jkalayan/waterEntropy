@@ -7,10 +7,12 @@ import argparse
 from datetime import datetime
 import logging
 import sys
+import numpy as np
 
 from MDAnalysis import Universe
 
 import waterEntropy.recipes.interfacial_solvent as GetSolvent
+import waterEntropy.recipes.bulk_water as GetBulkSolvent
 import waterEntropy.entropy.vibrations as VIB
 import waterEntropy.entropy.orientations as OR
 
@@ -30,10 +32,13 @@ def run_waterEntropy(
     # load topology and coordinates
     u = Universe(file_topology, file_coords)
 
-    Sorient_dict, covariances, vibrations, frame_solvent_indices = GetSolvent.get_interfacial_water_orient_entropy(u, start, end, step)
+    Sorient_dict, covariances, vibrations, frame_solvent_indices = GetSolvent.get_interfacial_water_orient_entropy(u, start, end, step, temperature=298)
     OR.print_Sorient_dicts(Sorient_dict)
     # GetSolvent.print_frame_solvent_dicts(frame_solvent_indices)
     VIB.print_Svib_data(vibrations, covariances)
+    bulk_Sorient_dict, bulk_covariances, bulk_vibrations = GetBulkSolvent.get_bulk_water_orient_entropy(u, start, end, step, temperature=298)
+    OR.print_Sorient_dicts(bulk_Sorient_dict)
+    VIB.print_Svib_data(bulk_vibrations, bulk_covariances)
 
 
     sys.stdout.flush()
@@ -70,7 +75,7 @@ def main():
             "-s",
             "--start",
             action="store",
-            metavar="int",
+            type=int,
             default=0,
             help="frame number to start analysis from.",
         )
@@ -78,7 +83,7 @@ def main():
             "-e",
             "--end",
             action="store",
-            metavar="int",
+            type=int,
             default=1,
             help="frame number to end analysis at.",
         )
@@ -86,7 +91,7 @@ def main():
             "-dt",
             "--step",
             action="store",
-            metavar="int",
+            type=int,
             default=1,
             help="steps to take between start and end frame selections.",
         )
