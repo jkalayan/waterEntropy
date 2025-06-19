@@ -43,9 +43,9 @@ def test_covariances():
         forces,
         np.array(
             [
-                [14436849, 712686, -2141242],
-                [712686, 19792305, 8921010],
-                [-2141242, 8921010, 9880023],
+                [824686, 40711, -122315],
+                [40711, 1130610, 509601],
+                [-122315, 509601, 564383],
             ]
         ),
     )
@@ -53,9 +53,9 @@ def test_covariances():
         torques,
         np.array(
             [
-                [2.89828793e08, 5.06914732e07, -2.92085655e07],
-                [5.06914732e07, 5.83455839e07, -1.13204566e06],
-                [-2.92085655e07, -1.13204566e06, 1.48596049e08],
+                [16556105.19, 2895686.63, -1668502.55],
+                [2895686.63, 3332918.07, -64666.68],
+                [-1668502.55, -64666.68, 8488362.3],
             ]
         ),
     )
@@ -69,12 +69,12 @@ def test_vibrations():
     trans_freqs = vibrations.translational_freq[("ACE_1", "WAT")]
     rot_freqs = vibrations.rotational_freq[("ACE_1", "WAT")]
 
-    assert np.allclose(Strans, np.array([5.59725172, 4.54547502, 6.94449285]))
-    assert np.allclose(Srot, np.array([0.07211633, 1.6609092, 0.37677331]))
-    assert np.allclose(trans_freqs, np.array([[14436849, 19792305, 9880023]]))
-    assert np.allclose(
-        rot_freqs, np.array([[2.89828793e08, 5.83455839e07, 1.48596049e08]])
-    )
+    assert np.allclose(Strans, np.array([16.787066, 15.49228514, 18.34936798]))
+    assert np.allclose(sum(Strans), 50.628719)
+    assert np.allclose(Srot, np.array([5.13190029, 11.11787766, 7.50395398]))
+    assert np.allclose(sum(Srot), 23.75373)
+    assert np.allclose(trans_freqs, np.array([[824686, 1130610, 564383]]))
+    assert np.allclose(rot_freqs, np.array([[16556105, 3332918, 8488362]]))
 
 
 def test_frame_solvent_indices():
