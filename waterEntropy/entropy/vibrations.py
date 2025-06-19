@@ -33,9 +33,9 @@ class Vibrations:
     KJ_TO_J = 1000
     NANOMETRE_TO_METRE = 1e-9
 
-    def __init__(self, temperature, force_units):
+    def __init__(self, temperature):
         self.temperature = temperature
-        self.force_units = force_units
+        # self.force_units = force_units
         self.translational_freq = nested_dict()
         self.rotational_freq = nested_dict()
         self.translational_S = nested_dict()
@@ -79,10 +79,7 @@ class Vibrations:
         :param diagonalise: whether to diagonalise the covariance matrix
         """
         # convert the covariance matrix to the correct units
-        if self.force_units == "gromacs":
-            covariance *= self.kJ_conversion()
-        else:
-            covariance *= self.kcal_conversion()
+        covariance *= self.mda_conversion()
         Svib, frequency = Vibrations.calculate_entropies(self, covariance, diagonalise)
 
         return Svib, frequency
@@ -111,6 +108,19 @@ class Vibrations:
         """
         numerator = (self.KJ_TO_J**2) * self.KG_TO_AMU
         denominator = (self.AVOGADRO**2) * (self.NANOMETRE_TO_METRE**2)
+        conversion = numerator / denominator
+
+        return conversion
+
+    def mda_conversion(self):
+        """
+        MDAnalysis stores forces as kJ/(mol Ang) by default, so:
+        Convert force covariance matrix from kJ/(mol Ang m^2) to J/mol
+        SI: kg.m/s^2 = N
+        The forces are squared, so do the same for the constant
+        """
+        numerator = (self.KJ_TO_J**2) * self.KG_TO_AMU
+        denominator = (self.AVOGADRO**2) * (self.ANGSTROM_TO_METRE**2)
         conversion = numerator / denominator
 
         return conversion
@@ -197,4 +207,5 @@ def print_Svib_data(vibrations: Vibrations, covariances: CovarianceCollection):
         # trans_freqs = vibrations.translational_freq[near_solvent_name]
         # rot_freqs = vibrations.rotational_freq[near_solvent_name]
         counts = covariances.counts[near_solvent_name]
+        print(near, solvent_name, Strans, Srot, counts)
         print(near, solvent_name, sum(Strans), sum(Srot), counts)

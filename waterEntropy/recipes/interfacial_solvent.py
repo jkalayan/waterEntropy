@@ -61,7 +61,9 @@ def find_interfacial_solvent(solutes, system, shells: ShellCollection):
     return list(set(solvent_indices))
 
 
-def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int):
+def get_interfacial_water_orient_entropy(
+    system, start: int, end: int, step: int, temperature=298
+):
     # pylint: disable=too-many-locals
     """
     For a given system, containing the topology and coordinates of molecules,
@@ -79,7 +81,7 @@ def get_interfacial_water_orient_entropy(system, start: int, end: int, step: int
     # initialise the Covariance class instance to store covariance matrices
     covariances = CovarianceCollection()
     # initialise the Vibrations class instance to store vibrational entropies
-    vibrations = Vibrations(temperature=298, force_units="kcal")
+    vibrations = Vibrations(temperature)
     hb_labels = HBLabels.HBLabelCollection()
     # pylint: disable=unused-variable
     for ts in system.trajectory[start:end:step]:
