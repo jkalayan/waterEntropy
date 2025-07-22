@@ -15,20 +15,21 @@ frame_solvent_shells = GetSolvent.get_interfacial_shells(system, start=0, end=4,
 
 
 def test_frame_solvent_shells():
-    """Test outputted shells outputted in frame_solvent_shells dictionary"""
+    """Test outputted shell indices outputted in frame_solvent_shells dictionary
+    from a first shell solvent"""
     # frame: {atom_idx: [shell_indices]}
-    assert len(frame_solvent_shells[0].keys()) == 26
-    assert len(frame_solvent_shells[2].keys()) == 35
-    assert frame_solvent_shells[0][54] == [726, 1662, 942, 2262, 29, 1200]
-    assert frame_solvent_shells[2][54] == [1983, 726, 29, 942, 2262, 843]
+    assert len(frame_solvent_shells[0].keys()) == 32
+    assert len(frame_solvent_shells[2].keys()) == 36
+    assert frame_solvent_shells[0][1024] == [415, 931, 1318, 1618, 25, 1474, 1282]
+    assert frame_solvent_shells[2][1024] == [1318, 460, 580, 25, 1714, 19, 2497]
 
 
 def test_Sorient_dict():
-    """Test outputted orientational entropy values"""
+    """Test outputted orientational entropy values of solvent molecules around a given solute molecule"""
     # resid: {resname = [Sorient, count]}
-    assert Sorient_dict[1]["ACE"] == pytest.approx([3.0489096643431974, 17])
-    assert Sorient_dict[2]["ARG"] == pytest.approx([1.4543131445108897, 31])
-    assert Sorient_dict[3]["NME"] == pytest.approx([2.038000764549012, 13])
+    assert Sorient_dict[1]["ACE"] == pytest.approx([2.2473807716251804, 13])
+    assert Sorient_dict[2]["ARG"] == pytest.approx([2.6481382191024245, 35])
+    assert Sorient_dict[3]["NME"] == pytest.approx([0.9503950365967891, 12])
 
 
 def test_covariances():
@@ -41,20 +42,24 @@ def test_covariances():
     assert np.allclose(
         forces,
         np.array(
-            [[475329, -9871, 89940], [-9871, 1546614, 283755], [89940, 283755, 1053114]]
+            [
+                [824686, 40711, -122315],
+                [40711, 1130610, 509601],
+                [-122315, 509601, 564383],
+            ]
         ),
     )
     assert np.allclose(
         torques,
         np.array(
             [
-                [58104052, 11723947, 3183189],
-                [11723947, 30729540, 84751],
-                [3183189, 84751, 51102359],
+                [16556105.19, 2895686.63, -1668502.55],
+                [2895686.63, 3332918.07, -64666.68],
+                [-1668502.55, -64666.68, 8488362.3],
             ]
         ),
     )
-    assert count == 17
+    assert count == 13
 
 
 def test_vibrations():
@@ -64,78 +69,94 @@ def test_vibrations():
     trans_freqs = vibrations.translational_freq[("ACE_1", "WAT")]
     rot_freqs = vibrations.rotational_freq[("ACE_1", "WAT")]
 
-    assert np.allclose(Strans, np.array([19.05833289, 14.212621, 15.78320831]))
-    assert np.allclose(Srot, np.array([1.66928353, 3.21696628, 1.94000706]))
-    assert np.allclose(trans_freqs, np.array([[475329, 1546614, 1053114]]))
-    assert np.allclose(rot_freqs, np.array([[58104052, 30729540, 51102359]]))
+    assert np.allclose(Strans, np.array([16.787066, 15.49228514, 18.34936798]))
+    assert np.allclose(sum(Strans), 50.628719)
+    assert np.allclose(Srot, np.array([5.13190029, 11.11787766, 7.50395398]))
+    assert np.allclose(sum(Srot), 23.75373)
+    assert np.allclose(trans_freqs, np.array([[824686, 1130610, 564383]]))
+    assert np.allclose(rot_freqs, np.array([[16556105, 3332918, 8488362]]))
 
 
 def test_frame_solvent_indices():
     """Test the get interfacial water orient entropy function"""
     # frame: {resname: {resid = [shell indices]}}
     assert frame_solvent_indices[0].get("ACE").get(1) == [
-        621,
-        888,
-        1038,
-        1143,
-        1413,
-        1737,
-        1800,
+        121,
+        235,
+        481,
+        505,
+        1639,
+        2260,
+        2314,
     ]
     assert frame_solvent_indices[0].get("ARG").get(2) == [
-        54,
-        168,
-        237,
-        369,
-        747,
-        1797,
-        2004,
-        2019,
-        2130,
-        2262,
-        2640,
-        2646,
-        2688,
+        55,
+        244,
+        274,
+        862,
+        931,
+        1024,
+        1165,
+        1282,
+        1474,
+        1855,
+        1912,
+        2005,
+        2056,
+        2077,
+        2245,
+        2497,
     ]
-    assert frame_solvent_indices[0].get("NME").get(3) == [486, 489, 834, 879, 984, 1698]
+    assert frame_solvent_indices[0].get("NME").get(3) == [
+        85,
+        205,
+        265,
+        1057,
+        1246,
+        1753,
+    ]
+    assert frame_solvent_indices[0].get("Cl-").get(4) == [460, 1669, 2041]
     assert frame_solvent_indices[2].get("ACE").get(1) == [
-        324,
-        621,
-        888,
-        1800,
-        2085,
-        2130,
-        2565,
-        2652,
-        2694,
-        2721,
+        505,
+        664,
+        1036,
+        1147,
+        1165,
+        2260,
     ]
     assert frame_solvent_indices[2].get("ARG").get(2) == [
-        54,
-        168,
-        237,
-        243,
-        642,
-        726,
-        843,
-        849,
-        1479,
-        1698,
-        2019,
-        2136,
-        2244,
-        2253,
-        2262,
-        2265,
-        2640,
-        2646,
+        49,
+        235,
+        274,
+        346,
+        409,
+        475,
+        580,
+        862,
+        931,
+        1024,
+        1048,
+        1228,
+        1855,
+        1858,
+        1891,
+        2056,
+        2404,
+        2497,
+        2605,
     ]
     assert frame_solvent_indices[2].get("NME").get(3) == [
-        282,
-        807,
-        834,
-        879,
-        1413,
-        2190,
-        2688,
+        43,
+        85,
+        205,
+        763,
+        1246,
+        1753,
+    ]
+    assert frame_solvent_indices[2].get("Cl-").get(4) == [
+        460,
+        1669,
+        1945,
+        2005,
+        2041,
     ]
