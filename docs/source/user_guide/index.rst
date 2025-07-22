@@ -6,7 +6,7 @@ Here's how to use waterEntropy on the command-line using the ``runWaterEntropy.p
 
 .. code-block:: bash
 
-    runWaterEntropy.py -t tests/input_files/amber/arginine_solution/system.prmtop -c tests/input_files/amber/arginine_solution/system.nc
+    waterEntropy -t tests/input_files/amber/arginine_solution/system.prmtop -c tests/input_files/amber/arginine_solution/system.nc
 
 Topology and trajectory files are available in the ``tests/input_files`` directory.
 
