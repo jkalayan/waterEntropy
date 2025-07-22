@@ -26,7 +26,7 @@ Here's how to use waterEntropy via the API:
     trajectory_path = "tests/input_files/amber/arginine_solution/system.nc"
 
     # load topology and trajectory
-    u = Universe(path_to_topology, path_to_trajectory)
+    u = Universe(topology_path, trajectory_path)
 
     # set the frames to be analysed
     start, end, step = 0, 1, 1
