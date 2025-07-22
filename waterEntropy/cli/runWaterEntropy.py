@@ -32,10 +32,13 @@ def run_waterEntropy(
     # load topology and coordinates
     u = Universe(file_topology, file_coords)
 
+    # interfacial waters
     Sorient_dict, covariances, vibrations, frame_solvent_indices = GetSolvent.get_interfacial_water_orient_entropy(u, start, end, step, temperature=298)
     OR.print_Sorient_dicts(Sorient_dict)
     # GetSolvent.print_frame_solvent_dicts(frame_solvent_indices)
     VIB.print_Svib_data(vibrations, covariances)
+
+    # bulk waters
     bulk_Sorient_dict, bulk_covariances, bulk_vibrations = GetBulkSolvent.get_bulk_water_orient_entropy(u, start, end, step, temperature=298)
     OR.print_Sorient_dicts(bulk_Sorient_dict)
     VIB.print_Svib_data(bulk_vibrations, bulk_covariances)
