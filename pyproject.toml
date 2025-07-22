@@ -19,10 +19,10 @@ classifiers = [
     "Development Status :: 3 - Alpha",
 ]
 keywords = ["water", "entropy", "molecular dynamics", "forces"]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
-    "mdanalysis==2.9.0",
-    "numpy==1.26.2",
+    "mdanalysis>=2.7.0",
+    "numpy==2.2.3",
 ]
 
 [project.urls]
@@ -53,7 +53,21 @@ docs = [
 
 [project.scripts]
 waterEntropy = "waterEntropy.cli.runWaterEntropy:main"
-waterShells = "waterEntropy.cli.run_find_Nc:main"
+
+#[project.entry-points."waterEntropy.neighbours"]
+#"gromacs.pdb2gmx" = "waterEntropy.neighbours.RAD:RAD"
+
+#[project.entry-points."aiida.calculations"]
+#"gromacs.pdb2gmx" = "aiida_gromacs.calculations.pdb2gmx:Pdb2gmxCalculation"
+
+#[project.entry-points."aiida.parsers"]
+#"gromacs.pdb2gmx" = "aiida_gromacs.parsers.pdb2gmx:Pdb2gmxParser"
+
+#[project.entry-points."aiida.workflows"]
+#"gromacs.setup" = "aiida_gromacs.workflows.simsetup:SetupWorkChain"
+
+#[project.entry-points."aiida.cmdline.data"]
+#"provenance" = "aiida_gromacs.commands.provenance:provenance"
 
 [tool.flit.module]
 name = "waterEntropy"
