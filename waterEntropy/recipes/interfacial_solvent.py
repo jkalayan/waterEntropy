@@ -3,6 +3,9 @@ These functions calculate orientational entropy from labelled
 coordination shells
 """
 
+from multiprocessing import Pool
+import sys
+
 import waterEntropy.analysis.HB as HBond
 import waterEntropy.analysis.HB_labels as HBLabels
 import waterEntropy.analysis.RAD as RADShell
@@ -59,6 +62,144 @@ def find_interfacial_solvent(solutes, system, shells: ShellCollection):
                 waters = shell_atoms.select_atoms("water")
                 solvent_indices.extend(waters.indices)
     return list(set(solvent_indices))
+
+
+def _parallel_interfacial_water_orient_entropy(args):
+    # pylint: disable=too-many-locals
+    """
+    For a given system, containing the topology and coordinates of molecules,
+    find the interfacial water molecules around solutes and calculate their
+    orientational entropy if there is a solute atom in the solvent coordination
+    shell.
+
+    :param system: mdanalysis instance of atoms in a frame
+    :param start: starting frame number
+    :param end: end frame number
+    :param step: steps between frames
+    """
+    # unpack vars
+    index, system, temperature = args
+    ts = system.trajectory[index]
+    # redeclare these on the frame by frame basis, and assemble them into the
+    # main data structures upon return.
+    frame_solvent_indices = nested_dict()
+    # initialise the Covariance class instance to store covariance matrices
+    covariances = CovarianceCollection()
+    # initialise the Vibrations class instance to store vibrational entropies
+    vibrations = Vibrations(temperature)
+    hb_labels = HBLabels.HBLabelCollection()
+    # initialise the RAD and HB class instances to store shell information
+    shells = ShellCollection()
+    HBs = HBond.HBCollection()
+    # 1. find > 1 UA molecules in system, these are the solutes
+    resid_list = Selections.find_solute_molecules(system)
+    solutes = Selections.get_selection(system, "resid", resid_list)
+    # 2. find the interfacial solvent molecules that are 1 UA in size
+    #   and are in the RAD shell of any solute
+    solvent_indices = find_interfacial_solvent(solutes, system, shells)
+    first_shell_solvent = Selections.get_selection(system, "index", solvent_indices)
+    # 3. iterate through first shell solvent and find their RAD shells,
+    #   HBing in the shells and shell labels
+    for solvent in first_shell_solvent:
+        # print(solvent)
+        # 3a. find RAD shell of interfacial solvent
+        shell = RADShell.get_RAD_shell(solvent, system, shells)
+        # 3b. find HBing in the shell
+        HBond.get_shell_HBs(shell, system, HBs, shells)
+        # 3c. find RAD shell labels
+        shell = RADLabels.get_shell_labels(solvent.index, system, shell, shells)
+        # 3d. find HB labels
+        HBLabels.get_HB_labels(solvent.index, system, HBs, shells)
+        if shell.nearest_nonlike_idx is not None:
+            # 3e. populate the labels into a dictionary for stats
+            # only if a different atom is in the RAD shell
+            nearest = system.atoms[shell.nearest_nonlike_idx]
+            nearest_resid = nearest.resid
+            nearest_resname = nearest.resname
+            hb_labels.add_data(
+                nearest_resid,
+                nearest_resname,
+                shell.labels,
+                shell.donates_to_labels,
+                shell.accepts_from_labels,
+            )
+            frame_solvent_indices = save_solvent_indices(
+                ts.frame,
+                shell.atom_idx,
+                nearest_resid,
+                nearest_resname,
+                frame_solvent_indices,
+            )
+            # 3f. calculate the running average of force and torque
+            # covariance matrices
+            solvent_molecule = system.atoms[solvent.index].fragment  # get molecule
+            get_forces_torques(
+                covariances,
+                solvent_molecule,
+                f"{nearest_resname}_{nearest_resid}",
+                system,
+            )
+
+    return frame_solvent_indices, covariances, vibrations, hb_labels
+
+
+def parallel_interfacial_water_orient_entropy(
+    system, start: int, end: int, step: int, temperature=298
+):
+    # pylint: disable=too-many-locals
+    """
+    For a given system, containing the topology and coordinates of molecules,
+    find the interfacial water molecules around solutes and calculate their
+    orientational entropy if there is a solute atom in the solvent coordination
+    shell.
+
+    :param system: mdanalysis instance of atoms in a frame
+    :param start: starting frame number
+    :param end: end frame number
+    :param step: steps between frames
+    """
+    # don't need to include the frame_solvent_indices dictionary
+    frame_solvent_indices = nested_dict()
+    # initialise the Covariance class instance to store covariance matrices
+    covariances = CovarianceCollection()
+    # initialise the Vibrations class instance to store vibrational entropies
+    vibrations = Vibrations(temperature)
+    hb_labels = HBLabels.HBLabelCollection()
+    # parallelise over frames by packing them and vars into generator object.
+    # can't seem to use the system.trajectory directly because it appears to
+    # give unpredictable results with all the frames being the same!
+    args = [
+        (index, system, temperature)
+        for index, _ in enumerate(system.trajectory[start:end:step])
+    ]
+    with Pool() as pool:
+        results = pool.map(_parallel_interfacial_water_orient_entropy, args)
+    # merge the solvent indices dicts
+    for res in results:
+        frame_solvent_indices.update(res[0])
+    # finish the other three data object mergers.
+    #
+    #
+    # pylint: disable=W0101
+    sys.exit("debug stop")
+    # 4. get the orientational entropy of interfacial waters and save
+    #   them to a dictionary
+    # TO-DO: add average Nc in Sorient dict
+    # Sorient_dict = Orient.get_resid_orientational_entropy_from_dict(
+    #     hb_labels.resid_labelled_shell_counts
+    # )
+    Sorients = Orientations()
+    Sorients.add_data(hb_labels)
+    Sorient_dict = Sorients.resid_labelled_Sorient
+    # 5. Get the vibrational entropy of interfacial waters
+    vibrations.add_data(covariances, diagonalise=True)
+
+    return (
+        Sorient_dict,
+        covariances,
+        vibrations,
+        frame_solvent_indices,
+    )
 
 
 def get_interfacial_water_orient_entropy(
@@ -136,7 +277,6 @@ def get_interfacial_water_orient_entropy(
                     f"{nearest_resname}_{nearest_resid}",
                     system,
                 )
-
     # 4. get the orientational entropy of interfacial waters and save
     #   them to a dictionary
     # TO-DO: add average Nc in Sorient dict
