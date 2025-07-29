@@ -18,10 +18,6 @@ from waterEntropy.recipes.forces_torques import get_forces_torques
 from waterEntropy.utils.helpers import nested_dict
 import waterEntropy.utils.selections as Selections
 
-# import numpy as np
-# np.set_printoptions(legacy='1.25')
-# import pprint
-
 
 def find_interfacial_solvent(solutes, system, shells: ShellCollection):
     # pylint: disable=too-many-locals
@@ -75,10 +71,7 @@ def _parallel_interfacial_water_orient_entropy(args):
     orientational entropy if there is a solute atom in the solvent coordination
     shell.
 
-    :param system: mdanalysis instance of atoms in a frame
-    :param start: starting frame number
-    :param end: end frame number
-    :param step: steps between frames
+    :param args: tuple of variables containing frame index and MDA system.
     """
     # unpack vars
     index, system = args
@@ -159,7 +152,11 @@ def parallel_interfacial_water_orient_entropy(
     :param end: end frame number
     :param step: steps between frames
     """
-    mp.set_start_method("fork")
+    # on linux default is fork, on mac and windows default is spawn,
+    # in python 3.14+ linux will default to spawn, so set to spawn for safety.
+    # This means functions calling this need to be called via a main function.
+    if mp.get_start_method(allow_none=False) != "spawn":
+        mp.set_start_method("spawn", force=True)
     # don't need to include the frame_solvent_indices dictionary
     frame_solvent_indices = nested_dict()
     # initialise the Covariance class instance to store covariance matrices
@@ -178,9 +175,6 @@ def parallel_interfacial_water_orient_entropy(
         frame_solvent_indices.update(res[0])
         covariances.merge(res[1])
         hb_labels.merge(res[2])
-
-    # pylint: disable=W0101
-    # sys.exit("debug stop")
     # 4. get the orientational entropy of interfacial waters and save
     #   them to a dictionary
     # TO-DO: add average Nc in Sorient dict
@@ -190,7 +184,6 @@ def parallel_interfacial_water_orient_entropy(
     Sorients = Orientations()
     Sorients.add_data(hb_labels)
     Sorient_dict = Sorients.resid_labelled_Sorient
-
     # # 5. Get the vibrational entropy of interfacial waters
     # initialise the Vibrations class instance to store vibrational entropies
     vibrations = Vibrations(temperature)
