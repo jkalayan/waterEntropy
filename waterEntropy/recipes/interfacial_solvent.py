@@ -4,7 +4,6 @@ coordination shells
 """
 
 from multiprocessing import Pool
-import sys
 
 import waterEntropy.analysis.HB as HBond
 import waterEntropy.analysis.HB_labels as HBLabels
@@ -18,6 +17,10 @@ import waterEntropy.maths.trig as Trig
 from waterEntropy.recipes.forces_torques import get_forces_torques
 from waterEntropy.utils.helpers import nested_dict
 import waterEntropy.utils.selections as Selections
+
+# import numpy as np
+# np.set_printoptions(legacy='1.25')
+# import pprint
 
 
 def find_interfacial_solvent(solutes, system, shells: ShellCollection):
@@ -78,15 +81,13 @@ def _parallel_interfacial_water_orient_entropy(args):
     :param step: steps between frames
     """
     # unpack vars
-    index, system, temperature = args
+    index, system = args
     ts = system.trajectory[index]
     # redeclare these on the frame by frame basis, and assemble them into the
     # main data structures upon return.
     frame_solvent_indices = nested_dict()
     # initialise the Covariance class instance to store covariance matrices
     covariances = CovarianceCollection()
-    # initialise the Vibrations class instance to store vibrational entropies
-    vibrations = Vibrations(temperature)
     hb_labels = HBLabels.HBLabelCollection()
     # initialise the RAD and HB class instances to store shell information
     shells = ShellCollection()
@@ -140,7 +141,7 @@ def _parallel_interfacial_water_orient_entropy(args):
                 system,
             )
 
-    return frame_solvent_indices, covariances, vibrations, hb_labels
+    return frame_solvent_indices, covariances, hb_labels
 
 
 def parallel_interfacial_water_orient_entropy(
@@ -162,26 +163,23 @@ def parallel_interfacial_water_orient_entropy(
     frame_solvent_indices = nested_dict()
     # initialise the Covariance class instance to store covariance matrices
     covariances = CovarianceCollection()
-    # initialise the Vibrations class instance to store vibrational entropies
-    vibrations = Vibrations(temperature)
     hb_labels = HBLabels.HBLabelCollection()
     # parallelise over frames by packing them and vars into generator object.
     # can't seem to use the system.trajectory directly because it appears to
     # give unpredictable results with all the frames being the same!
     args = [
-        (index, system, temperature)
-        for index, _ in enumerate(system.trajectory[start:end:step])
+        (index, system) for index, _ in enumerate(system.trajectory[start:end:step])
     ]
     with Pool() as pool:
         results = pool.map(_parallel_interfacial_water_orient_entropy, args)
     # merge the solvent indices dicts
     for res in results:
         frame_solvent_indices.update(res[0])
-    # finish the other three data object mergers.
-    #
-    #
+        covariances.merge(res[1])
+        hb_labels.merge(res[2])
+
     # pylint: disable=W0101
-    sys.exit("debug stop")
+    # sys.exit("debug stop")
     # 4. get the orientational entropy of interfacial waters and save
     #   them to a dictionary
     # TO-DO: add average Nc in Sorient dict
@@ -191,7 +189,10 @@ def parallel_interfacial_water_orient_entropy(
     Sorients = Orientations()
     Sorients.add_data(hb_labels)
     Sorient_dict = Sorients.resid_labelled_Sorient
-    # 5. Get the vibrational entropy of interfacial waters
+
+    # # 5. Get the vibrational entropy of interfacial waters
+    # initialise the Vibrations class instance to store vibrational entropies
+    vibrations = Vibrations(temperature)
     vibrations.add_data(covariances, diagonalise=True)
 
     return (
@@ -221,8 +222,6 @@ def get_interfacial_water_orient_entropy(
     frame_solvent_indices = nested_dict()
     # initialise the Covariance class instance to store covariance matrices
     covariances = CovarianceCollection()
-    # initialise the Vibrations class instance to store vibrational entropies
-    vibrations = Vibrations(temperature)
     hb_labels = HBLabels.HBLabelCollection()
     # pylint: disable=unused-variable
     for ts in system.trajectory[start:end:step]:
@@ -287,6 +286,8 @@ def get_interfacial_water_orient_entropy(
     Sorients.add_data(hb_labels)
     Sorient_dict = Sorients.resid_labelled_Sorient
     # 5. Get the vibrational entropy of interfacial waters
+    # initialise the Vibrations class instance to store vibrational entropies
+    vibrations = Vibrations(temperature)
     vibrations.add_data(covariances, diagonalise=True)
 
     return (
