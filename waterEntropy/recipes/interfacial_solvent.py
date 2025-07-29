@@ -3,7 +3,7 @@ These functions calculate orientational entropy from labelled
 coordination shells
 """
 
-from multiprocessing import Pool
+import multiprocessing as mp
 
 import waterEntropy.analysis.HB as HBond
 import waterEntropy.analysis.HB_labels as HBLabels
@@ -159,6 +159,7 @@ def parallel_interfacial_water_orient_entropy(
     :param end: end frame number
     :param step: steps between frames
     """
+    mp.set_start_method("fork")
     # don't need to include the frame_solvent_indices dictionary
     frame_solvent_indices = nested_dict()
     # initialise the Covariance class instance to store covariance matrices
@@ -170,7 +171,7 @@ def parallel_interfacial_water_orient_entropy(
     args = [
         (index, system) for index, _ in enumerate(system.trajectory[start:end:step])
     ]
-    with Pool() as pool:
+    with mp.Pool() as pool:
         results = pool.map(_parallel_interfacial_water_orient_entropy, args)
     # merge the solvent indices dicts
     for res in results:
