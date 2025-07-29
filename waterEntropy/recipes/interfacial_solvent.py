@@ -165,8 +165,9 @@ def parallel_interfacial_water_orient_entropy(
     # parallelise over frames by packing them and vars into generator object.
     # can't seem to use the system.trajectory directly because it appears to
     # give unpredictable results with all the frames being the same!
+    indices = list(range(start, end, step))
     args = [
-        (index, system) for index, _ in enumerate(system.trajectory[start:end:step])
+        (index, system) for index, _ in zip(indices, system.trajectory[start:end:step])
     ]
     with mp.Pool() as pool:
         results = pool.map(_parallel_interfacial_water_orient_entropy, args)
