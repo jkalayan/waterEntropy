@@ -3,7 +3,7 @@ These functions calculate orientational entropy from labelled
 coordination shells
 """
 
-import multiprocessing as mp
+from dask.distributed import Client
 
 import waterEntropy.analysis.HB as HBond
 import waterEntropy.analysis.HB_labels as HBLabels
@@ -155,8 +155,7 @@ def parallel_interfacial_water_orient_entropy(
     # on linux default is fork, on mac and windows default is spawn,
     # in python 3.14+ linux will default to spawn, so set to spawn for safety.
     # This means functions calling this need to be called via a main function.
-    if mp.get_start_method(allow_none=False) != "spawn":
-        mp.set_start_method("spawn", force=True)
+    client = Client(processes=True, threads_per_worker=1)
     # don't need to include the frame_solvent_indices dictionary
     frame_solvent_indices = nested_dict()
     # initialise the Covariance class instance to store covariance matrices
@@ -169,8 +168,8 @@ def parallel_interfacial_water_orient_entropy(
     args = [
         (index, system) for index, _ in zip(indices, system.trajectory[start:end:step])
     ]
-    with mp.Pool() as pool:
-        results = pool.map(_parallel_interfacial_water_orient_entropy, args)
+    futures = client.map(_parallel_interfacial_water_orient_entropy, args)
+    results = client.gather(futures)
     # merge the solvent indices dicts
     for res in results:
         frame_solvent_indices.update(res[0])
