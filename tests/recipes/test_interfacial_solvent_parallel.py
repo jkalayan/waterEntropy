@@ -9,7 +9,9 @@ import waterEntropy.recipes.interfacial_solvent as GetSolvent
 # get mda universe for arginine in solution
 system = load_inputs.get_amber_arginine_soln_universe()
 Sorient_dict, covariances, vibrations, frame_solvent_indices = (
-    GetSolvent.parallel_interfacial_water_orient_entropy(system, start=0, end=4, step=2)
+    GetSolvent.get_interfacial_water_orient_entropy(
+        system, start=0, end=4, step=2, parallel=True
+    )
 )
 
 

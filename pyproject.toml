@@ -23,6 +23,8 @@ requires-python = ">=3.11"
 dependencies = [
     "mdanalysis>=2.7.0",
     "numpy==2.2.3",
+    "dask==2025.7.0",
+    "distributed==2025.7.0",
 ]
 
 [project.urls]
