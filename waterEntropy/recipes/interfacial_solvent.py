@@ -243,39 +243,39 @@ def _entropy_per_step(args):
 
     :param args: tuple of variables containing frame index and MDA system frame.
     """
-    # unpack vars
+    # 1. unpack vars
     index, system = args
     ts = system.trajectory[index]
-    # redeclare these on the frame by frame basis, and assemble them into the
+    # 2. redeclare these on the frame by frame basis, and assemble them into the
     # main data structures upon return.
     frame_solvent_indices = nested_dict()
-    # initialise the Covariance class instance to store covariance matrices
+    # 3. initialise the Covariance class instance to store covariance matrices
     covariances = CovarianceCollection()
     hb_labels = HBLabels.HBLabelCollection()
-    # initialise the RAD and HB class instances to store shell information
+    # 4. initialise the RAD and HB class instances to store shell information
     shells = ShellCollection()
     HBs = HBond.HBCollection()
-    # 1. find > 1 UA molecules in system, these are the solutes
+    # 5. find > 1 UA molecules in system, these are the solutes
     resid_list = Selections.find_solute_molecules(system)
     solutes = Selections.get_selection(system, "resid", resid_list)
-    # 2. find the interfacial solvent molecules that are 1 UA in size
+    # 6. find the interfacial solvent molecules that are 1 UA in size
     #   and are in the RAD shell of any solute
     solvent_indices = find_interfacial_solvent(solutes, system, shells)
     first_shell_solvent = Selections.get_selection(system, "index", solvent_indices)
-    # 3. iterate through first shell solvent and find their RAD shells,
+    # 7. iterate through first shell solvent and find their RAD shells,
     #   HBing in the shells and shell labels
     for solvent in first_shell_solvent:
         # print(solvent)
-        # 3a. find RAD shell of interfacial solvent
+        # 8a. find RAD shell of interfacial solvent
         shell = RADShell.get_RAD_shell(solvent, system, shells)
-        # 3b. find HBing in the shell
+        # 8b. find HBing in the shell
         HBond.get_shell_HBs(shell, system, HBs, shells)
-        # 3c. find RAD shell labels
+        # 8c. find RAD shell labels
         shell = RADLabels.get_shell_labels(solvent.index, system, shell, shells)
-        # 3d. find HB labels
+        # 8d. find HB labels
         HBLabels.get_HB_labels(solvent.index, system, HBs, shells)
         if shell.nearest_nonlike_idx is not None:
-            # 3e. populate the labels into a dictionary for stats
+            # 8e. populate the labels into a dictionary for stats
             # only if a different atom is in the RAD shell
             nearest = system.atoms[shell.nearest_nonlike_idx]
             nearest_resid = nearest.resid
