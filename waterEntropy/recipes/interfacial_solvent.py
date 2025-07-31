@@ -205,15 +205,11 @@ def get_interfacial_water_orient_entropy(
     # Steps 1,2 and 3 in function calls.
     if parallel is True:
         covariances, frame_solvent_indices, hb_labels = (
-            _parallel_interfacial_water_orient_entropy(
-                system, start, end, step, temperature, client
-            )
+            _parallel_interfacial_water_orient_entropy(system, start, end, step, client)
         )
     else:
         covariances, frame_solvent_indices, hb_labels = (
-            _serial_interfacial_water_orient_entropy(
-                system, start, end, step, temperature
-            )
+            _serial_interfacial_water_orient_entropy(system, start, end, step)
         )
     # 4. get the orientational entropy of interfacial waters and save
     #   them to a dictionary
