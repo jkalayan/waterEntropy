@@ -13,7 +13,16 @@ def serial_interfacial_entropy():
     Sorient_dict, covariances, vibrations, frame_solvent_indices = (
         GetSolvent.get_interfacial_water_orient_entropy(system, start=0, end=4, step=2)
     )
-    return Sorient_dict, covariances, vibrations, frame_solvent_indices
+    frame_solvent_shells = GetSolvent.get_interfacial_shells(
+        system, start=0, end=4, step=2
+    )
+    return (
+        Sorient_dict,
+        covariances,
+        vibrations,
+        frame_solvent_indices,
+        frame_solvent_shells,
+    )
 
 
 def parallel_interfacial_entropy():
@@ -31,6 +40,17 @@ INTERFACIAL_ENTROPY_DICTS = pytest.mark.parametrize(
     "interfacial_entropy_dicts",
     [serial_interfacial_entropy(), parallel_interfacial_entropy()],
 )
+
+
+def test_frame_solvent_shells():
+    """Test outputted shell indices outputted in frame_solvent_shells dictionary
+    from a first shell solvent"""
+    frame_solvent_shells = serial_interfacial_entropy()[4]
+    # frame: {atom_idx: [shell_indices]}
+    assert len(frame_solvent_shells[0].keys()) == 32
+    assert len(frame_solvent_shells[2].keys()) == 36
+    assert frame_solvent_shells[0][1024] == [415, 931, 1318, 1618, 25, 1474, 1282]
+    assert frame_solvent_shells[2][1024] == [1318, 460, 580, 25, 1714, 19, 2497]
 
 
 @INTERFACIAL_ENTROPY_DICTS
