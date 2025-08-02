@@ -150,6 +150,146 @@ class HBLabelCollection:
                     "accepts_from"
                 ][d] += 1
 
+    def merge(self, other):
+        # pylint: disable=too-many-nested-blocks
+        # pylint: disable=too-many-branches
+        """
+        Merge another HBLabelCollection into this one.
+
+        :param other: another HBLabelCollection to merge
+        """
+
+        for resid in other.resid_labelled_shell_counts:
+            for resname in other.resid_labelled_shell_counts[resid]:
+                for labelled_shell in other.resid_labelled_shell_counts[resid][resname]:
+                    for D_A_count_key in other.resid_labelled_shell_counts[resid][
+                        resname
+                    ][labelled_shell]:
+                        if D_A_count_key in ["donates_to", "accepts_from"]:
+                            for DA in other.resid_labelled_shell_counts[resid][resname][
+                                labelled_shell
+                            ][D_A_count_key]:
+                                if (
+                                    DA
+                                    in self.resid_labelled_shell_counts[resid][resname][
+                                        labelled_shell
+                                    ][D_A_count_key]
+                                ):
+                                    self.resid_labelled_shell_counts[resid][resname][
+                                        labelled_shell
+                                    ][D_A_count_key][
+                                        DA
+                                    ] += other.resid_labelled_shell_counts[
+                                        resid
+                                    ][
+                                        resname
+                                    ][
+                                        labelled_shell
+                                    ][
+                                        D_A_count_key
+                                    ][
+                                        DA
+                                    ]
+                                else:
+                                    self.resid_labelled_shell_counts[resid][resname][
+                                        labelled_shell
+                                    ][D_A_count_key][
+                                        DA
+                                    ] = other.resid_labelled_shell_counts[
+                                        resid
+                                    ][
+                                        resname
+                                    ][
+                                        labelled_shell
+                                    ][
+                                        D_A_count_key
+                                    ][
+                                        DA
+                                    ]
+                        else:
+                            # shell_count
+                            if (
+                                D_A_count_key
+                                in self.resid_labelled_shell_counts[resid][resname][
+                                    labelled_shell
+                                ]
+                            ):
+                                self.resid_labelled_shell_counts[resid][resname][
+                                    labelled_shell
+                                ][D_A_count_key] += other.resid_labelled_shell_counts[
+                                    resid
+                                ][
+                                    resname
+                                ][
+                                    labelled_shell
+                                ][
+                                    D_A_count_key
+                                ]
+                            else:
+                                self.resid_labelled_shell_counts[resid][resname][
+                                    labelled_shell
+                                ][D_A_count_key] = other.resid_labelled_shell_counts[
+                                    resid
+                                ][
+                                    resname
+                                ][
+                                    labelled_shell
+                                ][
+                                    D_A_count_key
+                                ]
+
+        for resname in other.labelled_shell_counts:
+            for labelled_shell in other.labelled_shell_counts[resname]:
+                for D_A_count_key in other.labelled_shell_counts[resname][
+                    labelled_shell
+                ]:
+                    if D_A_count_key in ["donates_to", "accepts_from"]:
+                        for DA in other.labelled_shell_counts[resname][labelled_shell][
+                            D_A_count_key
+                        ]:
+                            if (
+                                DA
+                                in self.labelled_shell_counts[resname][labelled_shell][
+                                    D_A_count_key
+                                ]
+                            ):
+                                self.labelled_shell_counts[resname][labelled_shell][
+                                    D_A_count_key
+                                ][DA] += other.labelled_shell_counts[resname][
+                                    labelled_shell
+                                ][
+                                    D_A_count_key
+                                ][
+                                    DA
+                                ]
+                            else:
+                                self.labelled_shell_counts[resname][labelled_shell][
+                                    D_A_count_key
+                                ][DA] = other.labelled_shell_counts[resname][
+                                    labelled_shell
+                                ][
+                                    D_A_count_key
+                                ][
+                                    DA
+                                ]
+                    else:
+                        # shell_count
+                        if (
+                            D_A_count_key
+                            in self.labelled_shell_counts[resname][labelled_shell]
+                        ):
+                            self.labelled_shell_counts[resname][labelled_shell][
+                                D_A_count_key
+                            ] += other.labelled_shell_counts[resname][labelled_shell][
+                                D_A_count_key
+                            ]
+                        else:
+                            self.labelled_shell_counts[resname][labelled_shell][
+                                D_A_count_key
+                            ] = other.labelled_shell_counts[resname][labelled_shell][
+                                D_A_count_key
+                            ]
+
 
 def get_HB_labels(atom_idx: int, system, HBs: HBCollection, shells: ShellCollection):
     """

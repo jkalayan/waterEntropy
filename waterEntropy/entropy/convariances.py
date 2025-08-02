@@ -82,3 +82,27 @@ class CovarianceCollection:
             count_dict[(nearest, molecule_name)] = 1
         else:
             count_dict[(nearest, molecule_name)] += 1
+
+    def merge(self, other):
+        """
+        Merge another CovarianceCollection into this one.
+
+        :param other: another CovarianceCollection to merge
+        """
+        for key in other.forces:
+            if key not in self.forces:
+                self.forces[key] = other.forces[key]
+                self.torques[key] = other.torques[key]
+                self.counts[key] = other.counts[key]
+            else:
+                # weighted sum of the forces and torques
+                self.forces[key] = (
+                    self.forces[key] * self.counts[key]
+                    + other.forces[key] * other.counts[key]
+                ) / (self.counts[key] + other.counts[key])
+                self.torques[key] = (
+                    self.torques[key] * self.counts[key]
+                    + other.torques[key] * other.counts[key]
+                ) / (self.counts[key] + other.counts[key])
+                # sum of the counts
+                self.counts[key] += other.counts[key]
