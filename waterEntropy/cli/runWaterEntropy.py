@@ -34,7 +34,8 @@ def run_waterEntropy(
     # load topology and coordinates
     u = Universe(file_topology, file_coords)
     # interfacial waters
-    Sorient_dict, covariances, vibrations, frame_solvent_indices = GetSolvent.get_interfacial_water_orient_entropy(u, start, end, step, temperature, parallel)
+    Sorient_dict, covariances, vibrations, frame_solvent_indices, n_frames = GetSolvent.get_interfacial_water_orient_entropy(u, start, end, step, temperature, parallel)
+    print(f"Number of frames analysed: {n_frames}")
     OR.print_Sorient_dicts(Sorient_dict)
     # GetSolvent.print_frame_solvent_dicts(frame_solvent_indices)
     VIB.print_Svib_data(vibrations, covariances)

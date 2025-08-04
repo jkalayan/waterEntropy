@@ -204,11 +204,11 @@ def get_interfacial_water_orient_entropy(
     """
     # Steps 1,2 and 3 in function calls.
     if parallel is True:
-        covariances, frame_solvent_indices, hb_labels = (
+        covariances, frame_solvent_indices, hb_labels, n_frames = (
             _parallel_interfacial_water_orient_entropy(system, start, end, step, client)
         )
     else:
-        covariances, frame_solvent_indices, hb_labels = (
+        covariances, frame_solvent_indices, hb_labels, n_frames = (
             _serial_interfacial_water_orient_entropy(system, start, end, step)
         )
     # 4. get the orientational entropy of interfacial waters and save
@@ -230,6 +230,7 @@ def get_interfacial_water_orient_entropy(
         covariances,
         vibrations,
         frame_solvent_indices,
+        n_frames,
     )
 
 
@@ -252,6 +253,8 @@ def _entropy_per_step(args):
     # 3. initialise the Covariance class instance to store covariance matrices
     covariances = CovarianceCollection()
     hb_labels = HBLabels.HBLabelCollection()
+    # and store number of frames analysed
+    n_frames = 1
     # 4. initialise the RAD and HB class instances to store shell information
     shells = ShellCollection()
     HBs = HBond.HBCollection()
@@ -304,7 +307,7 @@ def _entropy_per_step(args):
                 system,
             )
 
-    return frame_solvent_indices, covariances, hb_labels
+    return frame_solvent_indices, covariances, hb_labels, n_frames
 
 
 def _parallel_interfacial_water_orient_entropy(
@@ -332,6 +335,8 @@ def _parallel_interfacial_water_orient_entropy(
     # initialise the Covariance class instance to store covariance matrices
     covariances = CovarianceCollection()
     hb_labels = HBLabels.HBLabelCollection()
+    # store number of frames analysed
+    n_frames = 0
     # parallelise over frames by packing them and vars into generator object.
     # can't seem to use the system.trajectory directly because it appears to
     # give unpredictable results with all the frames being the same!
@@ -346,7 +351,8 @@ def _parallel_interfacial_water_orient_entropy(
         frame_solvent_indices.update(res[0])
         covariances.merge(res[1])
         hb_labels.merge(res[2])
-    return (covariances, frame_solvent_indices, hb_labels)
+        n_frames += res[3]
+    return (covariances, frame_solvent_indices, hb_labels, n_frames)
 
 
 def _serial_interfacial_water_orient_entropy(system, start: int, end: int, step: int):
@@ -368,8 +374,11 @@ def _serial_interfacial_water_orient_entropy(system, start: int, end: int, step:
     # initialise the Covariance class instance to store covariance matrices
     covariances = CovarianceCollection()
     hb_labels = HBLabels.HBLabelCollection()
+    # store number of frames analysed
+    n_frames = 0
     # pylint: disable=unused-variable
     for ts in system.trajectory[start:end:step]:
+        n_frames += 1
         # initialise the RAD and HB class instances to store shell information
         shells = ShellCollection()
         HBs = HBond.HBCollection()
@@ -421,4 +430,4 @@ def _serial_interfacial_water_orient_entropy(system, start: int, end: int, step:
                     f"{nearest_resname}_{nearest_resid}",
                     system,
                 )
-    return (covariances, frame_solvent_indices, hb_labels)
+    return (covariances, frame_solvent_indices, hb_labels, n_frames)

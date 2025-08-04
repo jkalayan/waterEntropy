@@ -10,7 +10,7 @@ import waterEntropy.recipes.interfacial_solvent as GetSolvent
 def serial_interfacial_entropy():
     """Return the entropy dictionaries calcalated via serial process"""
     system = load_inputs.get_amber_arginine_soln_universe()
-    Sorient_dict, covariances, vibrations, frame_solvent_indices = (
+    Sorient_dict, covariances, vibrations, frame_solvent_indices, n_frames = (
         GetSolvent.get_interfacial_water_orient_entropy(system, start=0, end=4, step=2)
     )
     frame_solvent_shells = GetSolvent.get_interfacial_shells(
@@ -21,6 +21,7 @@ def serial_interfacial_entropy():
         covariances,
         vibrations,
         frame_solvent_indices,
+        n_frames,
         frame_solvent_shells,
     )
 
@@ -28,12 +29,12 @@ def serial_interfacial_entropy():
 def parallel_interfacial_entropy():
     """Return the entropy dictionaries calcalated via serial process"""
     system = load_inputs.get_amber_arginine_soln_universe()
-    Sorient_dict, covariances, vibrations, frame_solvent_indices = (
+    Sorient_dict, covariances, vibrations, frame_solvent_indices, n_frames = (
         GetSolvent.get_interfacial_water_orient_entropy(
             system, start=0, end=4, step=2, parallel=True
         )
     )
-    return Sorient_dict, covariances, vibrations, frame_solvent_indices
+    return Sorient_dict, covariances, vibrations, frame_solvent_indices, n_frames
 
 
 INTERFACIAL_ENTROPY_DICTS = pytest.mark.parametrize(
@@ -45,7 +46,7 @@ INTERFACIAL_ENTROPY_DICTS = pytest.mark.parametrize(
 def test_frame_solvent_shells():
     """Test outputted shell indices outputted in frame_solvent_shells dictionary
     from a first shell solvent"""
-    frame_solvent_shells = serial_interfacial_entropy()[4]
+    frame_solvent_shells = serial_interfacial_entropy()[5]
     # frame: {atom_idx: [shell_indices]}
     assert len(frame_solvent_shells[0].keys()) == 32
     assert len(frame_solvent_shells[2].keys()) == 36
@@ -197,3 +198,10 @@ def test_frame_solvent_indices(interfacial_entropy_dicts):
         2005,
         2041,
     ]
+
+
+@INTERFACIAL_ENTROPY_DICTS
+def test_n_frames(interfacial_entropy_dicts):
+    """Test the get interfacial water orient entropy function"""
+    n_frames = interfacial_entropy_dicts[4]
+    assert n_frames == 2
