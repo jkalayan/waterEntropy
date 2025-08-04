@@ -32,11 +32,13 @@ Here's how to use waterEntropy via the API:
     start, end, step = 0, 4, 2
 
     # Calculate the entropy
-    Sorient_dict, covariances, vibrations, frame_solvent_indices = GetSolvent.get_interfacial_water_orient_entropy(
+    Sorient_dict, covariances, vibrations, frame_solvent_indices, n_frames = GetSolvent.get_interfacial_water_orient_entropy(
         u, start, end, step,
         parallel=False, # option to parallelise the calculate is set to False by default, set True for parallel calculation
         temperature=298, # default simulated system temperate is set to 298 Kelvin, change accordingly
     )
+
+    print(f"Number of frames analysed: {n_frames}")
 
     # Print Sorient
     OR.print_Sorient_dicts(Sorient_dict)
