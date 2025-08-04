@@ -6,17 +6,46 @@ import pytest
 from tests.input_files import load_inputs
 import waterEntropy.recipes.interfacial_solvent as GetSolvent
 
-# get mda universe for arginine in solution
-system = load_inputs.get_amber_arginine_soln_universe()
-Sorient_dict, covariances, vibrations, frame_solvent_indices = (
-    GetSolvent.get_interfacial_water_orient_entropy(system, start=0, end=4, step=2)
+
+def serial_interfacial_entropy():
+    """Return the entropy dictionaries calcalated via serial process"""
+    system = load_inputs.get_amber_arginine_soln_universe()
+    Sorient_dict, covariances, vibrations, frame_solvent_indices = (
+        GetSolvent.get_interfacial_water_orient_entropy(system, start=0, end=4, step=2)
+    )
+    frame_solvent_shells = GetSolvent.get_interfacial_shells(
+        system, start=0, end=4, step=2
+    )
+    return (
+        Sorient_dict,
+        covariances,
+        vibrations,
+        frame_solvent_indices,
+        frame_solvent_shells,
+    )
+
+
+def parallel_interfacial_entropy():
+    """Return the entropy dictionaries calcalated via serial process"""
+    system = load_inputs.get_amber_arginine_soln_universe()
+    Sorient_dict, covariances, vibrations, frame_solvent_indices = (
+        GetSolvent.get_interfacial_water_orient_entropy(
+            system, start=0, end=4, step=2, parallel=True
+        )
+    )
+    return Sorient_dict, covariances, vibrations, frame_solvent_indices
+
+
+INTERFACIAL_ENTROPY_DICTS = pytest.mark.parametrize(
+    "interfacial_entropy_dicts",
+    [serial_interfacial_entropy(), parallel_interfacial_entropy()],
 )
-frame_solvent_shells = GetSolvent.get_interfacial_shells(system, start=0, end=4, step=2)
 
 
 def test_frame_solvent_shells():
     """Test outputted shell indices outputted in frame_solvent_shells dictionary
     from a first shell solvent"""
+    frame_solvent_shells = serial_interfacial_entropy()[4]
     # frame: {atom_idx: [shell_indices]}
     assert len(frame_solvent_shells[0].keys()) == 32
     assert len(frame_solvent_shells[2].keys()) == 36
@@ -24,17 +53,21 @@ def test_frame_solvent_shells():
     assert frame_solvent_shells[2][1024] == [1318, 460, 580, 25, 1714, 19, 2497]
 
 
-def test_Sorient_dict():
+@INTERFACIAL_ENTROPY_DICTS
+def test_Sorient_dict(interfacial_entropy_dicts):
     """Test outputted orientational entropy values of solvent molecules around a given solute molecule"""
     # resid: {resname = [Sorient, count]}
+    Sorient_dict = interfacial_entropy_dicts[0]
     assert Sorient_dict[1]["ACE"] == pytest.approx([2.2473807716251804, 13])
     assert Sorient_dict[2]["ARG"] == pytest.approx([2.6481382191024245, 35])
     assert Sorient_dict[3]["NME"] == pytest.approx([0.9503950365967891, 12])
 
 
-def test_covariances():
-    "Test the covariance matrices"
+@INTERFACIAL_ENTROPY_DICTS
+def test_covariances(interfacial_entropy_dicts):
+    """Test the covariance matrices"""
 
+    covariances = interfacial_entropy_dicts[1]
     forces = covariances.forces[("ACE_1", "WAT")]
     torques = covariances.torques[("ACE_1", "WAT")]
     count = covariances.counts[("ACE_1", "WAT")]
@@ -62,8 +95,10 @@ def test_covariances():
     assert count == 13
 
 
-def test_vibrations():
+@INTERFACIAL_ENTROPY_DICTS
+def test_vibrations(interfacial_entropy_dicts):
     "Test the vibrational entropies"
+    vibrations = interfacial_entropy_dicts[2]
     Strans = vibrations.translational_S[("ACE_1", "WAT")]
     Srot = vibrations.rotational_S[("ACE_1", "WAT")]
     trans_freqs = vibrations.translational_freq[("ACE_1", "WAT")]
@@ -77,9 +112,11 @@ def test_vibrations():
     assert np.allclose(rot_freqs, np.array([[16556105, 3332918, 8488362]]))
 
 
-def test_frame_solvent_indices():
+@INTERFACIAL_ENTROPY_DICTS
+def test_frame_solvent_indices(interfacial_entropy_dicts):
     """Test the get interfacial water orient entropy function"""
     # frame: {resname: {resid = [shell indices]}}
+    frame_solvent_indices = interfacial_entropy_dicts[3]
     assert frame_solvent_indices[0].get("ACE").get(1) == [
         121,
         235,

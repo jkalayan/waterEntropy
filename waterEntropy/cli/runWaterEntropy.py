@@ -22,6 +22,8 @@ def run_waterEntropy(
     start="start",
     end="end",
     step="step",
+    temperature="temperature",
+    parallel="parallel"
 ):
     """
     """
@@ -31,17 +33,16 @@ def run_waterEntropy(
 
     # load topology and coordinates
     u = Universe(file_topology, file_coords)
-
     # interfacial waters
-    Sorient_dict, covariances, vibrations, frame_solvent_indices = GetSolvent.get_interfacial_water_orient_entropy(u, start, end, step, temperature=298)
+    Sorient_dict, covariances, vibrations, frame_solvent_indices = GetSolvent.get_interfacial_water_orient_entropy(u, start, end, step, temperature, parallel)
     OR.print_Sorient_dicts(Sorient_dict)
     # GetSolvent.print_frame_solvent_dicts(frame_solvent_indices)
     VIB.print_Svib_data(vibrations, covariances)
 
     # bulk waters
-    bulk_Sorient_dict, bulk_covariances, bulk_vibrations = GetBulkSolvent.get_bulk_water_orient_entropy(u, start, end, step, temperature=298)
-    OR.print_Sorient_dicts(bulk_Sorient_dict)
-    VIB.print_Svib_data(bulk_vibrations, bulk_covariances)
+    # bulk_Sorient_dict, bulk_covariances, bulk_vibrations = GetBulkSolvent.get_bulk_water_orient_entropy(u, start, end, step, temperature)
+    # OR.print_Sorient_dicts(bulk_Sorient_dict)
+    # VIB.print_Svib_data(bulk_vibrations, bulk_covariances)
 
 
     sys.stdout.flush()
@@ -98,6 +99,20 @@ def main():
             default=1,
             help="steps to take between start and end frame selections.",
         )
+        parser.add_argument(
+            "-temp",
+            "--temperature",
+            action="store",
+            type=float,
+            default=298,
+            help="Target temperature the simulation was performed at in Kelvin.",
+        )
+        parser.add_argument(
+            "-p",
+            "--parallel",
+            action="store_true",
+            help="Whether to perform the interfacial water calculations in parallel.",
+        )
         op = parser.parse_args()
     except argparse.ArgumentError:
         logging.error(
@@ -112,6 +127,8 @@ def main():
         start=op.start, 
         end=op.end, 
         step=op.step,
+        temperature=op.temperature,
+        parallel=op.parallel
     )
 
 
