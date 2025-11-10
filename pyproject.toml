@@ -22,7 +22,7 @@ keywords = ["water", "entropy", "molecular dynamics", "forces"]
 requires-python = ">=3.11"
 dependencies = [
     "mdanalysis>=2.10.0",
-    "numpy==2.3.0",
+    "numpy==2.3.4",
     "dask==2025.7.0",
     "distributed==2025.7.0",
 ]
