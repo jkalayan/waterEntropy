@@ -3,6 +3,8 @@ These functions calculate orientational entropy from labelled
 coordination shells
 """
 
+import logging
+
 from dask.distributed import Client
 
 import waterEntropy.analysis.HB as HBond
@@ -313,6 +315,7 @@ def _entropy_per_step(args):
 def _parallel_interfacial_water_orient_entropy(
     system, start: int, end: int, step: int, client
 ):
+    # pylint: disable=too-many-locals
     """
     Parallel method for calculation of interfacial water orientational entropy.
     For a given system, containing the topology and coordinates of molecules,
@@ -325,11 +328,12 @@ def _parallel_interfacial_water_orient_entropy(
     :param end: end frame number
     :param step: steps between frames
     """
-    # on linux default is fork, on mac and windows default is spawn,
-    # in python 3.14+ linux will default to spawn, so set to spawn for safety.
-    # This means functions calling this need to be called via a main function.
+    # If no Dask client cluster has been setup externally then default to single host.
+    # In this program we want 1 worker = 1 thread.
     if client is None:
-        client = Client(processes=True, threads_per_worker=1)
+        client = Client(
+            processes=True, threads_per_worker=1, silence_logs=logging.CRITICAL
+        )
     # don't need to include the frame_solvent_indices dictionary
     frame_solvent_indices = nested_dict()
     # initialise the Covariance class instance to store covariance matrices
@@ -337,15 +341,24 @@ def _parallel_interfacial_water_orient_entropy(
     hb_labels = HBLabels.HBLabelCollection()
     # store number of frames analysed
     n_frames = 0
+    # Batch into chunks that coincide with number of workers,
+    # so that we can free memory in batches.
+    batch_size = client.scheduler_info()["n_workers"]
+    indices = list(range(start, end, step))
+    batches = [indices[i : i + batch_size] for i in range(0, len(indices), batch_size)]
     # parallelise over frames by packing them and vars into generator object.
     # can't seem to use the system.trajectory directly because it appears to
     # give unpredictable results with all the frames being the same!
-    indices = list(range(start, end, step))
-    args = [
-        (index, system) for index, _ in zip(indices, system.trajectory[start:end:step])
-    ]
-    futures = client.map(_entropy_per_step, args)
-    results = client.gather(futures)
+    results = []
+    for batch in batches:
+        args = [
+            (index, system)
+            for index, _ in zip(batch, system.trajectory[start:end:step])
+        ]
+        futures = client.map(_entropy_per_step, args)
+        results.extend(client.gather(futures))
+        client.restart()
+    client.close()
     # merge the solvent indices dicts
     for res in results:
         frame_solvent_indices.update(res[0])
