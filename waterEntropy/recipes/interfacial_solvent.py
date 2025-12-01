@@ -351,10 +351,7 @@ def _parallel_interfacial_water_orient_entropy(
     # give unpredictable results with all the frames being the same!
     results = []
     for batch in batches:
-        args = [
-            (index, system)
-            for index, _ in zip(batch, system.trajectory[start:end:step])
-        ]
+        args = [(index, system) for index in batch]
         futures = client.map(_entropy_per_step, args)
         results.extend(client.gather(futures))
         client.restart()
