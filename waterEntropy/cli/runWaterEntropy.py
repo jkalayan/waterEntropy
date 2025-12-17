@@ -17,6 +17,7 @@ import waterEntropy.entropy.vibrations as VIB
 import waterEntropy.entropy.orientations as OR
 from waterEntropy.utils.dask_clusters import configure_slurm_cluster
 
+
 def run_waterEntropy(args):
     """
     """
@@ -43,12 +44,11 @@ def run_waterEntropy(args):
     # OR.print_Sorient_dicts(bulk_Sorient_dict)
     # VIB.print_Svib_data(bulk_vibrations, bulk_covariances)
 
-
     sys.stdout.flush()
     print(datetime.now() - startTime)
 
 
-if __name__ == "__main__":
+def main():
     """Entrypoint for running the WaterEntropy for interfacial water calculation."""
 
     try:
@@ -165,6 +165,27 @@ if __name__ == "__main__":
             type=str,
             default="24:00:00",
             help="How long to request cluster for?",
+        )      
+        parser.add_argument(
+            "--conda_path",
+            action="store",
+            type=str,
+            default="$PWD/miniconda/bin",
+            help="Path to conda executable.",
+        )
+        parser.add_argument(
+            "--conda_exec",
+            action="store",
+            type=str,
+            default="mamba",
+            help="conda/mamba executable to use.",
+        )
+        parser.add_argument(
+            "--conda_env",
+            action="store",
+            type=str,
+            default="waterentropy",
+            help="Name of the conda/mamba environment to activate.",
         )
         args = parser.parse_args()
         if args.slurm is True: args.parallel = True # No need to set both on CLI.
@@ -176,3 +197,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     run_waterEntropy(args)
+
+
+if __name__ == "__main__":
+    main()

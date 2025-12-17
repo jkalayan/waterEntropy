@@ -23,14 +23,16 @@ def configure_slurm_cluster(args):
         local_directory="$PWD",
         interface="hsn0",
         job_script_prologue=[
-            'eval "$(/mnt/lustre/a2fs-nvme/work/c01/c01/jtg2/miniforge3/bin/conda shell.bash hook)"',
-            'eval "$(mamba shell hook --shell bash)"',
-            "mamba activate waterentropy",
+            f'eval "$({args.conda_path}/conda shell.bash hook)"',
+            f'eval "$({args.conda_exec} shell hook --shell bash)"',
+            f"{args.conda_exec} activate {args.conda_env}",
             "export SLURM_CPU_FREQ_REQ=2250000",
         ],
     )
 
-    cluster.scale(jobs=args.slurm.nodes)
+    cluster.scale(jobs=args.slurm_nodes)
     client = Client(cluster)
+    print("The job script that will be submitted to slurm is:")
+    print(cluster.job_script())
 
     return client
