@@ -15,26 +15,24 @@ import waterEntropy.recipes.interfacial_solvent as GetSolvent
 import waterEntropy.recipes.bulk_water as GetBulkSolvent
 import waterEntropy.entropy.vibrations as VIB
 import waterEntropy.entropy.orientations as OR
+from waterEntropy.utils.dask_clusters import configure_slurm_cluster
 
-def run_waterEntropy(
-    file_topology="file_topology",
-    file_coords="file_coords",
-    start="start",
-    end="end",
-    step="step",
-    temperature="temperature",
-    parallel="parallel"
-):
+def run_waterEntropy(args):
     """
     """
 
     startTime = datetime.now()
     print(startTime)
 
+    if args.slurm is True:
+        client = configure_slurm_cluster(args)
+    else:
+        client = None
+
     # load topology and coordinates
-    u = Universe(file_topology, file_coords)
+    u = Universe(args.file_topology, args.file_coords)
     # interfacial waters
-    Sorient_dict, covariances, vibrations, frame_solvent_indices, n_frames = GetSolvent.get_interfacial_water_orient_entropy(u, start, end, step, temperature, parallel)
+    Sorient_dict, covariances, vibrations, frame_solvent_indices, n_frames = GetSolvent.get_interfacial_water_orient_entropy(u, args.start, args.end, args.step, args.temperature, args.parallel, client)
     print(f"Number of frames analysed: {n_frames}")
     OR.print_Sorient_dicts(Sorient_dict)
     # GetSolvent.print_frame_solvent_dicts(frame_solvent_indices)
@@ -50,8 +48,9 @@ def run_waterEntropy(
     print(datetime.now() - startTime)
 
 
-def main():
-    """ """
+if __name__ == "__main__":
+    """Entrypoint for running the WaterEntropy for interfacial water calculation."""
+
     try:
         usage = "runWaterEntropy.py [-h]"
         parser = argparse.ArgumentParser(
@@ -114,7 +113,61 @@ def main():
             action="store_true",
             help="Whether to perform the interfacial water calculations in parallel.",
         )
-        op = parser.parse_args()
+        parser.add_argument(
+            "--slurm",
+            action="store_true",
+            help="Whether to perform the interfacial water calculations on a slurm cluster.",
+        )
+        parser.add_argument(
+            "--slurm_nodes",
+            action="store",
+            type=int,
+            default=1,
+            help="How many HPC nodes?",
+        )
+        parser.add_argument(
+            "--slurm_cores",
+            action="store",
+            type=int,
+            default=128,
+            help="How many cores per node?",
+        )
+        parser.add_argument(
+            "--slurm_processes",
+            action="store",
+            type=int,
+            default=128,
+            help="How many dask processes per node?",
+        )
+        parser.add_argument(
+            "--slurm_memory",
+            action="store",
+            type=str,
+            default="256GB",
+            help="How memory per node?",
+        )
+        parser.add_argument(
+            "--slurm_queue",
+            action="store",
+            type=str,
+            default="standard",
+            help="Which SLURM queue to submit to?",
+        )
+        parser.add_argument(
+            "--slurm_account",
+            action="store",
+            type=str,
+            help="Which account budget to submit with?",
+        )
+        parser.add_argument(
+            "--slurm_walltime",
+            action="store",
+            type=str,
+            default="24:00:00",
+            help="How long to request cluster for?",
+        )
+        args = parser.parse_args()
+        if args.slurm is True: args.parallel = True # No need to set both on CLI.
     except argparse.ArgumentError:
         logging.error(
             "Command line arguments are ill-defined, please check the arguments."
@@ -122,16 +175,4 @@ def main():
         raise
         sys.exit(1)
 
-    run_waterEntropy(
-        file_topology=op.file_topology,
-        file_coords=op.file_coords,
-        start=op.start, 
-        end=op.end, 
-        step=op.step,
-        temperature=op.temperature,
-        parallel=op.parallel
-    )
-
-
-if __name__ == "__main__":
-    main()
+    run_waterEntropy(args)

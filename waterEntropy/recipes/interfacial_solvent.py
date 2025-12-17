@@ -4,6 +4,7 @@ coordination shells
 """
 
 import logging
+import time
 
 from dask.distributed import Client
 
@@ -215,22 +216,28 @@ def get_interfacial_water_orient_entropy(
     indices = list(range(start, end, step))
     if parallel is True:
         # If no Dask client cluster has been setup externally then default to single host.
-        # In this program we want 1 worker = 1 thread.
         if client is None:
             client = Client(
                 processes=True, threads_per_worker=1, silence_logs=logging.CRITICAL
             )
-        # parallelise over frames by packing them and vars into batches and mapping
-        # them across dask workers.
-        batch_size = client.scheduler_info()["n_workers"]
-        batches = [
-            indices[i : i + batch_size] for i in range(0, len(indices), batch_size)
-        ]
-        for batch in batches:
-            args = [(index, system) for index in batch]
+            # parallelise over frames by packing them and vars into batches and mapping
+            # them across dask workers.
+            batch_size = client.scheduler_info()["n_workers"]
+            batches = [
+                indices[i : i + batch_size] for i in range(0, len(indices), batch_size)
+            ]
+            for i, batch in enumerate(batches):
+                args = [(index, system) for index in batch]
+                futures = client.map(_entropy_per_step, args)
+                results.extend(client.gather(futures))
+                if i < len(batches) - 1:
+                    client.restart()
+                    time.sleep(2)
+        # Otherwise we are on HPC and we can run without the memory fixes.
+        else:
+            args = [(index, system) for index in indices]
             futures = client.map(_entropy_per_step, args)
             results.extend(client.gather(futures))
-            client.restart()
         client.close()
     else:
         for index in indices:
