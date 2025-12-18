@@ -6,6 +6,8 @@
 import argparse
 from datetime import datetime
 import logging
+import os
+import shutil
 import sys
 import numpy as np
 
@@ -44,6 +46,9 @@ def run_waterEntropy(args):
     # OR.print_Sorient_dicts(bulk_Sorient_dict)
     # VIB.print_Svib_data(bulk_vibrations, bulk_covariances)
 
+    dask_tmp = os.path.join(os.getcwd(), "dask-scratch-space")
+    if os.path.exists(dask_tmp) and os.path.isdir(dask_tmp):
+        shutil.rmtree(dask_tmp)
     sys.stdout.flush()
     print(datetime.now() - startTime)
 
@@ -157,6 +162,7 @@ def main():
             "--slurm_account",
             action="store",
             type=str,
+            default="",
             help="Which account budget to submit with?",
         )
         parser.add_argument(
