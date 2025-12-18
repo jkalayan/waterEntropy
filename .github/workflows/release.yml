@@ -54,7 +54,7 @@ jobs:
 
       - name: send PR
         id: pr_id
-        uses: peter-evans/create-pull-request@v7.0.9
+        uses: peter-evans/create-pull-request@v8.0.0
         with:
           commit-message: Update version to ${{ github.event.inputs.version }}
           branch: version-update
@@ -96,7 +96,7 @@ jobs:
     steps:
 
       - name: create release
-        uses: softprops/action-gh-release@v2.4.2
+        uses: softprops/action-gh-release@v2.5.0
         with:
           name: v${{ github.event.inputs.version }}
           generate_release_notes: true
