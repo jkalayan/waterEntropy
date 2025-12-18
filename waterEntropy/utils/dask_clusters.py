@@ -2,22 +2,12 @@
 Helpers for setting up dask clusters on HPC.
 """
 
-import sys
-
 from dask.distributed import Client
 from dask_jobqueue import SLURMCluster
-import psutil
 
 
 def configure_slurm_cluster(args):
     """Configure a SLURM HPC cluster to run bigger jobs on."""
-
-    cpus = psutil.cpu_count(logical=False)
-    interfaces = psutil.net_if_addrs()
-    cli = sys.argv
-    print(f"cpus = {cpus}")
-    print(f"interfaces = {interfaces}")
-    print(f"argv = {cli}")
     prologue = []
     # conda init hook
     prologue.append(f'eval "$({args.conda_path}/conda shell.bash hook)"')
