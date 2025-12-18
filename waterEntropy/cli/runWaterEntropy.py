@@ -8,6 +8,7 @@ from datetime import datetime
 import logging
 import os
 import shutil
+import psutil
 import sys
 import numpy as np
 
@@ -134,14 +135,14 @@ def main():
             "--slurm_cores",
             action="store",
             type=int,
-            default=128,
+            default=psutil.cpu_count(logical=False),
             help="How many cores per node?",
         )
         parser.add_argument(
             "--slurm_processes",
             action="store",
             type=int,
-            default=128,
+            default=psutil.cpu_count(logical=False),
             help="How many dask processes per node?",
         )
         parser.add_argument(
