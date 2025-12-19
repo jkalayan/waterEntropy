@@ -18,7 +18,7 @@ import waterEntropy.recipes.interfacial_solvent as GetSolvent
 import waterEntropy.recipes.bulk_water as GetBulkSolvent
 import waterEntropy.entropy.vibrations as VIB
 import waterEntropy.entropy.orientations as OR
-from waterEntropy.utils.dask_clusters import configure_slurm_cluster
+from waterEntropy.utils.dask_clusters import configure_hpc_cluster
 
 
 def run_waterEntropy(args):
@@ -28,8 +28,8 @@ def run_waterEntropy(args):
     startTime = datetime.now()
     print(startTime)
 
-    if args.slurm is True:
-        client = configure_slurm_cluster(args)
+    if args.hpc is True:
+        client = configure_hpc_cluster(args)
     else:
         client = None
 
@@ -120,82 +120,96 @@ def main():
             help="Whether to perform the interfacial water calculations in parallel.",
         )
         parser.add_argument(
-            "--slurm",
+            "--conda-exec",
+            action="store",
+            type=str,
+            default="mamba",
+            help="conda/mamba executable to use for HPC runs.",
+        )
+        parser.add_argument(
+            "--conda-env",
+            action="store",
+            type=str,
+            default="waterentropy",
+            help="Name of the conda/mamba environment to activate for HPC runs.",
+        )
+        parser.add_argument(
+            "--conda-path",
+            action="store",
+            type=str,
+            default="$PWD/miniconda/bin",
+            help="Path to conda executable on HPC machine.",
+        )
+        parser.add_argument(
+            "--hpc",
             action="store_true",
             help="Whether to perform the interfacial water calculations on a slurm cluster.",
         )
         parser.add_argument(
-            "--slurm_nodes",
-            action="store",
-            type=int,
-            default=1,
-            help="How many HPC nodes?",
-        )
-        parser.add_argument(
-            "--slurm_cores",
-            action="store",
-            type=int,
-            default=psutil.cpu_count(logical=False),
-            help="How many cores per node?",
-        )
-        parser.add_argument(
-            "--slurm_processes",
-            action="store",
-            type=int,
-            default=psutil.cpu_count(logical=False),
-            help="How many dask processes per node?",
-        )
-        parser.add_argument(
-            "--slurm_memory",
-            action="store",
-            type=str,
-            default="256GB",
-            help="How memory per node?",
-        )
-        parser.add_argument(
-            "--slurm_queue",
-            action="store",
-            type=str,
-            default="standard",
-            help="Which SLURM queue to submit to?",
-        )
-        parser.add_argument(
-            "--slurm_account",
+            "--hpc-account",
             action="store",
             type=str,
             default="",
             help="Which account budget to submit with?",
         )
         parser.add_argument(
-            "--slurm_walltime",
+            "--hpc-constraint",
+            action="store",
+            type=str,
+            default="",
+            help="Constraints to apply to job allocation, such as hardware generation.",
+        )
+        parser.add_argument(
+            "--hpc-cores",
+            action="store",
+            type=int,
+            default=psutil.cpu_count(logical=False),
+            help="How many cores per node?",
+        )
+        parser.add_argument(
+            "--hpc-memory",
+            action="store",
+            type=str,
+            default="256GB",
+            help="How memory per node?",
+        )
+        parser.add_argument(
+            "--hpc-nodes",
+            action="store",
+            type=int,
+            default=1,
+            help="How many HPC nodes?",
+        )
+        parser.add_argument(
+            "--hpc-processes",
+            action="store",
+            type=int,
+            default=psutil.cpu_count(logical=False),
+            help="How many dask processes per node?",
+        )
+        parser.add_argument(
+            "--hpc-queue",
+            action="store",
+            type=str,
+            default="standard",
+            help="Which SLURM queue to submit to?",
+        )
+        parser.add_argument(
+            "--hpc-qos",
+            action="store",
+            type=str,
+            default="",
+            help="QoS to apply to job.",
+        )
+        parser.add_argument(
+            "--hpc-walltime",
             action="store",
             type=str,
             default="24:00:00",
             help="How long to request cluster for?",
         )      
-        parser.add_argument(
-            "--conda_path",
-            action="store",
-            type=str,
-            default="$PWD/miniconda/bin",
-            help="Path to conda executable.",
-        )
-        parser.add_argument(
-            "--conda_exec",
-            action="store",
-            type=str,
-            default="mamba",
-            help="conda/mamba executable to use.",
-        )
-        parser.add_argument(
-            "--conda_env",
-            action="store",
-            type=str,
-            default="waterentropy",
-            help="Name of the conda/mamba environment to activate.",
-        )
         args = parser.parse_args()
-        if args.slurm is True: args.parallel = True # No need to set both on CLI.
+        if args.hpc is True: args.parallel = True # No need to set both on CLI.
     except argparse.ArgumentError:
         logging.error(
             "Command line arguments are ill-defined, please check the arguments."
