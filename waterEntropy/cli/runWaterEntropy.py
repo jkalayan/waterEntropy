@@ -18,7 +18,7 @@ import waterEntropy.recipes.interfacial_solvent as GetSolvent
 import waterEntropy.recipes.bulk_water as GetBulkSolvent
 import waterEntropy.entropy.vibrations as VIB
 import waterEntropy.entropy.orientations as OR
-from waterEntropy.utils.dask_clusters import configure_hpc_cluster
+from waterEntropy.utils.dask_clusters import slurm_configure_cluster, slurm_submit_master
 
 
 def run_waterEntropy(args):
@@ -29,7 +29,7 @@ def run_waterEntropy(args):
     print(startTime)
 
     if args.hpc is True:
-        client = configure_hpc_cluster(args)
+        client = slurm_configure_cluster(args)
     else:
         client = None
 
@@ -54,6 +54,38 @@ def run_waterEntropy(args):
     print(datetime.now() - startTime)
 
 
+def _conda_env():
+    """Determine the activated conda/mamba environment."""
+    try:
+        return os.environ["CONDA_DEFAULT_ENV"]
+    except KeyError:
+        logging.error("Please activate your conda/mamba environment")
+        sys.exit(1)
+
+
+def _conda_exec():
+    """Determine the conda/mamba executable."""
+    try:
+        os.environ['MAMBA_EXE']
+        return "mamba"
+    except KeyError:
+        try:
+            os.environ['CONDA_EXE']
+            return "conda"
+        except KeyError:
+            logging.error("Cannot determine your conda executable, make sure they are initialised.")
+            sys.exit(1)
+
+
+def _conda_path():
+    """Determine the conda path"""
+    try:
+        return os.environ["CONDA_EXE"]
+    except KeyError:
+        logging.error("Please make sure you have conda/mamba set up correctly.")
+        sys.exit(1)
+
+
 def main():
     """Entrypoint for running the WaterEntropy for interfacial water calculation."""
 
@@ -69,14 +101,14 @@ def main():
         parser.add_argument_group("Options")
         parser.add_argument(
             "-top",
-            "--file_topology",
+            "--file-topology",
             metavar="file",
             default=None,
             help="name of file containing system topology.",
         )
         parser.add_argument(
             "-crd",
-            "--file_coords",
+            "--file-coords",
             metavar="file",
             default=None,
             help="name of file containing positions and forces in a single file.",
@@ -123,21 +155,21 @@ def main():
             "--conda-exec",
             action="store",
             type=str,
-            default="mamba",
+            default=_conda_exec(),
             help="conda/mamba executable to use for HPC runs.",
         )
         parser.add_argument(
             "--conda-env",
             action="store",
             type=str,
-            default="waterentropy",
+            default=_conda_env(),
             help="Name of the conda/mamba environment to activate for HPC runs.",
         )
         parser.add_argument(
             "--conda-path",
             action="store",
             type=str,
-            default="$PWD/miniconda/bin",
+            default=_conda_path(),
             help="Path to conda executable on HPC machine.",
         )
         parser.add_argument(
@@ -170,7 +202,7 @@ def main():
             "--hpc-memory",
             action="store",
             type=str,
-            default="256GB",
+            default=f"{psutil.virtual_memory().total / 1024.0 ** 3}GB",
             help="How memory per node?",
         )
         parser.add_argument(
@@ -207,7 +239,12 @@ def main():
             type=str,
             default="24:00:00",
             help="How long to request cluster for?",
-        )      
+        )
+        parser.add_argument(
+            "--submit",
+            action="store_true",
+            help="Whether to self submit on HPC.",
+        )
         args = parser.parse_args()
         if args.hpc is True: args.parallel = True # No need to set both on CLI.
     except argparse.ArgumentError:
@@ -217,6 +254,9 @@ def main():
         raise
         sys.exit(1)
 
+    if args.submit:
+      slurm_submit_master(args)
+      sys.exit(0)
     run_waterEntropy(args)
 
 
