@@ -3,6 +3,9 @@ These functions calculate orientational entropy from labelled
 coordination shells
 """
 
+import logging
+import time
+
 from dask.distributed import Client
 
 import waterEntropy.analysis.HB as HBond
@@ -187,6 +190,7 @@ def get_interfacial_water_orient_entropy(
 ):
     # pylint: disable=E1121
     # pylint: disable=R0913
+    # pylint: disable=too-many-locals
     """
     For a given system, containing the topology and coordinates of molecules,
     find the interfacial water molecules around solutes and calculate their
@@ -202,15 +206,48 @@ def get_interfacial_water_orient_entropy(
     :param parallel: set to True to run the parallel calculation
     :param client: dask client instance if custom cluster layout required
     """
+    # Initialise data structures to hold processed data.
+    frame_solvent_indices = nested_dict()
+    covariances = CovarianceCollection()
+    hb_labels = HBLabels.HBLabelCollection()
+    n_frames = 0
+    results = []
     # Steps 1,2 and 3 in function calls.
+    indices = list(range(start, end, step))
     if parallel is True:
-        covariances, frame_solvent_indices, hb_labels, n_frames = (
-            _parallel_interfacial_water_orient_entropy(system, start, end, step, client)
-        )
+        # If no Dask client cluster has been setup externally then default to single host.
+        if client is None:
+            client = Client(
+                processes=True, threads_per_worker=1, silence_logs=logging.CRITICAL
+            )
+            # parallelise over frames by packing them and vars into batches and mapping
+            # them across dask workers.
+            batch_size = client.scheduler_info()["n_workers"]
+            batches = [
+                indices[i : i + batch_size] for i in range(0, len(indices), batch_size)
+            ]
+            for i, batch in enumerate(batches):
+                args = [(index, system) for index in batch]
+                futures = client.map(_entropy_per_step, args)
+                results.extend(client.gather(futures))
+                if i < len(batches) - 1:
+                    client.restart()
+                    time.sleep(2)
+        # Otherwise we are on HPC and we can run without the memory fixes.
+        else:
+            args = [(index, system) for index in indices]
+            futures = client.map(_entropy_per_step, args)
+            results.extend(client.gather(futures))
+        client.close()
     else:
-        covariances, frame_solvent_indices, hb_labels, n_frames = (
-            _serial_interfacial_water_orient_entropy(system, start, end, step)
-        )
+        for index in indices:
+            results.append(_entropy_per_step((index, system)))
+    # merge the solvent indices dicts
+    for res in results:
+        frame_solvent_indices.update(res[0])
+        covariances.merge(res[1])
+        hb_labels.merge(res[2])
+        n_frames += res[3]
     # 4. get the orientational entropy of interfacial waters and save
     #   them to a dictionary
     # TO-DO: add average Nc in Sorient dict
@@ -306,128 +343,4 @@ def _entropy_per_step(args):
                 f"{nearest_resname}_{nearest_resid}",
                 system,
             )
-
     return frame_solvent_indices, covariances, hb_labels, n_frames
-
-
-def _parallel_interfacial_water_orient_entropy(
-    system, start: int, end: int, step: int, client
-):
-    """
-    Parallel method for calculation of interfacial water orientational entropy.
-    For a given system, containing the topology and coordinates of molecules,
-    find the interfacial water molecules around solutes and calculate their
-    orientational entropy if there is a solute atom in the solvent coordination
-    shell.
-
-    :param system: mdanalysis instance of atoms in a frame
-    :param start: starting frame number
-    :param end: end frame number
-    :param step: steps between frames
-    """
-    # on linux default is fork, on mac and windows default is spawn,
-    # in python 3.14+ linux will default to spawn, so set to spawn for safety.
-    # This means functions calling this need to be called via a main function.
-    if client is None:
-        client = Client(processes=True, threads_per_worker=1)
-    # don't need to include the frame_solvent_indices dictionary
-    frame_solvent_indices = nested_dict()
-    # initialise the Covariance class instance to store covariance matrices
-    covariances = CovarianceCollection()
-    hb_labels = HBLabels.HBLabelCollection()
-    # store number of frames analysed
-    n_frames = 0
-    # parallelise over frames by packing them and vars into generator object.
-    # can't seem to use the system.trajectory directly because it appears to
-    # give unpredictable results with all the frames being the same!
-    indices = list(range(start, end, step))
-    args = [
-        (index, system) for index, _ in zip(indices, system.trajectory[start:end:step])
-    ]
-    futures = client.map(_entropy_per_step, args)
-    results = client.gather(futures)
-    # merge the solvent indices dicts
-    for res in results:
-        frame_solvent_indices.update(res[0])
-        covariances.merge(res[1])
-        hb_labels.merge(res[2])
-        n_frames += res[3]
-    return (covariances, frame_solvent_indices, hb_labels, n_frames)
-
-
-def _serial_interfacial_water_orient_entropy(system, start: int, end: int, step: int):
-    # pylint: disable=too-many-locals
-    """
-    Serial method for calculation of interfacial water orientational entropy.
-    For a given system, containing the topology and coordinates of molecules,
-    find the interfacial water molecules around solutes and calculate their
-    orientational entropy if there is a solute atom in the solvent coordination
-    shell.
-
-    :param system: mdanalysis instance of atoms in a frame
-    :param start: starting frame number
-    :param end: end frame number
-    :param step: steps between frames
-    """
-    # don't need to include the frame_solvent_indices dictionary
-    frame_solvent_indices = nested_dict()
-    # initialise the Covariance class instance to store covariance matrices
-    covariances = CovarianceCollection()
-    hb_labels = HBLabels.HBLabelCollection()
-    # store number of frames analysed
-    n_frames = 0
-    # pylint: disable=unused-variable
-    for ts in system.trajectory[start:end:step]:
-        n_frames += 1
-        # initialise the RAD and HB class instances to store shell information
-        shells = ShellCollection()
-        HBs = HBond.HBCollection()
-        # 1. find > 1 UA molecules in system, these are the solutes
-        resid_list = Selections.find_solute_molecules(system)
-        solutes = Selections.get_selection(system, "resid", resid_list)
-        # 2. find the interfacial solvent molecules that are 1 UA in size
-        #   and are in the RAD shell of any solute
-        solvent_indices = find_interfacial_solvent(solutes, system, shells)
-        first_shell_solvent = Selections.get_selection(system, "index", solvent_indices)
-        # 3. iterate through first shell solvent and find their RAD shells,
-        #   HBing in the shells and shell labels
-        for solvent in first_shell_solvent:
-            # print(solvent)
-            # 3a. find RAD shell of interfacial solvent
-            shell = RADShell.get_RAD_shell(solvent, system, shells)
-            # 3b. find HBing in the shell
-            HBond.get_shell_HBs(shell, system, HBs, shells)
-            # 3c. find RAD shell labels
-            shell = RADLabels.get_shell_labels(solvent.index, system, shell, shells)
-            # 3d. find HB labels
-            HBLabels.get_HB_labels(solvent.index, system, HBs, shells)
-            if shell.nearest_nonlike_idx is not None:
-                # 3e. populate the labels into a dictionary for stats
-                # only if a different atom is in the RAD shell
-                nearest = system.atoms[shell.nearest_nonlike_idx]
-                nearest_resid = nearest.resid
-                nearest_resname = nearest.resname
-                hb_labels.add_data(
-                    nearest_resid,
-                    nearest_resname,
-                    shell.labels,
-                    shell.donates_to_labels,
-                    shell.accepts_from_labels,
-                )
-                frame_solvent_indices = save_solvent_indices(
-                    ts.frame,
-                    shell.atom_idx,
-                    nearest_resid,
-                    nearest_resname,
-                    frame_solvent_indices,
-                )
-                # 3f. calculate the running average of force and torque
-                # covariance matrices
-                solvent_molecule = system.atoms[solvent.index].fragment  # get molecule
-                get_forces_torques(
-                    covariances,
-                    solvent_molecule,
-                    f"{nearest_resname}_{nearest_resid}",
-                    system,
-                )
-    return (covariances, frame_solvent_indices, hb_labels, n_frames)
