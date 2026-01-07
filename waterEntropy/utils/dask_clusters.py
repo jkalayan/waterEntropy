@@ -9,6 +9,11 @@ from dask.distributed import Client
 from dask_jobqueue import SLURMCluster
 import psutil
 
+import os
+for key in os.environ.keys():
+    if key.startswith("SLURM_CPU_BIND"):
+        os.environ.pop(key)
+
 
 def slurm_submit_master(args):
     """Submit a master worker process for coordinating dask cluster setup,
