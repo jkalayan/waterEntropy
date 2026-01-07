@@ -2,6 +2,7 @@
 Helpers for setting up dask clusters on HPC.
 """
 
+import os
 import subprocess
 import sys
 
@@ -9,10 +10,9 @@ from dask.distributed import Client
 from dask_jobqueue import SLURMCluster
 import psutil
 
-import os
 
 def check_slurm_env():
-    """Check if SLURM_CPU_BIND is set in env and delete if so 
+    """Check if SLURM_CPU_BIND is set in env and delete if so
     to satisfy cpu bind request on some machines."""
     if "SLURM_CPU_BIND" in os.environ:
         os.environ.pop("SLURM_CPU_BIND")
