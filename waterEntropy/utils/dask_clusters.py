@@ -10,9 +10,12 @@ from dask_jobqueue import SLURMCluster
 import psutil
 
 import os
-for key in os.environ.keys():
-    if key.startswith("SLURM_CPU_BIND"):
-        os.environ.pop(key)
+
+def check_slurm_env():
+    """Check if SLURM_CPU_BIND is set in env and delete if so 
+    to satisfy cpu bind request on some machines."""
+    if "SLURM_CPU_BIND" in os.environ:
+        os.environ.pop("SLURM_CPU_BIND")
 
 
 def slurm_submit_master(args):
@@ -41,6 +44,9 @@ def slurm_submit_master(args):
             f.write(f'eval "$({args.conda_exec} shell hook --shell bash)"\n')
         f.write(f"{args.conda_exec} activate {args.conda_env}\n\n")
         f.write(f"srun waterEntropy {' '.join(cli)}")
+
+    # Fix slurm env.
+    check_slurm_env()
 
     try:
         sub = subprocess.check_output(["bash", "-c", "sbatch WE-master-submit.sh"])
@@ -79,6 +85,9 @@ def slurm_configure_cluster(args):
     for iface in hpc_nics:
         if iface in interfaces:
             break
+
+    # Fix slurm env.
+    check_slurm_env()
 
     # Define a slurm cluster.
     cluster = SLURMCluster(
