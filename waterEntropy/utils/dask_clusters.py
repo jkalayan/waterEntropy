@@ -18,6 +18,46 @@ def check_slurm_env():
         os.environ.pop("SLURM_CPU_BIND")
 
 
+def slurm_directives(args):
+    """Process extra directives and directives to be skipped."""
+    extra = []
+    if args.hpc_account != "":
+        extra.append(f'--account="{args.hpc_account}"')
+    if args.hpc_qos != "":
+        extra.append(f'--qos="{args.hpc_qos}"')
+    if args.hpc_constraint != "":
+        extra.append(f'--constraint="{args.hpc_constraint}"')
+
+    # Skip directives.
+    skip = []
+    skip = ["--mem"]
+
+    return extra, skip
+
+
+def slurm_prologues(args):
+    """Process any extra environment variables to be used."""
+    prologue = []
+    prologue.append(f'eval "$({args.conda_path} shell.bash hook)"')
+    if args.conda_exec == "mamba":
+        prologue.append(f'eval "$({args.conda_exec} shell hook --shell bash)"')
+    prologue.append(f"{args.conda_exec} activate {args.conda_env}")
+    prologue.append("export SLURM_CPU_FREQ_REQ=2250000")
+
+    return prologue
+
+
+def system_network_interface():
+    """Get best candidate for HPC network interface from commonly known ones."""
+    hpc_nics = ["bond0", "ib0", "hsn0", "eth0"]
+    interfaces = psutil.net_if_addrs()
+    for iface in hpc_nics:
+        if iface in interfaces:
+            break
+
+    return iface
+
+
 def slurm_submit_master(args):
     """Submit a master worker process for coordinating dask cluster setup,
     orchestration and shutdown."""
@@ -59,32 +99,13 @@ def slurm_configure_cluster(args):
     """Configure a SLURM HPC cluster to run bigger jobs on."""
 
     # Extra directives.
-    extra = []
-    if args.hpc_account != "":
-        extra.append(f'--account="{args.hpc_account}"')
-    if args.hpc_qos != "":
-        extra.append(f'--qos="{args.hpc_qos}"')
-    if args.hpc_constraint != "":
-        extra.append(f'--constraint="{args.hpc_constraint}"')
-
-    # Skip directives.
-    skip = []
-    skip = ["--mem"]
+    extra, skip = slurm_directives(args)
 
     # Prologues for appending env vars into the job submission script.
-    prologue = []
-    prologue.append(f'eval "$({args.conda_path} shell.bash hook)"')
-    if args.conda_exec == "mamba":
-        prologue.append(f'eval "$({args.conda_exec} shell hook --shell bash)"')
-    prologue.append(f"{args.conda_exec} activate {args.conda_env}")
-    prologue.append("export SLURM_CPU_FREQ_REQ=2250000")
+    prologue = slurm_prologues(args)
 
-    # Interfaces.
-    hpc_nics = ["bond0", "ib0", "hsn0", "eth0"]
-    interfaces = psutil.net_if_addrs()
-    for iface in hpc_nics:
-        if iface in interfaces:
-            break
+    # HPC network interface.
+    iface = system_network_interface()
 
     # Fix slurm env.
     check_slurm_env()
