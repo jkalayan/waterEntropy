@@ -2,19 +2,53 @@
 
 import argparse
 import os
+import sys
 from unittest import mock
 
 import pytest
 
 import waterEntropy.utils.dask_clusters as dc
 
+SUBMITFILE_TESTCASE1 = """#!/bin/bash --login
+
+#SBATCH --job-name=waterentropy-master
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=2
+#SBATCH --time=24:00:00
+#SBATCH --account=c01-bio
+#SBATCH --partition=standard
+#SBATCH --qos=standard
+
+eval "$(/path/to/conda shell.bash hook)"
+conda activate waterentropy
+
+srun waterEntropy --file-topology box.prmtop --file-coords frames.nc --start 0 --end 512 --step 1 --hpc --hpc-nodes 4 --hpc-account c01-bio --hpc-qos standard"""  # pylint: disable=line-too-long
+
+SUBMITFILE_TESTCASE2 = """#!/bin/bash --login
+
+#SBATCH --job-name=waterentropy-master
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=2
+#SBATCH --time=24:00:00
+#SBATCH --account=c01-bio
+#SBATCH --partition=standard
+#SBATCH --qos=standard
+
+eval "$(/path/to/conda shell.bash hook)"
+eval "$(mamba shell hook --shell bash)"
+mamba activate waterentropy
+
+srun waterEntropy --file-topology box.prmtop --file-coords frames.nc --start 0 --end 512 --step 1 --hpc --hpc-nodes 4 --hpc-account c01-bio --hpc-qos standard"""  # pylint: disable=line-too-long
+
 
 def args_helper_directives(args):
     """helper to setup the CLI args."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--hpc-account", default="")
-    parser.add_argument("--hpc-constraint", default="")
-    parser.add_argument("--hpc-qos", default="")
+    parser.add_argument("--hpc-account", type=str, default="")
+    parser.add_argument("--hpc-constraint", type=str, default="")
+    parser.add_argument("--hpc-qos", type=str, default="")
     args = parser.parse_args(args)
     return args
 
@@ -22,9 +56,31 @@ def args_helper_directives(args):
 def args_helper_prologues(args):
     """helper to setup the CLI args."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--conda-env", default="")
-    parser.add_argument("--conda-exec", default="")
-    parser.add_argument("--conda-path", default="")
+    parser.add_argument("--conda-env", type=str, default="")
+    parser.add_argument("--conda-exec", type=str, default="")
+    parser.add_argument("--conda-path", type=str, default="")
+    args = parser.parse_args(args)
+    return args
+
+
+def args_helper_submitfile(args):
+    """helper to setup the CLI args."""
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--conda-env", type=str, default="")
+    parser.add_argument("--conda-exec", type=str, default="")
+    parser.add_argument("--conda-path", type=str, default="")
+    parser.add_argument("--file-topology", type=str, default="")
+    parser.add_argument("--file-coords", type=str, default="")
+    parser.add_argument("--start", type=int, default=0)
+    parser.add_argument("--end", type=int, default=1)
+    parser.add_argument("--step", type=int, default=1)
+    parser.add_argument("--hpc", action="store_true")
+    parser.add_argument("--hpc-nodes", default="")
+    parser.add_argument("--hpc-account", type=str, default="")
+    parser.add_argument("--hpc-qos", type=str, default="")
+    parser.add_argument("--hpc-queue", type=str, default="standard")
+    parser.add_argument("--hpc-walltime", type=str, default="24:00:00")
+    parser.add_argument("--submit", action="store_true")
     args = parser.parse_args(args)
     return args
 
@@ -133,3 +189,133 @@ def test_interface_selection(net_if_addrs):
     net_if_addrs.return_value = ["ib0", "eth0"]
     iface = dc.system_network_interface()
     assert iface == "ib0"
+
+
+@mock.patch("subprocess.check_output")
+def test_submit_master(checkoutput):
+    """Test master submit file creation"""
+    mock_stdout = mock.MagicMock()
+    mock_stdout.configure_mock(
+        **{"stdout.decode.return_value": "test job submitted id xxxxxx"}
+    )
+    checkoutput.return_value = mock_stdout
+    cli = [
+        "waterEntropy",
+        "--file-topology",
+        "box.prmtop",
+        "--file-coords",
+        "frames.nc",
+        "--start",
+        "0",
+        "--end",
+        "512",
+        "--step",
+        "1",
+        "--hpc",
+        "--hpc-nodes",
+        "4",
+        "--hpc-account",
+        "c01-bio",
+        "--hpc-qos",
+        "standard",
+        "--submit",
+    ]
+    args = args_helper_submitfile(
+        [
+            "--conda-env",
+            "waterentropy",
+            "--conda-exec",
+            "conda",
+            "--conda-path",
+            "/path/to/conda",
+            "--file-topology",
+            "box.prmtop",
+            "--file-coords",
+            "frames.nc",
+            "--start",
+            "0",
+            "--end",
+            "512",
+            "--step",
+            "1",
+            "--hpc",
+            "--hpc-nodes",
+            "4",
+            "--hpc-account",
+            "c01-bio",
+            "--hpc-qos",
+            "standard",
+            "--submit",
+        ]
+    )
+    with mock.patch.object(sys, "argv", cli):
+        dc.slurm_submit_master(args)
+    with open("WE-master-submit.sh", encoding="utf-8") as file:
+        submitfile = file.read()
+        assert submitfile == SUBMITFILE_TESTCASE1
+    os.remove("WE-master-submit.sh")
+
+
+@mock.patch("subprocess.check_output")
+def test_submit_master_mamba(checkoutput):
+    """Test master submit file creation"""
+    mock_stdout = mock.MagicMock()
+    mock_stdout.configure_mock(
+        **{"stdout.decode.return_value": "test job submitted id xxxxxx"}
+    )
+    checkoutput.return_value = mock_stdout
+    cli = [
+        "waterEntropy",
+        "--file-topology",
+        "box.prmtop",
+        "--file-coords",
+        "frames.nc",
+        "--start",
+        "0",
+        "--end",
+        "512",
+        "--step",
+        "1",
+        "--hpc",
+        "--hpc-nodes",
+        "4",
+        "--hpc-account",
+        "c01-bio",
+        "--hpc-qos",
+        "standard",
+        "--submit",
+    ]
+    args = args_helper_submitfile(
+        [
+            "--conda-env",
+            "waterentropy",
+            "--conda-exec",
+            "mamba",
+            "--conda-path",
+            "/path/to/conda",
+            "--file-topology",
+            "box.prmtop",
+            "--file-coords",
+            "frames.nc",
+            "--start",
+            "0",
+            "--end",
+            "512",
+            "--step",
+            "1",
+            "--hpc",
+            "--hpc-nodes",
+            "4",
+            "--hpc-account",
+            "c01-bio",
+            "--hpc-qos",
+            "standard",
+            "--submit",
+        ]
+    )
+    with mock.patch.object(sys, "argv", cli):
+        dc.slurm_submit_master(args)
+    with open("WE-master-submit.sh", encoding="utf-8") as file:
+        submitfile = file.read()
+        assert submitfile == SUBMITFILE_TESTCASE2
+    os.remove("WE-master-submit.sh")
