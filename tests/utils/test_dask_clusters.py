@@ -85,6 +85,32 @@ def args_helper_submitfile(args):
     return args
 
 
+def args_helper_cluster(args):
+    """helper to setup the CLI args."""
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--conda-env", type=str, default="")
+    parser.add_argument("--conda-exec", type=str, default="")
+    parser.add_argument("--conda-path", type=str, default="")
+    parser.add_argument("--file-topology", type=str, default="")
+    parser.add_argument("--file-coords", type=str, default="")
+    parser.add_argument("--start", type=int, default=0)
+    parser.add_argument("--end", type=int, default=1)
+    parser.add_argument("--step", type=int, default=1)
+    parser.add_argument("--hpc", action="store_true")
+    parser.add_argument("--hpc-account", type=str, default="")
+    parser.add_argument("--hpc-constraint", type=str, default="")
+    parser.add_argument("--hpc-cores", type=int, default=20)
+    parser.add_argument("--hpc-memory", type=str, default="16GB")
+    parser.add_argument("--hpc-nodes", type=int, default="")
+    parser.add_argument("--hpc-processes", type=int, default=20)
+    parser.add_argument("--hpc-qos", type=str, default="")
+    parser.add_argument("--hpc-queue", type=str, default="standard")
+    parser.add_argument("--hpc-walltime", type=str, default="24:00:00")
+    parser.add_argument("--submit", action="store_true")
+    args = parser.parse_args(args)
+    return args
+
+
 def test_slurm_envfix1():
     """Test that calling function at all executes ok"""
     dc.check_slurm_env()
@@ -319,3 +345,40 @@ def test_submit_master_mamba(checkoutput):
         submitfile = file.read()
         assert submitfile == SUBMITFILE_TESTCASE2
     os.remove("WE-master-submit.sh")
+
+
+@mock.patch("waterEntropy.utils.dask_clusters.system_network_interface")
+def test_configure_cluster(interface):
+    """Test master submit file creation"""
+    interface.return_value = "lo"
+    args = args_helper_cluster(
+        [
+            "--conda-env",
+            "waterentropy",
+            "--conda-exec",
+            "mamba",
+            "--conda-path",
+            "/path/to/conda",
+            "--file-topology",
+            "box.prmtop",
+            "--file-coords",
+            "frames.nc",
+            "--start",
+            "0",
+            "--end",
+            "512",
+            "--step",
+            "1",
+            "--hpc",
+            "--hpc-nodes",
+            "4",
+            "--hpc-account",
+            "c01-bio",
+            "--hpc-qos",
+            "standard",
+            "--submit",
+        ]
+    )
+    dc.slurm_configure_cluster(args)
+    os.path.exists("dask-cluster-submit.sh")
+    os.remove("dask-cluster-submit.sh")
