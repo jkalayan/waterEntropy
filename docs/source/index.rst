@@ -15,7 +15,9 @@ simulations.
 .. toctree::
    :maxdepth: 2
 
-   user_guide/index
+   user_guide/serial
+   user_guide/parallel
+   user_guide/hpc
    API documentation <apidoc/waterEntropy>
 
 Related works:
