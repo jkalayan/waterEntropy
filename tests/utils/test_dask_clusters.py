@@ -5,6 +5,7 @@ import os
 import sys
 from unittest import mock
 
+import psutil
 import pytest
 
 import waterEntropy.utils.dask_clusters as dc
@@ -212,7 +213,7 @@ def test_slurm_prologues_mamba():
 @mock.patch("psutil.net_if_addrs")
 def test_interface_selection(net_if_addrs):
     """Test interface selection"""
-    net_if_addrs.return_value = ["ib0", "eth0"]
+    net_if_addrs.return_value = {"ib0": "", "eth0": ""}
     iface = dc.system_network_interface()
     assert iface == "ib0"
 
@@ -350,7 +351,7 @@ def test_submit_master_mamba(checkoutput):
 @mock.patch("waterEntropy.utils.dask_clusters.system_network_interface")
 def test_configure_cluster(interface):
     """Test master submit file creation"""
-    interface.return_value = "lo"
+    interface.return_value = list(psutil.net_if_addrs().keys())[0]
     args = args_helper_cluster(
         [
             "--conda-env",

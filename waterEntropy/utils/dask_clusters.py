@@ -50,7 +50,7 @@ def slurm_prologues(args):
 def system_network_interface():
     """Get best candidate for HPC network interface from commonly known ones."""
     hpc_nics = ["bond0", "ib0", "hsn0", "eth0"]
-    interfaces = psutil.net_if_addrs()
+    interfaces = list(psutil.net_if_addrs().keys())
     for iface in hpc_nics:
         if iface in interfaces:
             break
