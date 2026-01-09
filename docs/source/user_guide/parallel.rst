@@ -8,7 +8,8 @@ Here's how to use run the parallel waterEntropy from the command-line using the 
 
 .. code-block:: bash
 
-    waterEntropy -t tests/input_files/amber/arginine_solution/system.prmtop -c tests/input_files/amber/arginine_solution/system.nc --parallel
+    waterEntropy -t tests/input_files/amber/arginine_solution/system.prmtop \\
+    -c tests/input_files/amber/arginine_solution/system.nc --parallel
 
 Topology and trajectory files are available in the ``tests/input_files`` directory.
 
@@ -34,7 +35,8 @@ It is also possible to launch the parallel version via the API:
     start, end, step = 0, 10, 1
 
     # Calculate the entropy
-    Sorient_dict, covariances, vibrations, frame_solvent_indices, n_frames = GetSolvent.get_interfacial_water_orient_entropy(
+    Sorient_dict, covariances, vibrations, frame_solvent_indices, n_frames = \
+        GetSolvent.get_interfacial_water_orient_entropy(
         u, start, end, step,
         parallel=True, # set True for parallel calculation
         temperature=298, # default simulated system temperate is set to 298 Kelvin, change accordingly

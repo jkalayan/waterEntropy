@@ -1,12 +1,13 @@
 ==========
-User guide
+Run Serial
 ==========
 
 Here's how to use waterEntropy on the command-line using the ``runWaterEntropy.py`` script.
 
 .. code-block:: bash
 
-    waterEntropy -t tests/input_files/amber/arginine_solution/system.prmtop -c tests/input_files/amber/arginine_solution/system.nc
+    waterEntropy -t tests/input_files/amber/arginine_solution/system.prmtop \\
+    -c tests/input_files/amber/arginine_solution/system.nc
 
 Topology and trajectory files are available in the ``tests/input_files`` directory.
 
@@ -32,7 +33,8 @@ Here's how to use waterEntropy via the API:
     start, end, step = 0, 4, 2
 
     # Calculate the entropy
-    Sorient_dict, covariances, vibrations, frame_solvent_indices, n_frames = GetSolvent.get_interfacial_water_orient_entropy(
+    Sorient_dict, covariances, vibrations, frame_solvent_indices, n_frames = \
+        GetSolvent.get_interfacial_water_orient_entropy(
         u, start, end, step,
         temperature=298, # default simulated system temperate is set to 298 Kelvin, change accordingly
     )

@@ -27,7 +27,10 @@ The easiest option for users to launch this version of WaterEntropy, is from the
 
 .. code-block:: bash
 
-    waterEntropy --file-topology example_inputs/BTN_longer_sims/BTN_solvated_box.prmtop --file-coords example_inputs/BTN_longer_sims/BTN_5000frames.nc --start 0 --end 512 --step 1 --hpc --hpc-nodes 4 --hpc-account c01-bio --hpc-qos standard --submit
+    waterEntropy --file-topology example_inputs/BTN_longer_sims/BTN_solvated_box.prmtop \\
+    --file-coords example_inputs/BTN_longer_sims/BTN_5000frames.nc \\
+    --start 0 --end 512 --step 1 --hpc --hpc-nodes 4 --hpc-account c01-bio \\
+    --hpc-qos standard --submit
 
 This will submit a master job to the scheduler system which will run the WaterEntropy master process, a separate dask cluster will then be orchestrated to run the work, so you will see a single master job plus the number of nodes requested as dask-workers in the HPC queue.
 
@@ -35,7 +38,9 @@ It is possible to run the same command, without the "--submit" and this will run
 
 .. code-block:: bash
 
-    waterEntropy --file-topology example_inputs/BTN_longer_sims/BTN_solvated_box.prmtop --file-coords example_inputs/BTN_longer_sims/BTN_5000frames.nc --start 0 --end 128 --step 1 --hpc --hpc-account c01-bio --hpc-qos standard
+    waterEntropy --file-topology example_inputs/BTN_longer_sims/BTN_solvated_box.prmtop \\
+    --file-coords example_inputs/BTN_longer_sims/BTN_5000frames.nc \\
+    --start 0 --end 128 --step 1 --hpc --hpc-account c01-bio --hpc-qos standard
 
 If you want more control over how the WaterEntropy master process is submitted then you can submit your own script like this:
 
@@ -56,16 +61,9 @@ If you want more control over how the WaterEntropy master process is submitted t
     eval "$(mamba shell hook --shell bash)"
     mamba activate waterentropy
 
-    srun waterEntropy --file-topology example_inputs/BTN_longer_sims/BTN_solvated_box.prmtop --file-coords example_inputs/BTN_longer_sims/BTN_5000frames.nc --start 0 --end 512 --step 1 --hpc --hpc-nodes 4 --hpc-account c01-bio --hpc-qos standard
-
-
-
-
-
+    srun waterEntropy --file-topology example_inputs/BTN_longer_sims/BTN_solvated_box.prmtop \\
+    --file-coords example_inputs/BTN_longer_sims/BTN_5000frames.nc --start 0 --end 512 \\
+    --step 1 --hpc --hpc-nodes 4 --hpc-account c01-bio --hpc-qos standard
 
 
 Topology and trajectory files are available in the ``tests/input_files`` directory.
-
-Here's how to use waterEntropy via the API:
-
-.. code-block:: Python
