@@ -240,7 +240,7 @@ htmlhelp_basename = "waterentropy-doc"
 # We should ignore any python built-in exception, for instance
 nitpick_ignore = [
     # ignore warnings for `py:class reference target not found` for classes
-    ("py:class", "waterEntropy.analysis.HB_labels"),
+    ("py:class", "waterEntropy.analysis.HB_labels.HBLabelCollection"),
 ]
 
 # -- Options for LaTeX output ---------------------------------------------
