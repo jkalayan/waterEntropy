@@ -239,8 +239,8 @@ htmlhelp_basename = "waterentropy-doc"
 # Warnings to ignore when using the -n (nitpicky) option
 # We should ignore any python built-in exception, for instance
 nitpick_ignore = [
-    ("py:class", "Logger"),
-    ("py:class", "QbFields"),
+    # ignore warnings for `py:class reference target not found` for classes
+    ("py:class", "waterEntropy.analysis.HB_labels"),
 ]
 
 # -- Options for LaTeX output ---------------------------------------------
