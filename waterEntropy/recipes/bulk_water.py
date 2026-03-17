@@ -59,7 +59,7 @@ def get_bulk_water_orient_entropy(
                     shell.labels,
                     shell.donates_to_labels,
                     shell.accepts_from_labels,
-                    shell.N_w,
+                    len(shell.labels),  # set N_w
                 )
                 # 3e. calculate the running average of force and torque
                 # covariance matrices

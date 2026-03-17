@@ -214,7 +214,10 @@ def print_Svib_data(vibrations: Vibrations, covariances: CovarianceCollection):
     print("resid resname solvent_name Strans Srot Svib counts")
     decimals = 4
     for near_solvent_name, Strans in vibrations.translational_S.items():
-        resname, resid = near_solvent_name[0].split("_")
+        if "_" in near_solvent_name[0]:
+            resname, resid = near_solvent_name[0].split("_")
+        else:
+            resname, resid = near_solvent_name[0], "N/A"
         solvent_name = near_solvent_name[1]
         # forces = covariances.forces[near_solvent_name]
         # torques = covariances.torques[near_solvent_name]
