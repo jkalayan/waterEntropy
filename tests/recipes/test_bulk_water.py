@@ -31,7 +31,6 @@ def test_Sorient_dict(bulk_water_entropy_dicts):
     """Test outputted orientational entropy values of solvent molecules around a given solute molecule"""
     # resid: {resname = [Sorient, count]}
     Sorient_dict = bulk_water_entropy_dicts[0]
-    print(Sorient_dict)
     assert Sorient_dict["WAT"]["WAT"] == pytest.approx(
         [
             11.295694179188464,
