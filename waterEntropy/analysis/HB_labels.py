@@ -18,12 +18,13 @@ class HBLabelCollection:
     The counts are placed into two dictionaries used for statistics later,
     the structure of these two dictionaries are as follows:
 
-    dict1 = {"resname": {("labelled_shell"): {"shell_count": 0,
+    dict1 = {"resname": {("labelled_shell"): {"shell_count": 0, "N_w": N_w,
                                 "donates_to": {"labelled_donators": 0,},
                                 "accepts_from": {"labelled_acceptors": 0,}
                                 }}}
     dict2 = {"nearest_resid": {"resname":
                                 {("labelled_shell"): {"shell_count": 0,
+                                "N_w": N_w,
                                 "donates_to": {"labelled_donators": 0,},
                                 "accepts_from": {"labelled_acceptors": 0,}
                                 }}}
@@ -33,14 +34,14 @@ class HBLabelCollection:
         self.labelled_shell_counts = nested_dict()  # save shell instances in here
         self.resid_labelled_shell_counts = nested_dict()  # save shell instances in here
 
-    def add_data(self, resid, resname, labelled_shell, donates_to, accepts_from):
+    def add_data(self, resid, resname, labelled_shell, donates_to, accepts_from, N_w):
         # pylint: disable=too-many-arguments
         """Add data to class dictionaries"""
-        self.add_shell_counts(resid, resname, labelled_shell)
+        self.add_shell_counts(resid, resname, labelled_shell, N_w)
         self.add_donates_to(resid, resname, labelled_shell, donates_to)
         self.add_accepts_from(resid, resname, labelled_shell, accepts_from)
 
-    def add_shell_counts(self, resid, resname, labelled_shell):
+    def add_shell_counts(self, resid, resname, labelled_shell, N_w):
         """
         Add a labelled shell to a dictionary that keeps track of the counts
         for each labelled shell type with constituents alpha-numerically
@@ -54,6 +55,7 @@ class HBLabelCollection:
         labelled_shell = tuple(sorted(labelled_shell))
         if "shell_count" not in self.labelled_shell_counts[resname][labelled_shell]:
             self.labelled_shell_counts[resname][labelled_shell]["shell_count"] = 1
+            self.labelled_shell_counts[resname][labelled_shell]["N_w"] = N_w
         else:
             self.labelled_shell_counts[resname][labelled_shell]["shell_count"] += 1
 
@@ -64,6 +66,9 @@ class HBLabelCollection:
             self.resid_labelled_shell_counts[resid][resname][labelled_shell][
                 "shell_count"
             ] = 1
+            self.resid_labelled_shell_counts[resid][resname][labelled_shell][
+                "N_w"
+            ] = N_w
         else:
             self.resid_labelled_shell_counts[resid][resname][labelled_shell][
                 "shell_count"
@@ -213,7 +218,7 @@ class HBLabelCollection:
                                 in self.resid_labelled_shell_counts[resid][resname][
                                     labelled_shell
                                 ]
-                            ):
+                            ) and D_A_count_key != "N_w":  # N_w = fixed
                                 self.resid_labelled_shell_counts[resid][resname][
                                     labelled_shell
                                 ][D_A_count_key] += other.resid_labelled_shell_counts[
@@ -277,7 +282,7 @@ class HBLabelCollection:
                         if (
                             D_A_count_key
                             in self.labelled_shell_counts[resname][labelled_shell]
-                        ):
+                        ) and D_A_count_key != "N_w":  # N_w = fixed
                             self.labelled_shell_counts[resname][labelled_shell][
                                 D_A_count_key
                             ] += other.labelled_shell_counts[resname][labelled_shell][

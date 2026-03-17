@@ -59,9 +59,36 @@ def test_Sorient_dict(interfacial_entropy_dicts):
     """Test outputted orientational entropy values of solvent molecules around a given solute molecule"""
     # resid: {resname = [Sorient, count]}
     Sorient_dict = interfacial_entropy_dicts[0]
-    assert Sorient_dict[1]["ACE"] == pytest.approx([2.2473807716251804, 13])
-    assert Sorient_dict[2]["ARG"] == pytest.approx([2.6481382191024245, 35])
-    assert Sorient_dict[3]["NME"] == pytest.approx([0.9503950365967891, 12])
+    assert Sorient_dict[1]["ACE"] == pytest.approx(
+        [
+            2.2473807716251804,
+            13,
+            6.467857142857143,
+            5.257142857142858,
+            2.9594964080590276,
+            0.10765314493056646,
+        ]
+    )
+    assert Sorient_dict[2]["ARG"] == pytest.approx(
+        [
+            2.6481382191024245,
+            35,
+            7.3085782312925165,
+            5.835721088435374,
+            3.2771824257183773,
+            0.10732165472942556,
+        ]
+    )
+    assert Sorient_dict[3]["NME"] == pytest.approx(
+        [
+            0.9503950365967891,
+            12,
+            6.538461538461538,
+            5.1923076923076925,
+            2.050259026687599,
+            0.07010328362114078,
+        ]
+    )
 
 
 @INTERFACIAL_ENTROPY_DICTS
