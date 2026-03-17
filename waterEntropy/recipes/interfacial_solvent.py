@@ -118,7 +118,6 @@ def get_interfacial_shells(system, start: int, end: int, step: int):
     frame_solvent_shells = nested_dict()
     # pylint: disable=unused-variable
     for ts in system.trajectory[start:end:step]:
-        # print(ts)
         # initialise the RAD and HB class instances to store shell information
         shells = ShellCollection()
         # 1. find > 1 UA molecules in system, these are the solutes
@@ -305,7 +304,6 @@ def _entropy_per_step(args):
     # 7. iterate through first shell solvent and find their RAD shells,
     #   HBing in the shells and shell labels
     for solvent in first_shell_solvent:
-        # print(solvent)
         # 8a. find RAD shell of interfacial solvent
         shell = RADShell.get_RAD_shell(solvent, system, shells)
         # 8b. find HBing in the shell
@@ -326,6 +324,7 @@ def _entropy_per_step(args):
                 shell.labels,
                 shell.donates_to_labels,
                 shell.accepts_from_labels,
+                shell.N_w,
             )
             frame_solvent_indices = save_solvent_indices(
                 ts.frame,

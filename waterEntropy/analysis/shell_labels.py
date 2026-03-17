@@ -34,6 +34,7 @@ def get_shell_labels(atom_idx: int, system, shell, shells: ShellCollection):
     if nearest_nonlike_idx is not None:
         nearest_nonlike = system.atoms[nearest_nonlike_idx]
         shell_labels = []
+        N_w = 0
         for n in shell.UA_shell:
             neighbour = system.atoms[n]
             # 3a. label nearest nonlike atom as "0_RESNAME"
@@ -51,6 +52,7 @@ def get_shell_labels(atom_idx: int, system, shell, shells: ShellCollection):
                 neighbour.index != nearest_nonlike.index
                 and neighbour.resname == center.resname
             ):
+                N_w += 1
                 neighbour_shell = shells.find_shell(neighbour.index)
                 if not neighbour_shell:
                     neighbour_shell = RADShell.get_RAD_shell(neighbour, system, shells)
@@ -81,6 +83,7 @@ def get_shell_labels(atom_idx: int, system, shell, shells: ShellCollection):
                         shell_labels.append(f"X_{neighbour.resname}")
         shell.labels = shell_labels  # sorted(shell_labels) #don't sort yet
         shell.nearest_nonlike_idx = nearest_nonlike.index
+        shell.N_w = N_w
     return shell
 
 

@@ -55,6 +55,7 @@ class ShellCollection:
             self.set_property(atom_idx, "labels", None)
             self.set_property(atom_idx, "donates_to_labels", None)
             self.set_property(atom_idx, "accepts_from_labels", None)
+            self.set_property(atom_idx, "N_w", None)
 
     def set_property(self, atom_idx, key: str, value):
         """Set a property for a specific atom shell, ensuring it exists first.

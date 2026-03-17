@@ -2,6 +2,8 @@
 Store vibrational entropy from covariance matrices
 """
 
+import textwrap
+
 import numpy as np
 from numpy import linalg as LA
 
@@ -197,15 +199,34 @@ def print_Svib_data(vibrations: Vibrations, covariances: CovarianceCollection):
     :param vibrations: instance of Vibrations class
     :param covariances: instance of CovarianceCollection class
     """
+    terms = """
+    Vibrations
+    ==========
+    resid: residue ID of the closest solute to the waters
+    resname: name of the residue associated with the residue ID
+    solvent_name: name of the solvent near the solute
+    Strans: sum of 3 translational terms to give total translational entropy
+    Srot: sum of 3 rotational terms to give total rotational entropy
+    Svib: vibrational entropy (Strans+Srot) of water molecules
+    counts: total number of waters around the nearest solute across frames analysed
+    """
+    print(textwrap.dedent(terms))
+    print("resid resname solvent_name Strans Srot Svib counts")
+    decimals = 4
     for near_solvent_name, Strans in vibrations.translational_S.items():
-        near = near_solvent_name[0]
+        resname, resid = near_solvent_name[0].split("_")
         solvent_name = near_solvent_name[1]
         # forces = covariances.forces[near_solvent_name]
         # torques = covariances.torques[near_solvent_name]
         Strans = vibrations.translational_S[near_solvent_name]
         Srot = vibrations.rotational_S[near_solvent_name]
+        Svib = sum(Strans) + sum(Srot)
         # trans_freqs = vibrations.translational_freq[near_solvent_name]
         # rot_freqs = vibrations.rotational_freq[near_solvent_name]
         counts = covariances.counts[near_solvent_name]
-        print(near, solvent_name, Strans, Srot, counts)
-        print(near, solvent_name, sum(Strans), sum(Srot), counts)
+        # print(near, solvent_name, Strans, Srot, counts)
+        print(
+            f"{resid} {resname} {solvent_name} {sum(Strans):.{decimals}f} "
+            f"{sum(Srot):.{decimals}f} {Svib:.{decimals}f} {counts}"
+        )
+    print()

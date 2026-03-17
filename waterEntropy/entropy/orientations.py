@@ -3,6 +3,7 @@ Store orientational entropies here
 """
 
 from collections import Counter
+import textwrap
 
 import numpy as np
 
@@ -17,6 +18,8 @@ class WaterOrientCalculator:
 
     def __init__(self):
         self.Sorient = 0
+        self.Nc_eff = 0
+        self.pbias_ave = 0
 
     def add_data(self, shell_label: list, shell_values: dict):
         """
@@ -35,6 +38,8 @@ class WaterOrientCalculator:
             degeneracy, pD_dict, pA_dict
         )
         self.Sorient = self.get_orientation_S(Nc_eff, pbias_ave)
+        self.Nc_eff = Nc_eff
+        self.pbias_ave = pbias_ave
 
     def get_shell_degeneracy(self, shell_label: list):
         """
@@ -234,7 +239,7 @@ class Orientations:
         shell with format:
 
         resid_labelled_dict = {"nearest_resid": {"resname":
-                {("labelled_shell"): {"shell_count": 0,
+                {("labelled_shell"): {"shell_count": 0, "N_w": N_w,
                 "donates_to": {"labelled_donators": 0,},
                 "accepts_from": {"labelled_acceptors": 0,}
                 }}}
@@ -276,6 +281,7 @@ class Orientations:
         shell with format:
 
         labelled_dict = {"resname": {("labelled_shell"): {"shell_count": 0,
+                                    "N_w": N_w,
                                     "donates_to": {"labelled_donators": 0,},
                                     "accepts_from": {"labelled_acceptors": 0,}
                                     }}}
@@ -287,13 +293,35 @@ class Orientations:
         """
         for resname, shell_label_key in sorted(list(labelled_dict.items())):
             Sorient_ave, tot_count = 0, 0
+            N_c_ave, N_w_ave, Nc_eff_ave, pbias_ave = 0, 0, 0, 0
             for shell_label, values in sorted(list(shell_label_key.items())):
                 water = WaterOrientCalculator()
                 water.add_data(shell_label, values)
+                # only update tot_count here
                 Sorient_ave, tot_count = self.get_running_average(
                     water.Sorient, values["shell_count"], Sorient_ave, tot_count
                 )
-            Sorient_dict[resname] = [Sorient_ave, tot_count]
+                # ignore the _tot_count
+                Nc_eff_ave, _tot_count = self.get_running_average(
+                    water.Nc_eff, values["shell_count"], Nc_eff_ave, tot_count
+                )
+                pbias_ave, _tot_count = self.get_running_average(
+                    water.pbias_ave, values["shell_count"], pbias_ave, tot_count
+                )
+                N_c_ave, _tot_count = self.get_running_average(
+                    len(shell_label), values["shell_count"], N_c_ave, tot_count
+                )
+                N_w_ave, _tot_count = self.get_running_average(
+                    values["N_w"], values["shell_count"], N_w_ave, tot_count
+                )
+            Sorient_dict[resname] = [
+                Sorient_ave,
+                tot_count,
+                N_c_ave,
+                N_w_ave,
+                Nc_eff_ave,
+                pbias_ave,
+            ]
 
 
 def print_Sorient_dicts(Sorient_dict: dict):
@@ -302,6 +330,29 @@ def print_Sorient_dicts(Sorient_dict: dict):
 
     :param Sorient_dict: dictionary containing orientational entropy values
     """
+    terms = """
+    Orientations
+    ============
+    resid: residue ID of the closest solute to the waters
+    resname: name of the residue associated with the residue ID
+    Sor: Orientational entropy of water around residue
+    count: total number of waters around the residue across frames analysed
+    N_c: average number of UAs around waters analysed
+    N_w: average number of water UAs around waters analysed
+    Nc_eff: average number of effective neighbouts that waters can HB with
+    pbias: average of the probability of forming HBs with neighbouring UAs
+    """
+    print(textwrap.dedent(terms))
+
+    print("resid resname Sor count N_c N_w Nc_eff pbias")
     for resid, resname_key in sorted(list(Sorient_dict.items())):
-        for resname, [Sor, count] in sorted(list(resname_key.items())):
-            print(resid, resname, Sor, count)
+        for resname, [Sor, count, N_c, N_w, Nc_eff, pbias] in sorted(
+            list(resname_key.items())
+        ):
+            decimals = 4
+            print(
+                f"{resid} {resname} {Sor:.{decimals}f} {count} "
+                f"{N_c:.{decimals}f} {N_w:.{decimals}f} "
+                f"{Nc_eff:.{decimals}f} {pbias:.{decimals}f}"
+            )
+    print()
