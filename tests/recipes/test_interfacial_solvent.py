@@ -67,6 +67,8 @@ def test_Sorient_dict(interfacial_entropy_dicts):
             5.257142857142858,
             2.9594964080590276,
             0.10765314493056646,
+            10.670272583734757,
+            8.183120170171872,
         ]
     )
     assert Sorient_dict[2]["ARG"] == pytest.approx(
@@ -77,6 +79,8 @@ def test_Sorient_dict(interfacial_entropy_dicts):
             5.835721088435374,
             3.2771824257183773,
             0.10732165472942556,
+            12.039086367415315,
+            9.1274183064461,
         ]
     )
     assert Sorient_dict[3]["NME"] == pytest.approx(
@@ -87,6 +91,8 @@ def test_Sorient_dict(interfacial_entropy_dicts):
             5.1923076923076925,
             2.050259026687599,
             0.07010328362114078,
+            10.77132783200613,
+            8.187096360116465,
         ]
     )
 

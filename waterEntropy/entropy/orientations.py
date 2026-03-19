@@ -41,6 +41,29 @@ class WaterOrientCalculator:
         self.Nc_eff = Nc_eff
         self.pbias_ave = pbias_ave
 
+    def get_non_HB_data(self, Nc):
+        """
+        Calculate water orientational entropies without accounting for
+        HB biasing, using the following equation (as in the host-guest systems
+        paper, https://doi.org/10.1007/s10822-021-00406-5):
+
+        .. math::
+            S_\\mathrm{orient} = \\ln \\Bigg(N_c ^ {(3 / 2)} \times \\pi ^ {0.5}
+            \times \frac{p_\\mathrm{corr}}{\\sigma} \\Bigg)
+
+        where :math:`N_{c}` is the number of UAs in the coordination shell,
+        :math:`p_\\mathrm{corr}` is the probability that the neighboring
+        molecules are oriented suitably for each solute, which is set to 0.25
+        for water. And :math:`\\sigma` is the symmetry number for water which
+        is 2.
+
+        """
+        S_orient = 0
+        if Nc != 0:
+            S_orient = np.log((Nc) ** (3 / 2) * np.pi**0.5 * 0.25 / 2)
+        S_orient = max(S_orient, 0)
+        return S_orient * self.GAS_CONSTANT
+
     def get_shell_degeneracy(self, shell_label: list):
         """
         For a given labelled shell, find the degeneracy, i.e. count of each
@@ -294,14 +317,35 @@ class Orientations:
         for resname, shell_label_key in sorted(list(labelled_dict.items())):
             Sorient_ave, tot_count = 0, 0
             N_c_ave, N_w_ave, Nc_eff_ave, pbias_ave = 0, 0, 0, 0
+            Sorient_Nc_ave, Sorient_Nw_ave = 0, 0
             for shell_label, values in sorted(list(shell_label_key.items())):
+                # create object for Sorient
                 water = WaterOrientCalculator()
+                # calculate Sorient for water with given shell and solute
+                # neighbour using HB biasing
                 water.add_data(shell_label, values)
+
+                # add water entropies using previous methods that don't account
+                # for HBing
+                N_c = len(shell_label)
+                N_w = values["N_w"]
+                Sorient_Nc = water.get_non_HB_data(N_c)
+                Sorient_Nw = water.get_non_HB_data(N_w)
+
                 # only update tot_count here
+                # get running average for HB biased Sorient
                 Sorient_ave, tot_count = self.get_running_average(
                     water.Sorient, values["shell_count"], Sorient_ave, tot_count
                 )
                 # ignore the _tot_count
+                # get running average for non-HB Sorient
+                Sorient_Nc_ave, _tot_count = self.get_running_average(
+                    Sorient_Nc, values["shell_count"], Sorient_Nc_ave, tot_count
+                )
+                Sorient_Nw_ave, _tot_count = self.get_running_average(
+                    Sorient_Nw, values["shell_count"], Sorient_Nw_ave, tot_count
+                )
+                # get average terms for Nc and pbais
                 Nc_eff_ave, _tot_count = self.get_running_average(
                     water.Nc_eff, values["shell_count"], Nc_eff_ave, tot_count
                 )
@@ -309,10 +353,10 @@ class Orientations:
                     water.pbias_ave, values["shell_count"], pbias_ave, tot_count
                 )
                 N_c_ave, _tot_count = self.get_running_average(
-                    len(shell_label), values["shell_count"], N_c_ave, tot_count
+                    N_c, values["shell_count"], N_c_ave, tot_count
                 )
                 N_w_ave, _tot_count = self.get_running_average(
-                    values["N_w"], values["shell_count"], N_w_ave, tot_count
+                    N_w, values["shell_count"], N_w_ave, tot_count
                 )
             Sorient_dict[resname] = [
                 Sorient_ave,
@@ -321,6 +365,8 @@ class Orientations:
                 N_w_ave,
                 Nc_eff_ave,
                 pbias_ave,
+                Sorient_Nc_ave,
+                Sorient_Nw_ave,
             ]
 
 
@@ -335,24 +381,27 @@ def print_Sorient_dicts(Sorient_dict: dict):
     ============
     resid: residue ID of the closest solute to the waters
     resname: name of the residue associated with the residue ID
-    Sor: Orientational entropy of water around residue
+    Sor: Orientational entropy of water around residue using HB biasing
     count: total number of waters around the residue across frames analysed
     N_c: average number of UAs around waters analysed
     N_w: average number of water UAs around waters analysed
     Nc_eff: average number of effective neighbouts that waters can HB with
     pbias: average of the probability of forming HBs with neighbouring UAs
+    Sor_Nc: Orientational entropy of water around residue using Nc (no HB bias)
+    Sor_Nw: Orientational entropy of water around residue using Nw (no HB bias)
     """
     print(textwrap.dedent(terms))
 
-    print("resid resname Sor count N_c N_w Nc_eff pbias")
+    print("resid resname Sor count N_c N_w Nc_eff pbias Sor_Nc Sor_Nw")
     for resid, resname_key in sorted(list(Sorient_dict.items())):
-        for resname, [Sor, count, N_c, N_w, Nc_eff, pbias] in sorted(
+        for resname, [Sor, count, N_c, N_w, Nc_eff, pbias, Sor_Nc, Sor_Nw] in sorted(
             list(resname_key.items())
         ):
             decimals = 4
             print(
                 f"{resid} {resname} {Sor:.{decimals}f} {count} "
                 f"{N_c:.{decimals}f} {N_w:.{decimals}f} "
-                f"{Nc_eff:.{decimals}f} {pbias:.{decimals}f}"
+                f"{Nc_eff:.{decimals}f} {pbias:.{decimals}f} "
+                f"{Sor_Nc:.{decimals}f} {Sor_Nw:.{decimals}f} "
             )
     print()
