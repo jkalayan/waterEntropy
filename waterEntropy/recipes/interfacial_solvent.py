@@ -313,33 +313,36 @@ def _entropy_per_step(args):
         # 8d. find HB labels
         HBLabels.get_HB_labels(solvent.index, system, HBs, shells)
         if shell.nearest_nonlike_idx is not None:
-            # 8e. populate the labels into a dictionary for stats
-            # only if a different atom is in the RAD shell
             nearest = system.atoms[shell.nearest_nonlike_idx]
-            nearest_resid = nearest.resid
-            nearest_resname = nearest.resname
-            hb_labels.add_data(
-                nearest_resid,
-                nearest_resname,
-                shell.labels,
-                shell.donates_to_labels,
-                shell.accepts_from_labels,
-                shell.N_w,
-            )
-            frame_solvent_indices = save_solvent_indices(
-                ts.frame,
-                shell.atom_idx,
-                nearest_resid,
-                nearest_resname,
-                frame_solvent_indices,
-            )
-            # 3f. calculate the running average of force and torque
-            # covariance matrices
-            solvent_molecule = system.atoms[solvent.index].fragment  # get molecule
-            get_forces_torques(
-                covariances,
-                solvent_molecule,
-                f"{nearest_resname}_{nearest_resid}",
-                system,
-            )
+            # nearest_resid = nearest.resid
+            # nearest_resname = nearest.resname
+            for nearest_resid, nearest_resname in zip(
+                [nearest.resid, 0], [nearest.resname, "all"]
+            ):
+                # 8e. populate the labels into a dictionary for stats
+                # only if a different atom is in the RAD shell
+                hb_labels.add_data(
+                    nearest_resid,
+                    nearest_resname,
+                    shell.labels,
+                    shell.donates_to_labels,
+                    shell.accepts_from_labels,
+                    shell.N_w,
+                )
+                frame_solvent_indices = save_solvent_indices(
+                    ts.frame,
+                    shell.atom_idx,
+                    nearest_resid,
+                    nearest_resname,
+                    frame_solvent_indices,
+                )
+                # 3f. calculate the running average of force and torque
+                # covariance matrices
+                solvent_molecule = system.atoms[solvent.index].fragment  # get molecule
+                get_forces_torques(
+                    covariances,
+                    solvent_molecule,
+                    f"{nearest_resname}_{nearest_resid}",
+                    system,
+                )
     return frame_solvent_indices, covariances, hb_labels, n_frames
