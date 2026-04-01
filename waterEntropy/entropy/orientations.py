@@ -256,13 +256,6 @@ class Orientations:
             hb_labels.resid_labelled_shell_counts
         )
 
-        # get Nw, Nc Sor entropies via distribution of shell N occurance
-        # No HB shell label info here
-        Nw_counts, Nc_counts = self.get_Nx_dist(hb_labels.resid_labelled_shell_counts)
-        self.get_orientational_entropy_from_Nx_dist(
-            Nw_counts, Nc_counts, self.resid_labelled_Sorient
-        )
-
     def get_resid_orientational_entropy_from_dict(self, resid_labelled_dict: dict):
         """
         For a given dictionary containing labelled shells and HBing within the
@@ -281,6 +274,15 @@ class Orientations:
         """
         for resid, shell_label_key in sorted(list(resid_labelled_dict.items())):
             self.get_orientational_entropy_from_dict(
+                shell_label_key, self.resid_labelled_Sorient[resid]
+            )
+            # get Nw, Nc Sor entropies via distribution of shell N occurance
+            # No HB shell label info here
+            self.get_orientational_entropy_from_Nx_dist(
+                shell_label_key, self.resid_labelled_Sorient[resid]
+            )
+            # get SorHB using the Nc distribution method used above
+            self.get_orientational_entropy_from_pbias_Nc_eff_dist(
                 shell_label_key, self.resid_labelled_Sorient[resid]
             )
 
@@ -303,39 +305,47 @@ class Orientations:
         return new_running_average, new_count_stored
 
     def get_orientational_entropy_from_Nx_dist(
-        self, Nw_counts: dict, Nc_counts: dict, Sorient_dict: dict
+        self, labelled_dict: dict, Sorient_dict: dict
     ):
         # pylint: disable=too-many-locals
         """
-        Calculate the Sorient from the coordination number occurances
+        For a given dictionary containing labelled shells and HBing within the
+        shell with format:
 
-        :param Nw_counts: number of Nw occuring
-        :param Nc_counts: number of Nc occuring
-        :param Sorient_dict: Sorient store
+        labelled_dict = {"resname": {("labelled_shell"): {"shell_count": 0,
+                                    "N_w": N_w,
+                                    "donates_to": {"labelled_donators": 0,},
+                                    "accepts_from": {"labelled_acceptors": 0,}
+                                    }}}
+
+        Get the orientational entropy of the molecules in this dict
+
+        :param labelled_dict: dictionary of format dict1 containing labelled
+            coordination shells and HB donating and accepting
         """
-        for resid, resname_key in Nc_counts.items():
-            for resname, N_c_key in resname_key.items():
-                tot_count, Sorient_Nc_ave = 0, 0
-                for N_c, count in N_c_key.items():
-                    water = WaterOrientCalculator()
-                    Sorient_Nc = water.get_non_HB_data(N_c)
-                    # get running average for non-HB Sorient
-                    Sorient_Nc_ave, tot_count = self.get_running_average(
-                        Sorient_Nc, count, Sorient_Nc_ave, tot_count
-                    )
-                Sorient_dict[resid][resname][6] = Sorient_Nc_ave
+        Nc_counts, Nw_counts = self.get_Nx_dist(labelled_dict)
 
-        for resid, resname_key in Nw_counts.items():
-            for resname, N_w_key in resname_key.items():
-                tot_count, Sorient_Nw_ave = 0, 0
-                for N_w, count in N_w_key.items():
-                    water = WaterOrientCalculator()
-                    Sorient_Nw = water.get_non_HB_data(N_w)
-                    # get running average for non-HB Sorient
-                    Sorient_Nw_ave, tot_count = self.get_running_average(
-                        Sorient_Nw, count, Sorient_Nw_ave, tot_count
-                    )
-                Sorient_dict[resid][resname][7] = Sorient_Nw_ave
+        for resname, N_c_key in Nc_counts.items():
+            tot_count, Sorient_Nc_ave = 0, 0
+            for N_c, count in N_c_key.items():
+                water = WaterOrientCalculator()
+                Sorient_Nc = water.get_non_HB_data(N_c)
+                # get running average for non-HB Sorient
+                Sorient_Nc_ave, tot_count = self.get_running_average(
+                    Sorient_Nc, count, Sorient_Nc_ave, tot_count
+                )
+            Sorient_dict[resname][9] = Sorient_Nc_ave
+
+        for resname, N_w_key in Nw_counts.items():
+            tot_count, Sorient_Nw_ave = 0, 0
+            for N_w, count in N_w_key.items():
+                water = WaterOrientCalculator()
+                Sorient_Nw = water.get_non_HB_data(N_w)
+                # get running average for non-HB Sorient
+                Sorient_Nw_ave, tot_count = self.get_running_average(
+                    Sorient_Nw, count, Sorient_Nw_ave, tot_count
+                )
+            Sorient_dict[resname][10] = Sorient_Nw_ave
 
     def get_Nx_dist(self, labelled_dict: dict):
         # pylint: disable=too-many-locals
@@ -354,25 +364,113 @@ class Orientations:
         :param labelled_dict: dictionary of format dict1 containing labelled
             coordination shells and HB donating and accepting
         """
-        Nw_counts = {}
         Nc_counts = {}
-        for resid, resname_key in sorted(list(labelled_dict.items())):
-            Nw_counts[resid] = {}
-            Nc_counts[resid] = {}
-            for resname, shell_label_key in sorted(list(resname_key.items())):
-                Nw_counts[resid][resname] = {}
-                Nc_counts[resid][resname] = {}
-                for shell_label, values in sorted(list(shell_label_key.items())):
-                    N_w = values["N_w"]
-                    N_c = len(shell_label)
-                    if N_w not in Nw_counts[resid][resname].keys():
-                        Nw_counts[resid][resname][N_w] = 0
-                    if N_c not in Nc_counts[resid][resname].keys():
-                        Nc_counts[resid][resname][N_c] = 0
-                    Nw_counts[resid][resname][N_w] += 1
-                    Nc_counts[resid][resname][N_c] += 1
+        Nw_counts = {}
+        for resname, shell_label_key in sorted(list(labelled_dict.items())):
+            Nc_counts[resname] = {}
+            Nw_counts[resname] = {}
+            for shell_label, values in sorted(list(shell_label_key.items())):
 
-        return Nw_counts, Nw_counts
+                N_c = len(shell_label)
+                if N_c not in Nc_counts[resname].keys():
+                    Nc_counts[resname][N_c] = 0
+                Nc_counts[resname][N_c] += 1
+
+                N_w = values["N_w"]
+                if N_w not in Nw_counts[resname].keys():
+                    Nw_counts[resname][N_w] = 0
+                Nw_counts[resname][N_w] += 1
+
+        return Nc_counts, Nw_counts
+
+    def get_orientational_entropy_from_pbias_Nc_eff_dist(
+        self, labelled_dict: dict, Sorient_dict: dict
+    ):
+        # pylint: disable=too-many-locals
+        """
+        For a given dictionary containing labelled shells and HBing within the
+        shell with format:
+
+        labelled_dict = {"resname": {("labelled_shell"): {"shell_count": 0,
+                                    "N_w": N_w,
+                                    "donates_to": {"labelled_donators": 0,},
+                                    "accepts_from": {"labelled_acceptors": 0,}
+                                    }}}
+
+        Get the orientational entropy of the molecules in this dict
+
+        :param labelled_dict: dictionary of format dict1 containing labelled
+            coordination shells and HB donating and accepting
+        """
+        Neff_HBbias_dict = self.get_pbias_Nc_eff_dist(labelled_dict)
+
+        for resname, N_c_key in Neff_HBbias_dict.items():
+            tot_count, Sorient_HB_ave = 0, 0
+            for _N_c, info in N_c_key.items():
+                Nc_eff = info["Nc_eff"]
+                pbias = info["pbias"]
+                count = info["count"]
+                water = WaterOrientCalculator()
+                Sorient_HB = water.get_orientation_S(Nc_eff, pbias)
+                # get running average for non-HB Sorient
+                Sorient_HB_ave, tot_count = self.get_running_average(
+                    Sorient_HB, count, Sorient_HB_ave, tot_count
+                )
+            Sorient_dict[resname][8] = Sorient_HB_ave
+
+    def get_pbias_Nc_eff_dist(self, labelled_dict: dict):
+        """
+        For a given dictionary containing labelled shells and HBing within the
+        shell with format:
+
+        labelled_dict = {"resname": {("labelled_shell"): {"shell_count": 0,
+                                    "N_w": N_w,
+                                    "donates_to": {"labelled_donators": 0,},
+                                    "accepts_from": {"labelled_acceptors": 0,}
+                                    }}}
+
+        Get the orientational entropy of the molecules in this dict
+
+        :param labelled_dict: dictionary of format dict1 containing labelled
+            coordination shells and HB donating and accepting
+        """
+        Neff_HBbias_dict = (
+            nested_dict()
+        )  # dict for Neff and pbias_ave averaged over each Nc
+        for resname, shell_label_key in sorted(list(labelled_dict.items())):
+            for shell_label, values in sorted(list(shell_label_key.items())):
+                N_c = len(shell_label)
+                # create object for Sorient
+                water = WaterOrientCalculator()
+                # calculate Sorient for water with given shell and solute
+                # neighbour using HB biasing
+                water.add_data(shell_label, values)
+
+                if N_c not in Neff_HBbias_dict[resname]:
+                    Neff_HBbias_dict[resname][N_c] = {
+                        "pbias": 0,
+                        "Nc_eff": 0,
+                        "count": 0,
+                    }
+
+                (
+                    Neff_HBbias_dict[resname][N_c]["Nc_eff"],
+                    Neff_HBbias_dict[resname][N_c]["count"],
+                ) = self.get_running_average(
+                    water.Nc_eff,
+                    values["shell_count"],
+                    Neff_HBbias_dict[resname][N_c]["Nc_eff"],
+                    Neff_HBbias_dict[resname][N_c]["count"],
+                )
+                Neff_HBbias_dict[resname][N_c]["pbias"], _stored_shell_count = (
+                    self.get_running_average(
+                        water.pbias_ave,
+                        values["shell_count"],
+                        Neff_HBbias_dict[resname][N_c]["pbias"],
+                        Neff_HBbias_dict[resname][N_c]["count"],
+                    )
+                )
+        return Neff_HBbias_dict
 
     def get_orientational_entropy_from_dict(
         self, labelled_dict: dict, Sorient_dict: dict
@@ -444,12 +542,16 @@ class Orientations:
                 N_w_ave,
                 Nc_eff_ave,
                 pbias_ave,
-                0,  # Sorient_Nc_ave, # calculated elsewhere
-                0,  # Sorient_Nw_ave, # calculated elsewhere
+                Sorient_Nc_ave,
+                Sorient_Nw_ave,
+                0,  # new Sor HB, # calculated elsewhere
+                0,  # Sor Nc dist, # calculated elsewhere
+                0,  # Sor Nw dist, # calculated elsewhere
             ]
 
 
 def print_Sorient_dicts(Sorient_dict: dict):
+    # pylint: disable=too-many-locals
     """
     Print the orientational entropies of interfacial solvent
 
@@ -471,16 +573,30 @@ def print_Sorient_dicts(Sorient_dict: dict):
     """
     print(textwrap.dedent(terms))
 
-    print("resid resname Sor count N_c N_w Nc_eff pbias Sor_Nc Sor_Nw")
+    print(
+        "resid resname SorHB count N_c N_w Nc_eff pbias Sor_Nc Sor_Nw SorHB2 Sor_Nc2 Sor_Nw2"
+    )
     for resid, resname_key in sorted(list(Sorient_dict.items())):
-        for resname, [Sor, count, N_c, N_w, Nc_eff, pbias, Sor_Nc, Sor_Nw] in sorted(
-            list(resname_key.items())
-        ):
+        for resname, [
+            Sor,
+            count,
+            N_c,
+            N_w,
+            Nc_eff,
+            pbias,
+            Sor_Nc,
+            Sor_Nw,
+            Sor2,
+            Sor_Nc2,
+            Sor_Nw2,
+        ] in sorted(list(resname_key.items())):
             decimals = 4
             print(
                 f"{resid} {resname} {Sor:.{decimals}f} {count} "
                 f"{N_c:.{decimals}f} {N_w:.{decimals}f} "
                 f"{Nc_eff:.{decimals}f} {pbias:.{decimals}f} "
                 f"{Sor_Nc:.{decimals}f} {Sor_Nw:.{decimals}f} "
+                f"{Sor2:.{decimals}f} {Sor_Nc2:.{decimals}f} "
+                f"{Sor_Nw2:.{decimals}f}"
             )
     print()
