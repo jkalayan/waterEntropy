@@ -328,23 +328,25 @@ class Orientations:
         for resname, N_c_key in Nc_counts.items():
             tot_count, Sorient_Nc_ave = 0, 0
             for N_c, count in N_c_key.items():
-                water = WaterOrientCalculator()
-                Sorient_Nc = water.get_non_HB_data(N_c)
-                # get running average for non-HB Sorient
-                Sorient_Nc_ave, tot_count = self.get_running_average(
-                    Sorient_Nc, count, Sorient_Nc_ave, tot_count
-                )
+                if count > 0:  # sampling check
+                    water = WaterOrientCalculator()
+                    Sorient_Nc = water.get_non_HB_data(N_c)
+                    # get running average for non-HB Sorient
+                    Sorient_Nc_ave, tot_count = self.get_running_average(
+                        Sorient_Nc, count, Sorient_Nc_ave, tot_count
+                    )
             Sorient_dict[resname][9] = Sorient_Nc_ave
 
         for resname, N_w_key in Nw_counts.items():
             tot_count, Sorient_Nw_ave = 0, 0
             for N_w, count in N_w_key.items():
-                water = WaterOrientCalculator()
-                Sorient_Nw = water.get_non_HB_data(N_w)
-                # get running average for non-HB Sorient
-                Sorient_Nw_ave, tot_count = self.get_running_average(
-                    Sorient_Nw, count, Sorient_Nw_ave, tot_count
-                )
+                if count > 0:  # sampling check
+                    water = WaterOrientCalculator()
+                    Sorient_Nw = water.get_non_HB_data(N_w)
+                    # get running average for non-HB Sorient
+                    Sorient_Nw_ave, tot_count = self.get_running_average(
+                        Sorient_Nw, count, Sorient_Nw_ave, tot_count
+                    )
             Sorient_dict[resname][10] = Sorient_Nw_ave
 
     def get_Nx_dist(self, labelled_dict: dict):
@@ -439,37 +441,38 @@ class Orientations:
         )  # dict for Neff and pbias_ave averaged over each Nc
         for resname, shell_label_key in sorted(list(labelled_dict.items())):
             for shell_label, values in sorted(list(shell_label_key.items())):
-                N_c = len(shell_label)
-                # create object for Sorient
-                water = WaterOrientCalculator()
-                # calculate Sorient for water with given shell and solute
-                # neighbour using HB biasing
-                water.add_data(shell_label, values)
+                if values["shell_count"] > 0:  # make sure enough sampling
+                    N_c = len(shell_label)
+                    # create object for Sorient
+                    water = WaterOrientCalculator()
+                    # calculate Sorient for water with given shell and solute
+                    # neighbour using HB biasing
+                    water.add_data(shell_label, values)
 
-                if N_c not in Neff_HBbias_dict[resname]:
-                    Neff_HBbias_dict[resname][N_c] = {
-                        "pbias": 0,
-                        "Nc_eff": 0,
-                        "count": 0,
-                    }
+                    if N_c not in Neff_HBbias_dict[resname]:
+                        Neff_HBbias_dict[resname][N_c] = {
+                            "pbias": 0,
+                            "Nc_eff": 0,
+                            "count": 0,
+                        }
 
-                (
-                    Neff_HBbias_dict[resname][N_c]["Nc_eff"],
-                    Neff_HBbias_dict[resname][N_c]["count"],
-                ) = self.get_running_average(
-                    water.Nc_eff,
-                    values["shell_count"],
-                    Neff_HBbias_dict[resname][N_c]["Nc_eff"],
-                    Neff_HBbias_dict[resname][N_c]["count"],
-                )
-                Neff_HBbias_dict[resname][N_c]["pbias"], _stored_shell_count = (
-                    self.get_running_average(
-                        water.pbias_ave,
+                    (
+                        Neff_HBbias_dict[resname][N_c]["Nc_eff"],
+                        Neff_HBbias_dict[resname][N_c]["count"],
+                    ) = self.get_running_average(
+                        water.Nc_eff,
                         values["shell_count"],
-                        Neff_HBbias_dict[resname][N_c]["pbias"],
+                        Neff_HBbias_dict[resname][N_c]["Nc_eff"],
                         Neff_HBbias_dict[resname][N_c]["count"],
                     )
-                )
+                    Neff_HBbias_dict[resname][N_c]["pbias"], _stored_shell_count = (
+                        self.get_running_average(
+                            water.pbias_ave,
+                            values["shell_count"],
+                            Neff_HBbias_dict[resname][N_c]["pbias"],
+                            Neff_HBbias_dict[resname][N_c]["count"],
+                        )
+                    )
         return Neff_HBbias_dict
 
     def get_orientational_entropy_from_dict(
@@ -496,58 +499,59 @@ class Orientations:
             N_c_ave, N_w_ave, Nc_eff_ave, pbias_ave = 0, 0, 0, 0
             Sorient_Nc_ave, Sorient_Nw_ave = 0, 0
             for shell_label, values in sorted(list(shell_label_key.items())):
-                # create object for Sorient
-                water = WaterOrientCalculator()
-                # calculate Sorient for water with given shell and solute
-                # neighbour using HB biasing
-                water.add_data(shell_label, values)
+                if values["shell_count"] > 0:  # make sure enough sampling
+                    # create object for Sorient
+                    water = WaterOrientCalculator()
+                    # calculate Sorient for water with given shell and solute
+                    # neighbour using HB biasing
+                    water.add_data(shell_label, values)
 
-                # add water entropies using previous methods that don't account
-                # for HBing
-                N_c = len(shell_label)
-                N_w = values["N_w"]
-                Sorient_Nc = water.get_non_HB_data(N_c)
-                Sorient_Nw = water.get_non_HB_data(N_w)
+                    # add water entropies using previous methods that don't account
+                    # for HBing
+                    N_c = len(shell_label)
+                    N_w = values["N_w"]
+                    Sorient_Nc = water.get_non_HB_data(N_c)
+                    Sorient_Nw = water.get_non_HB_data(N_w)
 
-                # only update tot_count here
-                # get running average for HB biased Sorient
-                Sorient_ave, tot_count = self.get_running_average(
-                    water.Sorient, values["shell_count"], Sorient_ave, tot_count
-                )
-                # ignore the _tot_count
-                # get running average for non-HB Sorient
-                Sorient_Nc_ave, _tot_count = self.get_running_average(
-                    Sorient_Nc, values["shell_count"], Sorient_Nc_ave, tot_count
-                )
-                Sorient_Nw_ave, _tot_count = self.get_running_average(
-                    Sorient_Nw, values["shell_count"], Sorient_Nw_ave, tot_count
-                )
-                # get average terms for Nc and pbais
-                Nc_eff_ave, _tot_count = self.get_running_average(
-                    water.Nc_eff, values["shell_count"], Nc_eff_ave, tot_count
-                )
-                pbias_ave, _tot_count = self.get_running_average(
-                    water.pbias_ave, values["shell_count"], pbias_ave, tot_count
-                )
-                N_c_ave, _tot_count = self.get_running_average(
-                    N_c, values["shell_count"], N_c_ave, tot_count
-                )
-                N_w_ave, _tot_count = self.get_running_average(
-                    N_w, values["shell_count"], N_w_ave, tot_count
-                )
-            Sorient_dict[resname] = [
-                Sorient_ave,
-                tot_count,
-                N_c_ave,
-                N_w_ave,
-                Nc_eff_ave,
-                pbias_ave,
-                Sorient_Nc_ave,
-                Sorient_Nw_ave,
-                0,  # new Sor HB, # calculated elsewhere
-                0,  # Sor Nc dist, # calculated elsewhere
-                0,  # Sor Nw dist, # calculated elsewhere
-            ]
+                    # only update tot_count here
+                    # get running average for HB biased Sorient
+                    Sorient_ave, tot_count = self.get_running_average(
+                        water.Sorient, values["shell_count"], Sorient_ave, tot_count
+                    )
+                    # ignore the _tot_count
+                    # get running average for non-HB Sorient
+                    Sorient_Nc_ave, _tot_count = self.get_running_average(
+                        Sorient_Nc, values["shell_count"], Sorient_Nc_ave, tot_count
+                    )
+                    Sorient_Nw_ave, _tot_count = self.get_running_average(
+                        Sorient_Nw, values["shell_count"], Sorient_Nw_ave, tot_count
+                    )
+                    # get average terms for Nc and pbais
+                    Nc_eff_ave, _tot_count = self.get_running_average(
+                        water.Nc_eff, values["shell_count"], Nc_eff_ave, tot_count
+                    )
+                    pbias_ave, _tot_count = self.get_running_average(
+                        water.pbias_ave, values["shell_count"], pbias_ave, tot_count
+                    )
+                    N_c_ave, _tot_count = self.get_running_average(
+                        N_c, values["shell_count"], N_c_ave, tot_count
+                    )
+                    N_w_ave, _tot_count = self.get_running_average(
+                        N_w, values["shell_count"], N_w_ave, tot_count
+                    )
+                Sorient_dict[resname] = [
+                    Sorient_ave,
+                    tot_count,
+                    N_c_ave,
+                    N_w_ave,
+                    Nc_eff_ave,
+                    pbias_ave,
+                    Sorient_Nc_ave,
+                    Sorient_Nw_ave,
+                    0,  # new Sor HB, # calculated elsewhere
+                    0,  # Sor Nc dist, # calculated elsewhere
+                    0,  # Sor Nw dist, # calculated elsewhere
+                ]
 
 
 def print_Sorient_dicts(Sorient_dict: dict):
