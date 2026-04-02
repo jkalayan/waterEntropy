@@ -366,13 +366,10 @@ class Orientations:
         :param labelled_dict: dictionary of format dict1 containing labelled
             coordination shells and HB donating and accepting
         """
-        Nc_counts = {}
-        Nw_counts = {}
+        Nc_counts = nested_dict()
+        Nw_counts = nested_dict()
         for resname, shell_label_key in sorted(list(labelled_dict.items())):
-            Nc_counts[resname] = {}
-            Nw_counts[resname] = {}
             for shell_label, values in sorted(list(shell_label_key.items())):
-
                 N_c = len(shell_label)
                 if N_c not in Nc_counts[resname].keys():
                     Nc_counts[resname][N_c] = 0
@@ -382,7 +379,6 @@ class Orientations:
                 if N_w not in Nw_counts[resname].keys():
                     Nw_counts[resname][N_w] = 0
                 Nw_counts[resname][N_w] += 1
-
         return Nc_counts, Nw_counts
 
     def get_orientational_entropy_from_pbias_Nc_eff_dist(
@@ -441,7 +437,7 @@ class Orientations:
         )  # dict for Neff and pbias_ave averaged over each Nc
         for resname, shell_label_key in sorted(list(labelled_dict.items())):
             for shell_label, values in sorted(list(shell_label_key.items())):
-                if values["shell_count"] > 0:  # make sure enough sampling
+                if values["shell_count"] > 0:  # sampling check
                     N_c = len(shell_label)
                     # create object for Sorient
                     water = WaterOrientCalculator()
