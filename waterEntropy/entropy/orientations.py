@@ -309,6 +309,7 @@ class Orientations:
     ):
         # pylint: disable=too-many-locals
         """
+        Use the distribution of Nc shells to get the averaged Sor.
         For a given dictionary containing labelled shells and HBing within the
         shell with format:
 
@@ -352,6 +353,7 @@ class Orientations:
     def get_Nx_dist(self, labelled_dict: dict):
         # pylint: disable=too-many-locals
         """
+        Use the distribution of Nc shells to get the averaged Sor.
         For a given dictionary containing labelled shells and HBing within the
         shell with format:
 
@@ -373,12 +375,12 @@ class Orientations:
                 N_c = len(shell_label)
                 if N_c not in Nc_counts[resname].keys():
                     Nc_counts[resname][N_c] = 0
-                Nc_counts[resname][N_c] += 1
+                Nc_counts[resname][N_c] += values["shell_count"]
 
                 N_w = values["N_w"]
                 if N_w not in Nw_counts[resname].keys():
                     Nw_counts[resname][N_w] = 0
-                Nw_counts[resname][N_w] += 1
+                Nw_counts[resname][N_w] += values["shell_count"]
         return Nc_counts, Nw_counts
 
     def get_orientational_entropy_from_pbias_Nc_eff_dist(
@@ -386,6 +388,7 @@ class Orientations:
     ):
         # pylint: disable=too-many-locals
         """
+        Use the distribution of Nc shells to get the averaged Sor.
         For a given dictionary containing labelled shells and HBing within the
         shell with format:
 
@@ -418,6 +421,7 @@ class Orientations:
 
     def get_pbias_Nc_eff_dist(self, labelled_dict: dict):
         """
+        Use the distribution of Nc shells to get the averaged Sor.
         For a given dictionary containing labelled shells and HBing within the
         shell with format:
 
@@ -511,7 +515,7 @@ class Orientations:
 
                     # only update tot_count here
                     # get running average for HB biased Sorient
-                    Sorient_ave, tot_count = self.get_running_average(
+                    Sorient_ave, tot_count_update = self.get_running_average(
                         water.Sorient, values["shell_count"], Sorient_ave, tot_count
                     )
                     # ignore the _tot_count
@@ -535,6 +539,7 @@ class Orientations:
                     N_w_ave, _tot_count = self.get_running_average(
                         N_w, values["shell_count"], N_w_ave, tot_count
                     )
+                    tot_count = tot_count_update
                 Sorient_dict[resname] = [
                     Sorient_ave,
                     tot_count,
