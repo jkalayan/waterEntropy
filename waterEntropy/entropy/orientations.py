@@ -410,7 +410,7 @@ class Orientations:
             for _N_c, info in N_c_key.items():
                 Nc_eff = info["Nc_eff"]
                 pbias = info["pbias"]
-                count = info["count"]
+                count = info["count_Nc_eff"]
                 water = WaterOrientCalculator()
                 Sorient_HB = water.get_orientation_S(Nc_eff, pbias)
                 # get running average for non-HB Sorient
@@ -453,25 +453,27 @@ class Orientations:
                         Neff_HBbias_dict[resname][N_c] = {
                             "pbias": 0,
                             "Nc_eff": 0,
-                            "count": 0,
+                            "count_pbias": 0,
+                            "count_Nc_eff": 0,
                         }
 
                     (
                         Neff_HBbias_dict[resname][N_c]["Nc_eff"],
-                        Neff_HBbias_dict[resname][N_c]["count"],
+                        Neff_HBbias_dict[resname][N_c]["count_Nc_eff"],
                     ) = self.get_running_average(
                         water.Nc_eff,
                         values["shell_count"],
                         Neff_HBbias_dict[resname][N_c]["Nc_eff"],
-                        Neff_HBbias_dict[resname][N_c]["count"],
+                        Neff_HBbias_dict[resname][N_c]["count_Nc_eff"],
                     )
-                    Neff_HBbias_dict[resname][N_c]["pbias"], _stored_shell_count = (
-                        self.get_running_average(
-                            water.pbias_ave,
-                            values["shell_count"],
-                            Neff_HBbias_dict[resname][N_c]["pbias"],
-                            Neff_HBbias_dict[resname][N_c]["count"],
-                        )
+                    (
+                        Neff_HBbias_dict[resname][N_c]["pbias"],
+                        Neff_HBbias_dict[resname][N_c]["count_pbias"],
+                    ) = self.get_running_average(
+                        water.pbias_ave,
+                        values["shell_count"],
+                        Neff_HBbias_dict[resname][N_c]["pbias"],
+                        Neff_HBbias_dict[resname][N_c]["count_pbias"],
                     )
         return Neff_HBbias_dict
 
