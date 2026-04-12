@@ -230,7 +230,7 @@ def get_interfacial_water_orient_entropy(
                 futures = client.map(_entropy_per_step, args)
                 results.extend(client.gather(futures))
                 if i < len(batches) - 1:
-                    client.restart()
+                    client.restart(wait_for_workers=False)
                     time.sleep(2)
         # Otherwise we are on HPC and we can run without the memory fixes.
         else:
