@@ -297,10 +297,20 @@ class HBLabelCollection:
 
 
 def get_HB_labels(atom_idx: int, system, HBs: HBCollection, shells: ShellCollection):
+    # pylint: disable=too-many-branches
+    # pylint: disable=too-many-statements
+    # pylint: disable=too-many-nested-blocks
+    # pylint: disable=too-many-locals
     """
     For a given central atom, get what UAs it donates and accepts from, then
     find what shell labels these correspond to. Update the shells class
-    instance with this information
+    instance with this information.
+
+    IDEA:
+    Can we check if a water that is being donated to / accepted from is itself
+    donating to / accepting from another SOLUTE, if so, then these are the waters
+    that should keep the X_ 1_ label, otherwise switch them to 2_ ? As they are
+    indistiguishable from bulk water (i.e. not interacting with solute)
 
     :param atom_idx: atom index to find HB labels for
     :param system: mdanalysis instance of all atoms in current frame
@@ -325,7 +335,49 @@ def get_HB_labels(atom_idx: int, system, HBs: HBCollection, shells: ShellCollect
                     bonded_UA = Selections.find_bonded_heavy_atom(d_idx, system)
                     if bonded_UA.index in shell.UA_shell:
                         shell_idx = shell.UA_shell.index(bonded_UA.index)
-                        accepts_from_labels.append(shell.labels[shell_idx])
+                        # accepts_from_labels.append(shell.labels[shell_idx])
+
+                        # print("accepts_from", bonded_UA.index, shell.labels[shell_idx])
+                        if (
+                            system.atoms[atom_idx].resname
+                            == system.atoms[bonded_UA.index].resname
+                            and shell.labels[shell_idx]
+                            != system.atoms[atom_idx].resname
+                        ):
+                            # print()
+                            donator_HBs = []
+
+                            # check what the acceptor donates to:
+                            donator_donates_to = HBs.find_acceptor(bonded_UA.index)
+                            # print("\t", donator_donates_to.values())
+                            for ddt in donator_donates_to.values():
+                                donator_HBs.append(system.atoms[ddt].resname)
+                            # check what acceptor accepts from:
+                            donator_accepts_from = HBs.find_donators(bonded_UA.index)
+                            # print("\t", donator_accepts_from)
+                            if donator_accepts_from:
+                                for daf in donator_accepts_from:
+                                    donator_HBs.append(system.atoms[daf].resname)
+                            # print(system.atoms[atom_idx].resname, donator_HBs)
+                            acceptor_check = all(
+                                ele == system.atoms[atom_idx].resname
+                                for ele in donator_HBs
+                            )
+
+                            if acceptor_check and shell.labels[shell_idx][:2] != "2_":
+                                # print(acceptor_check, shell.labels[shell_idx][:2], shell.labels[shell_idx][2:])
+                                new_label = f"2_{shell.labels[shell_idx][2:]}"
+                                # print(new_label)
+                                accepts_from_labels.append(new_label)
+                                # print(shell.labels)
+                                shell.labels[shell_idx] = new_label
+                                # print(shell.labels)
+
+                            else:
+                                accepts_from_labels.append(shell.labels[shell_idx])
+                        else:
+                            accepts_from_labels.append(shell.labels[shell_idx])
+
                     else:
                         # don't add donating neighbour if not in central UA
                         # shell
@@ -338,7 +390,46 @@ def get_HB_labels(atom_idx: int, system, HBs: HBCollection, shells: ShellCollect
                     if acceptor.mass < 1.1:
                         acceptor = Selections.find_bonded_heavy_atom(a_idx, system)
                     shell_idx = shell.UA_shell.index(acceptor.index)
-                    donates_to_labels.append(shell.labels[shell_idx])
+                    # donates_to_labels.append(shell.labels[shell_idx])
+
+                    if (
+                        system.atoms[atom_idx].resname == acceptor.resname
+                        and shell.labels[shell_idx] != system.atoms[atom_idx].resname
+                    ):
+                        # print()
+                        acceptor_HBs = []
+                        # check what the acceptor donates to:
+                        acceptor_donates_to = HBs.find_acceptor(acceptor.index)
+                        # print("\t", acceptor_donates_to.values())
+                        for adt in acceptor_donates_to.values():
+                            acceptor_HBs.append(system.atoms[adt].resname)
+                        # check what acceptor accepts from:
+                        acceptor_accepts_from = HBs.find_donators(acceptor.index)
+                        # print("\t", acceptor_accepts_from)
+                        if acceptor_accepts_from:
+                            for aaf in acceptor_accepts_from:
+                                acceptor_HBs.append(system.atoms[aaf].resname)
+                        # print(system.atoms[atom_idx].resname, acceptor_HBs)
+                        acceptor_check = all(
+                            ele == system.atoms[atom_idx].resname
+                            for ele in acceptor_HBs
+                        )
+
+                        if acceptor_check and shell.labels[shell_idx][:2] != "2_":
+                            # print()
+                            # print(acceptor_check, shell.labels[shell_idx][:2], shell.labels[shell_idx][2:])
+                            new_label = f"2_{shell.labels[shell_idx][2:]}"
+                            # print(new_label)
+                            donates_to_labels.append(new_label)
+                            # print(shell.labels)
+                            shell.labels[shell_idx] = new_label
+                            # print(shell.labels)
+
+                        else:
+                            donates_to_labels.append(shell.labels[shell_idx])
+                    else:
+                        donates_to_labels.append(shell.labels[shell_idx])
+
     # 5. Add labelled neighbours to shells instance
     shell.donates_to_labels = donates_to_labels
     shell.accepts_from_labels = accepts_from_labels

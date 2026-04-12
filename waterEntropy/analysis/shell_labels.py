@@ -39,7 +39,8 @@ def get_shell_labels(atom_idx: int, system, shell, shells: ShellCollection):
             neighbour = system.atoms[n]
             # 3a. label nearest nonlike atom as "0_RESNAME"
             if neighbour.index == nearest_nonlike.index:
-                shell_labels.append(f"0_{neighbour.resname}")
+                # shell_labels.append(f"0_{neighbour.resname}")
+                shell_labels.append(f"{neighbour.resname}")
             # 3b. label other nonlike atoms as "RESNAME"
             if (
                 neighbour.index != nearest_nonlike.index
@@ -80,7 +81,8 @@ def get_shell_labels(atom_idx: int, system, shell, shells: ShellCollection):
                         # 3h. if neighbours nearest nonlike is not the same resid
                         # as central nearest resid,  it is in the first shell
                         # of a different resid and labelled as "X_RESNAME"
-                        shell_labels.append(f"X_{neighbour.resname}")
+                        # shell_labels.append(f"X_{neighbour.resname}")
+                        shell_labels.append(f"1_{neighbour.resname}")
         shell.labels = shell_labels  # sorted(shell_labels) #don't sort yet
         shell.nearest_nonlike_idx = nearest_nonlike.index
         shell.N_w = N_w
