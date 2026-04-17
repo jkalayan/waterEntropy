@@ -102,13 +102,14 @@ def get_UA_masses(molecule):
     return UA_masses
 
 
-def get_axes(molecule, molecule_scale: str):
+def get_axes(molecule, molecule_scale: str, dimensions: np.ndarray):
     """
     From a selection of atoms, get the ordered principal axes (3,3) and
     the ordered moment of inertia axes (3,) for that selection of atoms
 
     :param molecule: mdanalysis instance of molecule
     :param molecule_scale: the length scale of molecule
+    :param dimension: (3,) dimensions of system
     """
     # default moment of inertia
     moment_of_inertia = molecule.moment_of_inertia(unwrap=True)
@@ -119,7 +120,7 @@ def get_axes(molecule, molecule_scale: str):
         center_of_mass = molecule.center_of_mass()
         masses = get_UA_masses(molecule)
         moment_of_inertia = MOI(center_of_mass, UAs.positions, masses)
-    make_whole(molecule.atoms)
+    make_whole(molecule.atoms)  # deals with PBC
     principal_axes = molecule.principal_axes()
     # diagonalise moment of inertia tensor here
     # pylint: disable=unused-variable
@@ -134,6 +135,12 @@ def get_axes(molecule, molecule_scale: str):
     order = np.argsort(np.abs(eigenvalues))[::-1]  # match CE
     # principal_axes = principal_axes[order] # PI already ordered correctly
     MOI_axis = eigenvalues[order]
+
+    if molecule_scale == "single_UA":
+        UAs = Selections.find_molecule_UAs(molecule)
+        principal_axes = get_flipped_axes(
+            molecule.positions, principal_axes, UAs[0].position, dimensions
+        )  # flip like in CE
 
     return principal_axes, MOI_axis
 
@@ -346,7 +353,9 @@ def get_bonded_axes(system, atom, dimensions):
         )
     if len(heavy_bonded) == 0:
         # !! Check if this scale is correct
-        custom_axes, position_vector = get_axes(UA_all, molecule_scale="single_UA")
+        custom_axes, position_vector = get_axes(
+            UA_all, molecule_scale="single_UA", dimensions=dimensions
+        )
 
     if custom_axes is not None:
         custom_axes, position_vector = get_custom_PI_MOI(
