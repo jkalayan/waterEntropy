@@ -2,6 +2,7 @@
 Functions for transforming atomic positions and forces
 """
 
+from MDAnalysis.lib.mdamath import make_whole
 import numpy as np
 from numpy import linalg as LA
 
@@ -110,7 +111,7 @@ def get_axes(molecule, molecule_scale: str):
     :param molecule_scale: the length scale of molecule
     """
     # default moment of inertia
-    moment_of_inertia = molecule.moment_of_inertia()
+    moment_of_inertia = molecule.moment_of_inertia(unwrap=True)
     if molecule_scale == "single_UA":
         pass  # moment_of_inertia = molecule.moment_of_inertia()
     if molecule_scale == "multiple_UAs":
@@ -118,6 +119,7 @@ def get_axes(molecule, molecule_scale: str):
         center_of_mass = molecule.center_of_mass()
         masses = get_UA_masses(molecule)
         moment_of_inertia = MOI(center_of_mass, UAs.positions, masses)
+    make_whole(molecule.atoms)
     principal_axes = molecule.principal_axes()
     # diagonalise moment of inertia tensor here
     # pylint: disable=unused-variable
@@ -128,7 +130,8 @@ def get_axes(molecule, molecule_scale: str):
     #           function instead
 
     # sort eigenvalues of moi tensor by largest to smallest magnitude
-    order = abs(eigenvalues).argsort()[::-1]  # decending order
+    # order = abs(eigenvalues).argsort()[::-1]  # decending order
+    order = np.argsort(np.abs(eigenvalues))[::-1]  # match CE
     # principal_axes = principal_axes[order] # PI already ordered correctly
     MOI_axis = eigenvalues[order]
 
