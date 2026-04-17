@@ -259,7 +259,7 @@ def get_interfacial_water_orient_entropy(
     Sorients.add_data(hb_labels)
     Sorient_dict = Sorients.resid_labelled_Sorient
     vibrations = Vibrations(temperature)
-    vibrations.add_data(covariances, diagonalise=True)
+    vibrations.add_data(covariances, diagonalise=False)
 
     return (
         Sorient_dict,
