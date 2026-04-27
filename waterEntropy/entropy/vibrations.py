@@ -25,8 +25,9 @@ class Vibrations:
     # constants
     BOLTZMANN = 1.38064852e-23  # (J / K)
     HBAR = 1.0545718e-34  # (J s)
-    AVOGADRO = 6.022e23
-    GAS_CONSTANT = 8.314  # (J/ (K mol)
+    AVOGADRO = 6.0221415e23
+    GAS_CONSTANT = 8.3144598484848  # (J/ (K mol)
+    PLANK_CONSTANT = 6.62607004081818e-34
     # conversions
     CALORIE_TO_JOULE = 4184
     KG_TO_AMU = 6.02214086e26
