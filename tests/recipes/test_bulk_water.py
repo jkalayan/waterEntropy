@@ -35,12 +35,15 @@ def test_Sorient_dict(bulk_water_entropy_dicts):
         [
             11.295694179188464,
             867,
-            6.053509907760105,
-            6.053509907760105,
-            6.053509907760105,
-            0.2291068586055006,
-            9.775154915649155,
-            9.775154915649155,
+            6.8788927335640135,
+            6.8788927335640135,
+            6.8788927335640135,
+            0.25,
+            11.295694179188464,
+            11.295694179188464,
+            11.295694179188464,
+            11.295694179188464,
+            11.295694179188464,
         ]
     )
 
@@ -54,13 +57,17 @@ def test_covariances(bulk_water_entropy_dicts):
     torques = covariances.torques[("WAT", "WAT")]
     count = covariances.counts[("WAT", "WAT")]
 
+    print("forces", forces)
+    print("torques", torques)
+    print("count", count)
+
     assert np.allclose(
         forces,
         np.array(
             [
-                [677766.79725371, 57015.33553172, 1713.75817016],
-                [57015.33553172, 1498012.49688953, 37806.43086811],
-                [1713.75817016, 37806.43086811, 951068.82244533],
+                [677734.94716348, 57012.65622729, 1713.67763604],
+                [57012.65622729, 1497942.10124106, 37804.65424194],
+                [1713.67763604, 37804.65424194, 951024.12915563],
             ]
         ),
     )
@@ -68,9 +75,9 @@ def test_covariances(bulk_water_entropy_dicts):
         torques,
         np.array(
             [
-                [8.82222234e06, -1.57822726e05, 5.92784745e05],
-                [-1.57822726e05, 6.49223541e06, 6.08836668e03],
-                [5.92784745e05, 6.08836668e03, 1.41024728e07],
+                [8527024.55153786, -154805.72447386, 576257.37509633],
+                [-154805.72447386, 6436426.29332658, 56359.58996768],
+                [576257.37509633, 56359.58996768, 14007633.78229195],
             ]
         ),
     )
@@ -86,9 +93,9 @@ def test_vibrations(bulk_water_entropy_dicts):
     trans_freqs = vibrations.translational_freq[("WAT", "WAT")]
     rot_freqs = vibrations.rotational_freq[("WAT", "WAT")]
 
-    assert np.allclose(Strans, np.array([17.59459292, 14.34269432, 16.2012916]))
-    assert np.allclose(sum(Strans), 48.1385788374531)
-    assert np.allclose(Srot, np.array([7.36084486, 8.51428332, 5.6781004]))
-    assert np.allclose(sum(Srot), 21.553228577722663)
-    assert np.allclose(trans_freqs, np.array([[677766, 1498012, 951068]]))
-    assert np.allclose(rot_freqs, np.array([[8822222, 6492235, 14102472]]))
+    assert np.allclose(Strans, np.array([14.32595231, 17.61982376, 16.21354637]))
+    assert np.allclose(sum(Strans), 48.159322433317016)
+    assert np.allclose(Srot, np.array([5.68693308, 7.5082148, 8.55525875]))
+    assert np.allclose(sum(Srot), 21.75040663028019)
+    assert np.allclose(trans_freqs, np.array([1504472, 673788, 948440]))
+    assert np.allclose(rot_freqs, np.array([14067779, 8479586, 6423718]))

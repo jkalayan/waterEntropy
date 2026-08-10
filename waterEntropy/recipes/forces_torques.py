@@ -35,7 +35,9 @@ def get_forces_torques(
         # lengthscales in the hierarchy
         scale_covariance = 1
     # 2. Get the axes of the molecule
-    principal_axes, MOI_axis = Transformation.get_axes(molecule, molecule_scale)
+    principal_axes, MOI_axis = Transformation.get_axes(
+        molecule, molecule_scale, system.dimensions[:3]
+    )
     # 3. Get the center point of the molecule
     center_of_mass = molecule.center_of_mass()
     # 4. calculate the torque from the forces and axes

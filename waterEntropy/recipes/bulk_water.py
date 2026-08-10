@@ -81,7 +81,7 @@ def get_bulk_water_orient_entropy(
     Sorients.add_data(hb_labels)
     Sorient_dict = Sorients.resid_labelled_Sorient
     # 5. Get the vibrational entropy of interfacial waters
-    vibrations.add_data(covariances, diagonalise=True)
+    vibrations.add_data(covariances, diagonalise=False)
 
     return (
         Sorient_dict,
