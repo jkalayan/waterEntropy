@@ -577,6 +577,12 @@ def print_Sorient_dicts(Sorient_dict: dict):
     pbias: average of the probability of forming HBs with neighbouring UAs
     Sor_Nc: Orientational entropy of water around residue using Nc (no HB bias)
     Sor_Nw: Orientational entropy of water around residue using Nw (no HB bias)
+    SorHB2: Orientational entropy of water around residue using HB biasing,
+    grouped and averaged over shell sizes first
+    Sor_Nc2: Orientational entropy of water around residue using Nc (no HB bias),
+    grouped and averaged over shell sizes first
+    Sor_Nw2: Orientational entropy of water around residue using Nw (no HB bias),
+    grouped and averaged over shell sizes first
     """
     print(textwrap.dedent(terms))
 
