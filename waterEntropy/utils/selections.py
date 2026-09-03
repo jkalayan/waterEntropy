@@ -65,9 +65,15 @@ def find_bonded_heavy_atom(atom_idx: int, system):
     """
     atom = system.atoms[atom_idx]
     if atom.mass < 1.1:
-        bonded_atoms = system.select_atoms(f"bonded index {atom_idx}")
-        bonded_heavy_atoms = bonded_atoms.select_atoms("mass 2 to 999")
-        bonded_heavy_atom = bonded_heavy_atoms[0]  # should be a list of one
+        bonded_heavy_atom = None
+        for bonds in atom.bonds:
+            bond1, bond2 = bonds[0], bonds[1]
+            if bond1.index != atom.index and bond1.mass > 1.1:
+                bonded_heavy_atom = bond1
+            elif bond2.index != atom.index and bond2.mass > 1.1:
+                bonded_heavy_atom = bond2
+            else:
+                continue
     else:
         bonded_heavy_atom = atom
     return bonded_heavy_atom
