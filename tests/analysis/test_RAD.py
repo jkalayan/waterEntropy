@@ -6,6 +6,7 @@ from tests.input_files import load_inputs
 import waterEntropy.analysis.RAD as RADShell
 import waterEntropy.analysis.shell_labels as RADLabels
 from waterEntropy.analysis.shells import ShellCollection
+import waterEntropy.analysis.HB as HBond
 import waterEntropy.maths.trig as Trig
 from waterEntropy.recipes.interfacial_solvent import find_interfacial_solvent
 import waterEntropy.utils.selections as Selections
@@ -86,6 +87,16 @@ def test_get_RAD_shell():
         "2_WAT",
     ]
 
+    # find list of nearest solutes
+    nonlikes = RADLabels.get_nonlike_list(shell, system)
+    assert list(nonlikes) == [29]
+
+    # Find HBing in the shell and strongest HB
+    HBs = HBond.HBCollection()
+    HBond.get_shell_HBs(shell, system, HBs, shells)
+    strongest_HB = RADLabels.get_strongest_HB(solvent_UA.index, system, HBs)
+    assert strongest_HB[0].index == 1228
+    assert strongest_HB[1] == pytest.approx(-0.09501820357260474)
 
 def test_find_interfacial_solvent():
     """Test the find interfacial solvent function"""
