@@ -3,10 +3,10 @@
 import pytest
 
 from tests.input_files import load_inputs
+import waterEntropy.analysis.HB as HBond
 import waterEntropy.analysis.RAD as RADShell
 import waterEntropy.analysis.shell_labels as RADLabels
 from waterEntropy.analysis.shells import ShellCollection
-import waterEntropy.analysis.HB as HBond
 import waterEntropy.maths.trig as Trig
 from waterEntropy.recipes.interfacial_solvent import find_interfacial_solvent
 import waterEntropy.utils.selections as Selections
@@ -97,6 +97,7 @@ def test_get_RAD_shell():
     strongest_HB = RADLabels.get_strongest_HB(solvent_UA.index, system, HBs)
     assert strongest_HB[0].index == 1228
     assert strongest_HB[1] == pytest.approx(-0.09501820357260474)
+
 
 def test_find_interfacial_solvent():
     """Test the find interfacial solvent function"""
