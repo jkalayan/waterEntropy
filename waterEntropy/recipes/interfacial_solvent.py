@@ -309,7 +309,7 @@ def _entropy_per_step(args):
         # 8b. find HBing in the shell
         HBond.get_shell_HBs(shell, system, HBs, shells)
         # 8c. find RAD shell labels
-        shell = RADLabels.get_shell_labels(solvent.index, system, shell, shells)
+        shell = RADLabels.get_shell_labels(solvent.index, system, shell, shells, HBs)
         # 8d. find HB labels
         HBLabels.get_HB_labels(solvent.index, system, HBs, shells)
         if shell.nearest_nonlike_idx is not None:
