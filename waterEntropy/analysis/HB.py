@@ -22,7 +22,9 @@ class HBCollection:
             nested_dict()
         )  # structure: UA_idx[accepting_idx] = [donating_idx1,]
 
-    def add_data(self, UA_idx: int, donator_idx: int, acceptor_idx: int):
+    def add_data(
+        self, UA_idx: int, donator_idx: int, acceptor_idx: int, HB_strength: float
+    ):
         """
         For a given donator index, save its acceptor index in the donating_to
         dictionary. And for that acceptor, save the donator index as a list in
@@ -32,14 +34,14 @@ class HBCollection:
         :param UA_idx: atom index of the UA of the bonded donating hydrogen
         :param donator_idx: atom index of the donator bonded to the UA
         :param acceptor_idx: atom index of the UA accepting the
-            hydrogen bond in the coordination shell
+        :param HB_strength: HB strength value, more negative = stronger HB
         """
         if donator_idx not in self.donating_to[UA_idx]:
-            self.donating_to[UA_idx][donator_idx] = acceptor_idx
+            self.donating_to[UA_idx][donator_idx] = (acceptor_idx, HB_strength)
         if acceptor_idx not in self.accepting_from:
             self.accepting_from[acceptor_idx] = []
-        if donator_idx not in self.accepting_from[acceptor_idx]:
-            self.accepting_from[acceptor_idx].append(donator_idx)
+        if (donator_idx, HB_strength) not in self.accepting_from[acceptor_idx]:
+            self.accepting_from[acceptor_idx].append((donator_idx, HB_strength))
 
     def find_donators(self, UA_idx: int):
         """
@@ -136,7 +138,7 @@ def get_shell_HB_acceptors(shell, system, HBs: HBCollection):
                     current_relative_charge = relative_charge
                     current_acceptor = acceptor
             # 7. create a new object for hydrogen bonding in a RAD shell
-            HBs.add_data(X_idx, D_idx, current_acceptor.index)
+            HBs.add_data(X_idx, D_idx, current_acceptor.index, current_relative_charge)
 
 
 def get_shell_HBs(shell, system, HBs: HBCollection, shells: RADShell.ShellCollection):
