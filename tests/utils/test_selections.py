@@ -107,6 +107,7 @@ def test_find_bonded_heavy_atom():
     first_shell_solvent = Select.get_selection(system, "index", solvent_indices)
     # find all heavy atoms bonded to a hydrogen
     bonded_to_H = Select.find_bonded_heavy_atom(0, system_solutes)
+    heavy_atom = Select.find_bonded_heavy_atom(36, system_solutes)
 
     assert list(first_shell_solvent.resids) == [
         11,
@@ -145,6 +146,7 @@ def test_find_bonded_heavy_atom():
         825,
     ]
     assert bonded_to_H.name == "CH3"
+    assert heavy_atom.name == "Cl-"
 
 
 def test_find_molecule_UAs():
@@ -171,3 +173,22 @@ def test_find_molecule_UAs():
         "C",
         "Cl-",
     ]
+
+
+def test_find_bonded_atoms():
+    """Test find bonded atoms"""
+    atom_idx = 1
+    bonded_heavy_atoms, bonded_H_atoms = Select.find_bonded_atoms(atom_idx, system)
+    assert list(bonded_heavy_atoms.indices) == [4]
+    assert list(bonded_H_atoms.indices) == [0, 2, 3]
+
+
+def test_guess_length_scale():
+    """Test guess length scale"""
+    molecule = system.atoms[0].fragment  # pylint: disable=unsubscriptable-object
+    molecule_scale = Select.guess_length_scale(molecule)
+    assert molecule_scale == "polymer"
+
+    molecule = system.atoms[100].fragment  # pylint: disable=unsubscriptable-object
+    molecule_scale = Select.guess_length_scale(molecule)
+    assert molecule_scale == "single_UA"
