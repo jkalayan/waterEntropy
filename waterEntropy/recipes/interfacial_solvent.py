@@ -47,9 +47,7 @@ def find_interfacial_solvent(solutes, system, shells: ShellCollection):
             sorted_indices, sorted_distances = Trig.get_sorted_neighbours(
                 atom.index, system
             )
-            sorted_atoms = Selections.get_selection(
-                system, "index", sorted_indices[:20]
-            )
+            sorted_atoms = system.atoms[sorted_indices[:20]]
             sorted_waters = sorted_atoms.select_atoms("water")
             # 2b. Only get RAD shells if there is a water in the closest X
             # neighbours
@@ -60,7 +58,7 @@ def find_interfacial_solvent(solutes, system, shells: ShellCollection):
                 )  # get the molecule UA shell
                 shell_indices = shell.UA_shell
                 # 4. for each neighbour in the RAD shell, find single UA molecules
-                shell_atoms = Selections.get_selection(system, "index", shell_indices)
+                shell_atoms = system.atoms[shell_indices]
                 waters = shell_atoms.select_atoms("water")
                 solvent_indices.extend(waters.indices)
     return list(set(solvent_indices))

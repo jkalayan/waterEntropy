@@ -27,7 +27,7 @@ def find_molecule_UAs(molecule):
 
     :param molecule: mdanalysis instance of atoms in a frame
     """
-    UAs = molecule.select_atoms("mass 2 to 999")
+    UAs = molecule.select_atoms("prop mass > 1.1")
     return UAs
 
 
@@ -40,13 +40,13 @@ def find_solute_molecules(system):
 
     :param system: mdanalysis instance of atoms in a frame
     """
-    atom = system.select_atoms("not water")
+    atoms = system.select_atoms("not water")
     # atom = system.select_atoms("all")
-    molecules = atom.fragments
+    molecules = atoms.fragments
     solute_molecule_resid_list = []
     for molecule in molecules:
         for res in molecule.residues:
-            UAs = atom.select_atoms(f"resid {res.resid} and mass 2 to 999")
+            UAs = atoms.select_atoms(f"resid {res.resid} and prop mass > 1.1")
             if len(UAs) > 1:
                 solute_molecule_resid_list.append(res.resid)
             # if heavy atom is not oxygen, treat as solute
@@ -87,7 +87,7 @@ def find_bonded_atoms(atom_idx: int, system):
     :param system: mdanalysis instance of all atoms in current frame
     """
     bonded_atoms = system.select_atoms(f"bonded index {atom_idx}")
-    bonded_heavy_atoms = bonded_atoms.select_atoms("mass 2 to 999")
+    bonded_heavy_atoms = bonded_atoms.select_atoms("prop mass > 1.1")
     bonded_H_atoms = bonded_atoms.select_atoms("mass 1 to 1.1")
     return bonded_heavy_atoms, bonded_H_atoms
 

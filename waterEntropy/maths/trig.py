@@ -5,8 +5,6 @@ Functions for common trigonometric calculations
 import MDAnalysis
 import numpy as np
 
-import waterEntropy.utils.selections as Selections
-
 
 def get_neighbourlist(
     atom: np.ndarray, neighbours, dimensions: np.ndarray, max_cutoff=9e9
@@ -57,9 +55,9 @@ def get_sorted_neighbours(i_idx: int, system, max_cutoff=10):
     #       Should the central atom bonded UAs be allowed to block?
     #       This was not done in original code, keep the same here
     neighbours = system.select_atoms(
-        f"""mass 2 to 999 and not index {i_idx}
+        f"""prop mass > 1.1 and not index {i_idx}
                                     and not bonded index {i_idx}"""
-        # f"""mass 2 to 999 and not index {i_idx}"""  # bonded UAs can block
+        # f"""prop mass > 1.1 and not index {i_idx}"""  # bonded UAs can block
     )
     # 2. Get the neighbours sorted from closest to furthest
     sorted_indices, sorted_distances = get_neighbourlist(
@@ -83,14 +81,14 @@ def get_shell_neighbour_selection(
     :max_cutoff: set the maximum cutoff value for finding neighbours
     """
     # 1a. Select heavy atoms in shell, can only donate to heavy atoms in the shell
-    neighbours = Selections.get_selection(system, "index", shell.UA_shell)
+    neighbours = system.atoms[shell.UA_shell]
     if not heavy_atoms:
         # 1b. Select all atoms in the shell, included bonded to atoms (Hs included)
         #   Can donate to any atoms in a shell
         all_shell_bonded = neighbours[:].bonds.indices
         all_shell_indices = list(set().union(*all_shell_bonded))
         # can donate to any atom in the shell
-        neighbours = Selections.get_selection(system, "index", all_shell_indices)
+        neighbours = system.atoms[all_shell_indices]
     # 1c. can donate to any neighbours outside a shell, not used
     # neighbours = system.select_atoms(f"all and not index {donator.index} and not bonded index {donator.index}")
     # 2. Get the neighbours sorted from closest to furthest
