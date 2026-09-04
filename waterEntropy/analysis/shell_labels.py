@@ -14,6 +14,7 @@ def get_shell_labels(
 ):
     # pylint: disable=too-many-locals
     # pylint: disable=unused-argument
+    # pylint: disable=too-many-branches
     """
     Get the shell labels of an atoms shell based on the following:
     For a central UA, rank its coordination shell by proximity to that
@@ -58,13 +59,29 @@ def get_shell_labels(
             neighbour = system.atoms[n]
             # 3a. label nearest nonlike atom as "0_RESNAME"
             if neighbour.index == nearest_nonlike.index:
-                shell_labels.append(f"0_{neighbour.resname}")
+                # shell_labels.append(f"0_{neighbour.resname}")
+
+                # only allow single UA molecules to be distinguishable
+                # in shell
+                if len(neighbour.fragment) == 1:
+                    shell_labels.append(f"0_{neighbour.resname}")
+                else:
+                    shell_labels.append("SOL")
+
             # 3b. label other nonlike atoms as "RESNAME"
             if (
                 neighbour.index != nearest_nonlike.index
                 and neighbour.resname != center.resname
             ):
-                shell_labels.append(neighbour.resname)
+                # shell_labels.append(neighbour.resname)
+
+                # only allow single UA molecules to be distinguishable
+                # in shell
+                if len(neighbour.fragment) == 1:
+                    shell_labels.append(neighbour.resname)
+                else:
+                    shell_labels.append("SOL")
+
             # 3c. find RAD shells for shell constituents with same resname
             # as central atom
             if (
