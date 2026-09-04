@@ -58,6 +58,7 @@ docs = [
 [project.scripts]
 waterEntropy = "waterEntropy.cli.runWaterEntropy:main"
 waterShells = "waterEntropy.cli.run_find_Nc:main"
+waterBulk = "waterEntropy.cli.runBulk:main"
 
 [tool.flit.module]
 name = "waterEntropy"
