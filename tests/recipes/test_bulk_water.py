@@ -1,10 +1,10 @@
-""" Tests for waterEntropy bulk water functions in neighbours."""
+"""Tests for waterEntropy bulk water functions in neighbours."""
 
 import numpy as np
 import pytest
 
-from tests.input_files import load_inputs
 import waterEntropy.recipes.bulk_water as GetBulk
+from tests.input_files import load_inputs
 
 
 def bulk_water_entropy():
@@ -31,20 +31,28 @@ def test_Sorient_dict(bulk_water_entropy_dicts):
     """Test outputted orientational entropy values of solvent molecules around a given solute molecule"""
     # resid: {resname = [Sorient, count]}
     Sorient_dict = bulk_water_entropy_dicts[0]
-    assert Sorient_dict["WAT"]["WAT"] == pytest.approx(
-        [
-            11.295694179188464,
-            867,
-            6.8788927335640135,
-            6.8788927335640135,
-            6.8788927335640135,
-            0.25,
-            11.295694179188464,
-            11.295694179188464,
-            11.295694179188464,
-            11.295694179188464,
-            11.295694179188464,
-        ]
+    assert Sorient_dict["WAT"]["WAT"]["Sorient_ave"] == pytest.approx(
+        11.295694179188464
+    )
+    assert Sorient_dict["WAT"]["WAT"]["tot_count"] == pytest.approx(867)
+    assert Sorient_dict["WAT"]["WAT"]["N_c_ave"] == pytest.approx(6.8788927335640135)
+    assert Sorient_dict["WAT"]["WAT"]["N_w_ave"] == pytest.approx(6.8788927335640135)
+    assert Sorient_dict["WAT"]["WAT"]["Nc_eff_ave"] == pytest.approx(6.8788927335640135)
+    assert Sorient_dict["WAT"]["WAT"]["pbias_ave"] == pytest.approx(0.25)
+    assert Sorient_dict["WAT"]["WAT"]["Sorient_Nc_ave"] == pytest.approx(
+        11.295694179188464
+    )
+    assert Sorient_dict["WAT"]["WAT"]["Sorient_Nw_ave"] == pytest.approx(
+        11.295694179188464
+    )
+    assert Sorient_dict["WAT"]["WAT"]["Sorient_HB_ave2"] == pytest.approx(
+        11.295694179188464
+    )
+    assert Sorient_dict["WAT"]["WAT"]["Sorient_Nc_ave2"] == pytest.approx(
+        11.295694179188464
+    )
+    assert Sorient_dict["WAT"]["WAT"]["Sorient_Nw_ave2"] == pytest.approx(
+        11.295694179188464
     )
 
 
@@ -57,30 +65,20 @@ def test_covariances(bulk_water_entropy_dicts):
     torques = covariances.torques[("WAT", "WAT")]
     count = covariances.counts[("WAT", "WAT")]
 
-    print("forces", forces)
-    print("torques", torques)
-    print("count", count)
+    np.testing.assert_allclose(
+        np.linalg.eigvalsh(forces),
+        np.array([673788.02213212, 948440.87510386, 1504472.28032419]),
+        rtol=1e-5,
+        atol=1e-5,
+    )
 
-    assert np.allclose(
-        forces,
-        np.array(
-            [
-                [677734.94716348, 57012.65622729, 1713.67763604],
-                [57012.65622729, 1497942.10124106, 37804.65424194],
-                [1713.67763604, 37804.65424194, 951024.12915563],
-            ]
-        ),
+    np.testing.assert_allclose(
+        np.linalg.eigvalsh(torques),
+        np.array([6423718.64945265, 8479586.95316266, 14067779.02454107]),
+        rtol=1e-5,
+        atol=1e-5,
     )
-    assert np.allclose(
-        torques,
-        np.array(
-            [
-                [8527024.55153786, -154805.72447386, 576257.37509633],
-                [-154805.72447386, 6436426.29332658, 56359.58996768],
-                [576257.37509633, 56359.58996768, 14007633.78229195],
-            ]
-        ),
-    )
+
     assert count == 867
 
 

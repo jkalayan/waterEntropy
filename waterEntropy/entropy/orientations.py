@@ -336,7 +336,8 @@ class Orientations:
                     Sorient_Nc_ave, tot_count = self.get_running_average(
                         Sorient_Nc, count, Sorient_Nc_ave, tot_count
                     )
-            Sorient_dict[resname][9] = Sorient_Nc_ave
+            # Sorient_dict[resname][9] = Sorient_Nc_ave
+            Sorient_dict[resname]["Sorient_Nc_ave2"] = Sorient_Nc_ave
 
         for resname, N_w_key in Nw_counts.items():
             tot_count, Sorient_Nw_ave = 0, 0
@@ -348,7 +349,8 @@ class Orientations:
                     Sorient_Nw_ave, tot_count = self.get_running_average(
                         Sorient_Nw, count, Sorient_Nw_ave, tot_count
                     )
-            Sorient_dict[resname][10] = Sorient_Nw_ave
+            # Sorient_dict[resname][10] = Sorient_Nw_ave
+            Sorient_dict[resname]["Sorient_Nw_ave2"] = Sorient_Nw_ave
 
     def get_Nx_dist(self, labelled_dict: dict):
         # pylint: disable=too-many-locals
@@ -417,7 +419,7 @@ class Orientations:
                 Sorient_HB_ave, tot_count = self.get_running_average(
                     Sorient_HB, count, Sorient_HB_ave, tot_count
                 )
-            Sorient_dict[resname][8] = Sorient_HB_ave
+            Sorient_dict[resname]["Sorient_HB_ave2"] = Sorient_HB_ave
 
     def get_pbias_Nc_eff_dist(self, labelled_dict: dict):
         """
@@ -542,19 +544,19 @@ class Orientations:
                         N_w, values["shell_count"], N_w_ave, tot_count
                     )
                     tot_count = tot_count_update
-                Sorient_dict[resname] = [
-                    Sorient_ave,
-                    tot_count,
-                    N_c_ave,
-                    N_w_ave,
-                    Nc_eff_ave,
-                    pbias_ave,
-                    Sorient_Nc_ave,
-                    Sorient_Nw_ave,
-                    0,  # new Sor HB, # calculated elsewhere
-                    0,  # Sor Nc dist, # calculated elsewhere
-                    0,  # Sor Nw dist, # calculated elsewhere
-                ]
+                Sorient_dict[resname] = {
+                    "Sorient_ave": Sorient_ave,
+                    "tot_count": tot_count,
+                    "N_c_ave": N_c_ave,
+                    "N_w_ave": N_w_ave,
+                    "Nc_eff_ave": Nc_eff_ave,
+                    "pbias_ave": pbias_ave,
+                    "Sorient_Nc_ave": Sorient_Nc_ave,
+                    "Sorient_Nw_ave": Sorient_Nw_ave,
+                    # 0,  # new Sor HB, # calculated elsewhere
+                    # 0,  # Sor Nc dist, # calculated elsewhere
+                    # 0,  # Sor Nw dist, # calculated elsewhere
+                }
 
 
 def print_Sorient_dicts(Sorient_dict: dict):
@@ -590,26 +592,27 @@ def print_Sorient_dicts(Sorient_dict: dict):
         "resid resname SorHB count N_c N_w Nc_eff pbias Sor_Nc Sor_Nw SorHB2 Sor_Nc2 Sor_Nw2"
     )
     for resid, resname_key in sorted(list(Sorient_dict.items())):
-        for resname, [
-            Sor,
-            count,
-            N_c,
-            N_w,
-            Nc_eff,
-            pbias,
-            Sor_Nc,
-            Sor_Nw,
-            Sor2,
-            Sor_Nc2,
-            Sor_Nw2,
-        ] in sorted(list(resname_key.items())):
+        for resname, terms in sorted(list(resname_key.items())):
             decimals = 4
+
+            Sorient_ave = terms["Sorient_ave"]
+            tot_count = terms["tot_count"]
+            N_c_ave = terms["N_c_ave"]
+            N_w_ave = terms["N_w_ave"]
+            Nc_eff_ave = terms["Nc_eff_ave"]
+            pbias_ave = terms["pbias_ave"]
+            Sorient_Nc_ave = terms["Sorient_Nc_ave"]
+            Sorient_Nw_ave = terms["Sorient_Nw_ave"]
+            Sorient_HB_ave2 = terms["Sorient_HB_ave2"]
+            Sorient_Nc_ave2 = terms["Sorient_Nc_ave2"]
+            Sorient_Nw_ave2 = terms["Sorient_Nw_ave2"]
+
             print(
-                f"{resid} {resname} {Sor:.{decimals}f} {count} "
-                f"{N_c:.{decimals}f} {N_w:.{decimals}f} "
-                f"{Nc_eff:.{decimals}f} {pbias:.{decimals}f} "
-                f"{Sor_Nc:.{decimals}f} {Sor_Nw:.{decimals}f} "
-                f"{Sor2:.{decimals}f} {Sor_Nc2:.{decimals}f} "
-                f"{Sor_Nw2:.{decimals}f}"
+                f"{resid} {resname} {Sorient_ave:.{decimals}f} {tot_count} "
+                f"{N_c_ave:.{decimals}f} {N_w_ave:.{decimals}f} "
+                f"{Nc_eff_ave:.{decimals}f} {pbias_ave:.{decimals}f} "
+                f"{Sorient_Nc_ave:.{decimals}f} {Sorient_Nw_ave:.{decimals}f} "
+                f"{Sorient_HB_ave2:.{decimals}f} {Sorient_Nc_ave2:.{decimals}f} "
+                f"{Sorient_Nw_ave2:.{decimals}f}"
             )
     print()
