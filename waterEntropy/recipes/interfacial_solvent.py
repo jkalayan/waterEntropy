@@ -21,6 +21,8 @@ from waterEntropy.recipes.forces_torques import get_forces_torques
 from waterEntropy.utils.helpers import nested_dict
 import waterEntropy.utils.selections as Selections
 
+from .bulk_water import bulk_water_per_step
+
 
 def find_interfacial_solvent(solutes, system, shells: ShellCollection):
     # pylint: disable=too-many-locals
@@ -296,21 +298,53 @@ def _entropy_per_step(args):
     HBs = HBond.HBCollection()
     # 5. find > 1 UA molecules in system, these are the solutes
     resid_list = Selections.find_solute_molecules(system)
-    solutes = Selections.get_selection(system, "resid", resid_list)
-    # 6. find the interfacial solvent molecules that are 1 UA in size
+
+    # 6a. find the interfacial solvent molecules that are 1 UA in size
     #   and are in the RAD shell of any solute
-    solvent_indices = find_interfacial_solvent(solutes, system, shells)
-    first_shell_solvent = Selections.get_selection(system, "index", solvent_indices)
-    # 7. iterate through first shell solvent and find their RAD shells,
-    #   HBing in the shells and shell labels
+    if len(resid_list) > 0:
+        solutes = Selections.get_selection(system, "resid", resid_list)
+        solvent_indices = find_interfacial_solvent(solutes, system, shells)
+        first_shell_solvent = Selections.get_selection(system, "index", solvent_indices)
+        _interfacial_water_per_step(
+            first_shell_solvent,
+            system,
+            shells,
+            HBs,
+            hb_labels,
+            covariances,
+            frame_solvent_indices,
+            ts,
+        )
+    # 6b. treat system as bulk water if no solutes found
+    else:
+        waters = system.select_atoms("water and mass 2 to 999")
+        bulk_water_per_step(waters, system, shells, HBs, hb_labels, covariances)
+    return frame_solvent_indices, covariances, hb_labels, n_frames
+
+
+def _interfacial_water_per_step(
+    first_shell_solvent,
+    system,
+    shells,
+    HBs,
+    hb_labels,
+    covariances,
+    frame_solvent_indices,
+    ts,
+):
+    # pylint: disable=too-many-arguments
+    """
+    Iterate over waters found at solute interfaces.
+    """
+
     for solvent in first_shell_solvent:
-        # 8a. find RAD shell of interfacial solvent
+        # a. find RAD shell of interfacial solvent
         shell = RADShell.get_RAD_shell(solvent, system, shells)
-        # 8b. find HBing in the shell
+        # b. find HBing in the shell
         HBond.get_shell_HBs(shell, system, HBs, shells)
-        # 8c. find RAD shell labels
+        # c. find RAD shell labels
         shell = RADLabels.get_shell_labels(solvent.index, system, shell, shells, HBs)
-        # 8d. find HB labels
+        # d. find HB labels
         HBLabels.get_HB_labels(solvent.index, system, HBs, shells)
         if shell.nearest_nonlike_idx is not None:
             nearest = system.atoms[shell.nearest_nonlike_idx]
@@ -319,7 +353,7 @@ def _entropy_per_step(args):
             for nearest_resid, nearest_resname in zip(
                 [nearest.resid, 0], [nearest.resname, "all"]
             ):
-                # 8e. populate the labels into a dictionary for stats
+                # e. populate the labels into a dictionary for stats
                 # only if a different atom is in the RAD shell
                 hb_labels.add_data(
                     nearest_resid,
@@ -336,7 +370,7 @@ def _entropy_per_step(args):
                     nearest_resname,
                     frame_solvent_indices,
                 )
-                # 3f. calculate the running average of force and torque
+                # f. calculate the running average of force and torque
                 # covariance matrices
                 solvent_molecule = system.atoms[solvent.index].fragment  # get molecule
                 get_forces_torques(
@@ -345,4 +379,3 @@ def _entropy_per_step(args):
                     f"{nearest_resname}_{nearest_resid}",
                     system,
                 )
-    return frame_solvent_indices, covariances, hb_labels, n_frames

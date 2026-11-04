@@ -42,34 +42,7 @@ def get_bulk_water_orient_entropy(
         waters = system.select_atoms("water and mass 2 to 999")
         # 3. iterate through first shell solvent and find their RAD shells,
         #   HBing in the shells and shell labels
-        for solvent in waters:
-            # 3a. find RAD shell of interfacial solvent
-            shell = RADShell.get_RAD_shell(solvent, system, shells)
-            # 3b. Set RAD shell labels as resname of neighbour
-            shell.labels = [system.atoms[n].resname for n in shell.UA_shell]
-            # check shell only contains only solvent molecules
-            if set(shell.labels) == {solvent.resname}:
-                # 3c. find HBing in the shell
-                HBond.get_shell_HBs(shell, system, HBs, shells)
-                # 3d. find HB labels
-                HBLabels.get_HB_labels(solvent.index, system, HBs, shells)
-                hb_labels.add_data(
-                    f"{solvent.resname}",
-                    f"{solvent.resname}",
-                    shell.labels,
-                    shell.donates_to_labels,
-                    shell.accepts_from_labels,
-                    len(shell.labels),  # set N_w
-                )
-                # 3e. calculate the running average of force and torque
-                # covariance matrices
-                solvent_molecule = system.atoms[solvent.index].fragment  # get molecule
-                get_forces_torques(
-                    covariances,
-                    solvent_molecule,
-                    f"{solvent.resname}",
-                    system,
-                )
+        bulk_water_per_step(waters, system, shells, HBs, hb_labels, covariances)
 
     # 4. get the orientational entropy of interfacial waters and save
     #   them to a dictionary
@@ -88,3 +61,41 @@ def get_bulk_water_orient_entropy(
         covariances,
         vibrations,
     )
+
+
+def bulk_water_per_step(waters, system, shells, HBs, hb_labels, covariances):
+    # pylint: disable=too-many-arguments
+    """
+    Calculate per-step bulk-water properties from the supplied data.
+    """
+
+    # iterate through first shell solvent and find their RAD shells,
+    # HBing in the shells and shell labels
+    for solvent in waters:
+        # a. find RAD shell of interfacial solvent
+        shell = RADShell.get_RAD_shell(solvent, system, shells)
+        # b. Set RAD shell labels as resname of neighbour
+        shell.labels = [system.atoms[n].resname for n in shell.UA_shell]
+        # check shell only contains only solvent molecules
+        if set(shell.labels) == {solvent.resname}:
+            # c. find HBing in the shell
+            HBond.get_shell_HBs(shell, system, HBs, shells)
+            # d. find HB labels
+            HBLabels.get_HB_labels(solvent.index, system, HBs, shells)
+            hb_labels.add_data(
+                f"{solvent.resname}",
+                f"{solvent.resname}",
+                shell.labels,
+                shell.donates_to_labels,
+                shell.accepts_from_labels,
+                len(shell.labels),  # set N_w
+            )
+            # e. calculate the running average of force and torque
+            # covariance matrices
+            solvent_molecule = system.atoms[solvent.index].fragment  # get molecule
+            get_forces_torques(
+                covariances,
+                solvent_molecule,
+                f"{solvent.resname}",
+                system,
+            )
