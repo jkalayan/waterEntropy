@@ -177,3 +177,7 @@ docs/build/
 #tests
 .system*
 .DS_Store
+
+
+#vscode
+.vscode
