@@ -31,20 +31,28 @@ def test_Sorient_dict(bulk_water_entropy_dicts):
     """Test outputted orientational entropy values of solvent molecules around a given solute molecule"""
     # resid: {resname = [Sorient, count]}
     Sorient_dict = bulk_water_entropy_dicts[0]
-    assert Sorient_dict["WAT"]["WAT"] == pytest.approx(
-        [
-            11.295694179188464,
-            867,
-            6.8788927335640135,
-            6.8788927335640135,
-            6.8788927335640135,
-            0.25,
-            11.295694179188464,
-            11.295694179188464,
-            11.295694179188464,
-            11.295694179188464,
-            11.295694179188464,
-        ]
+    assert Sorient_dict["WAT"]["WAT"]["Sorient_ave"] == pytest.approx(
+        11.295694179188464
+    )
+    assert Sorient_dict["WAT"]["WAT"]["tot_count"] == pytest.approx(867)
+    assert Sorient_dict["WAT"]["WAT"]["N_c_ave"] == pytest.approx(6.8788927335640135)
+    assert Sorient_dict["WAT"]["WAT"]["N_w_ave"] == pytest.approx(6.8788927335640135)
+    assert Sorient_dict["WAT"]["WAT"]["Nc_eff_ave"] == pytest.approx(6.8788927335640135)
+    assert Sorient_dict["WAT"]["WAT"]["pbias_ave"] == pytest.approx(0.25)
+    assert Sorient_dict["WAT"]["WAT"]["Sorient_Nc_ave"] == pytest.approx(
+        11.295694179188464
+    )
+    assert Sorient_dict["WAT"]["WAT"]["Sorient_Nw_ave"] == pytest.approx(
+        11.295694179188464
+    )
+    assert Sorient_dict["WAT"]["WAT"]["Sorient_HB_ave2"] == pytest.approx(
+        11.295694179188464
+    )
+    assert Sorient_dict["WAT"]["WAT"]["Sorient_Nc_ave2"] == pytest.approx(
+        11.295694179188464
+    )
+    assert Sorient_dict["WAT"]["WAT"]["Sorient_Nw_ave2"] == pytest.approx(
+        11.295694179188464
     )
 
 
@@ -56,10 +64,6 @@ def test_covariances(bulk_water_entropy_dicts):
     forces = covariances.forces[("WAT", "WAT")]
     torques = covariances.torques[("WAT", "WAT")]
     count = covariances.counts[("WAT", "WAT")]
-
-    print("forces", forces)
-    print("torques", torques)
-    print("count", count)
 
     assert np.allclose(
         forces,

@@ -59,51 +59,52 @@ def test_Sorient_dict(interfacial_entropy_dicts):
     """Test outputted orientational entropy values of solvent molecules around a given solute molecule"""
     # resid: {resname = [Sorient, count]}
     Sorient_dict = interfacial_entropy_dicts[0]
-    assert Sorient_dict[1]["ACE"] == pytest.approx(
-        [
-            2.2473807716251804,
-            13,
-            7.0,
-            5.6923076923076925,
-            3.2245457772507913,
-            0.116959182573051,
-            11.549772583950544,
-            8.866118517437595,
-            1.0246793134504353,
-            11.549772583950546,
-            8.866118517437595,
-        ]
+
+    assert Sorient_dict[1]["ACE"]["Sorient_ave"] == pytest.approx(2.2473807716251804)
+    assert Sorient_dict[1]["ACE"]["tot_count"] == pytest.approx(13)
+    assert Sorient_dict[1]["ACE"]["N_c_ave"] == pytest.approx(7.0)
+    assert Sorient_dict[1]["ACE"]["N_w_ave"] == pytest.approx(5.6923076923076925)
+    assert Sorient_dict[1]["ACE"]["Nc_eff_ave"] == pytest.approx(3.2245457772507913)
+    assert Sorient_dict[1]["ACE"]["pbias_ave"] == pytest.approx(0.116959182573051)
+    assert Sorient_dict[1]["ACE"]["Sorient_Nc_ave"] == pytest.approx(11.549772583950544)
+    assert Sorient_dict[1]["ACE"]["Sorient_Nw_ave"] == pytest.approx(8.866118517437595)
+    assert Sorient_dict[1]["ACE"]["Sorient_HB_ave2"] == pytest.approx(
+        1.0246793134504353
     )
-    assert Sorient_dict[2]["ARG"] == pytest.approx(
-        [
-            2.6481382191024245,
-            35,
-            7.514285714285714,
-            6.0,
-            3.464361256421488,
-            0.114223362162831,
-            12.394889769242496,
-            9.388627866311323,
-            0.47562453963817075,
-            12.394889769242495,
-            9.388627866311323,
-        ]
+    assert Sorient_dict[1]["ACE"]["Sorient_Nc_ave2"] == pytest.approx(
+        11.549772583950546
     )
-    assert Sorient_dict[3]["NME"] == pytest.approx(
-        [
-            0.9503950365967891,
-            12,
-            7.333333333333333,
-            5.833333333333333,
-            2.314863945578231,
-            0.0798514739229025,
-            12.077905047118842,
-            9.183582113622649,
-            0.0,
-            12.077905047118845,
-            9.18358211362265,
-        ]
+    assert Sorient_dict[1]["ACE"]["Sorient_Nw_ave2"] == pytest.approx(8.866118517437595)
+
+    assert Sorient_dict[2]["ARG"]["Sorient_ave"] == pytest.approx(2.6481382191024245)
+    assert Sorient_dict[2]["ARG"]["tot_count"] == pytest.approx(35)
+    assert Sorient_dict[2]["ARG"]["N_c_ave"] == pytest.approx(7.514285714285714)
+    assert Sorient_dict[2]["ARG"]["N_w_ave"] == pytest.approx(6.0)
+    assert Sorient_dict[2]["ARG"]["Nc_eff_ave"] == pytest.approx(3.464361256421488)
+    assert Sorient_dict[2]["ARG"]["pbias_ave"] == pytest.approx(0.114223362162831)
+    assert Sorient_dict[2]["ARG"]["Sorient_Nc_ave"] == pytest.approx(12.394889769242496)
+    assert Sorient_dict[2]["ARG"]["Sorient_Nw_ave"] == pytest.approx(9.388627866311323)
+    assert Sorient_dict[2]["ARG"]["Sorient_HB_ave2"] == pytest.approx(
+        0.47562453963817075
     )
+    assert Sorient_dict[2]["ARG"]["Sorient_Nc_ave2"] == pytest.approx(
+        12.394889769242495
+    )
+    assert Sorient_dict[2]["ARG"]["Sorient_Nw_ave2"] == pytest.approx(9.388627866311323)
+
+    assert Sorient_dict[3]["NME"]["Sorient_ave"] == pytest.approx(0.9503950365967891)
+    assert Sorient_dict[3]["NME"]["tot_count"] == pytest.approx(12)
+    assert Sorient_dict[3]["NME"]["N_c_ave"] == pytest.approx(7.333333333333333)
+    assert Sorient_dict[3]["NME"]["N_w_ave"] == pytest.approx(5.833333333333333)
+    assert Sorient_dict[3]["NME"]["Nc_eff_ave"] == pytest.approx(2.314863945578231)
+    assert Sorient_dict[3]["NME"]["pbias_ave"] == pytest.approx(0.0798514739229025)
+    assert Sorient_dict[3]["NME"]["Sorient_Nc_ave"] == pytest.approx(12.077905047118842)
+    assert Sorient_dict[3]["NME"]["Sorient_Nw_ave"] == pytest.approx(9.183582113622649)
+    assert Sorient_dict[3]["NME"]["Sorient_HB_ave2"] == pytest.approx(0.0)
+    assert Sorient_dict[3]["NME"]["Sorient_Nc_ave2"] == pytest.approx(
+        12.077905047118845
+    )
+    assert Sorient_dict[3]["NME"]["Sorient_Nw_ave2"] == pytest.approx(9.18358211362265)
 
 
 @INTERFACIAL_ENTROPY_DICTS
