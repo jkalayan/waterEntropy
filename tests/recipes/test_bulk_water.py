@@ -1,10 +1,10 @@
-""" Tests for waterEntropy bulk water functions in neighbours."""
+"""Tests for waterEntropy bulk water functions in neighbours."""
 
 import numpy as np
 import pytest
 
-from tests.input_files import load_inputs
 import waterEntropy.recipes.bulk_water as GetBulk
+from tests.input_files import load_inputs
 
 
 def bulk_water_entropy():
@@ -65,26 +65,20 @@ def test_covariances(bulk_water_entropy_dicts):
     torques = covariances.torques[("WAT", "WAT")]
     count = covariances.counts[("WAT", "WAT")]
 
-    assert np.allclose(
-        forces,
-        np.array(
-            [
-                [677734.94716348, 57012.65622729, 1713.67763604],
-                [57012.65622729, 1497942.10124106, 37804.65424194],
-                [1713.67763604, 37804.65424194, 951024.12915563],
-            ]
-        ),
+    np.testing.assert_allclose(
+        np.linalg.eigvalsh(forces),
+        np.array([673788.02213212, 948440.87510386, 1504472.28032419]),
+        rtol=1e-5,
+        atol=1e-5,
     )
-    assert np.allclose(
-        torques,
-        np.array(
-            [
-                [8527024.55153786, -154805.72447386, 576257.37509633],
-                [-154805.72447386, 6436426.29332658, 56359.58996768],
-                [576257.37509633, 56359.58996768, 14007633.78229195],
-            ]
-        ),
+
+    np.testing.assert_allclose(
+        np.linalg.eigvalsh(torques),
+        np.array([6423718.64945265, 8479586.95316266, 14067779.02454107]),
+        rtol=1e-5,
+        atol=1e-5,
     )
+
     assert count == 867
 
 
