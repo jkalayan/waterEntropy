@@ -1,4 +1,4 @@
-""" Tests for waterEntropy trig functions in utils."""
+"""Tests for waterEntropy trig functions in utils."""
 
 import numpy as np
 import pytest

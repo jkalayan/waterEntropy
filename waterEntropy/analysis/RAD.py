@@ -5,8 +5,8 @@ angular distance.
 
 import numpy as np
 
-from waterEntropy.analysis.shells import ShellCollection
 import waterEntropy.maths.trig as Trig
+from waterEntropy.analysis.shells import ShellCollection
 
 
 def get_RAD_neighbours(i_coords, sorted_indices, sorted_distances, system):

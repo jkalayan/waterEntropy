@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 
-"""
-"""
+"""CLI script for getting the interfacial water indices."""
 
 import argparse
-from datetime import datetime
-import logging
 import sys
+from datetime import datetime
 
 from MDAnalysis import Universe
 
@@ -24,7 +22,7 @@ def run_waterEntropy(
     step="step",
 ):
     # pylint: disable=all
-    """ """
+    """Find the interfacial water indices for each frame."""
 
     startTime = datetime.now()
     print(startTime)
@@ -46,7 +44,9 @@ def run_waterEntropy(
 
 
 def main():
-    """ """
+    """
+    Find the interfacial water indices for each frame.
+    """
     try:
         usage = "runWaterEntropy.py [-h]"
         parser = argparse.ArgumentParser(
@@ -119,10 +119,6 @@ def main():
         )
         op = parser.parse_args()
     except argparse.ArgumentError:
-        logging.error(
-            "Command line arguments are ill-defined, please check the arguments."
-        )
-        raise
         sys.exit(1)
 
     run_waterEntropy(

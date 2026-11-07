@@ -42,17 +42,19 @@ testing = [
     "pytest-sugar==1.0.0"
 ]
 pre-commit = [
-    "pre-commit==3.7.1",
-    "pylint==3.2.5"
+    "pre-commit>=4.5,<5.0",
+    "ruff>=0.15.2,<1.0",
+    "pylint>=4.0,<5.0",
+    "rstcheck>=6.2,<7.0"
 ]
 docs = [
-    "sphinx",
-    "sphinx_rtd_theme",
-    "sphinxcontrib-contentui",
-    "sphinxcontrib-details-directive",
-    "sphinx_copybutton",
-    "furo",
-    "markupsafe<2.1"
+    "sphinx>=9,<10",
+    "sphinx_rtd_theme>=3.1.0,<4",
+    "sphinxcontrib-contentui>=0.2.5,<1",
+    "sphinxcontrib-details-directive>=0.1.0,<1",
+    "sphinx_copybutton>=0.5.2,<1",
+    "furo==2025.12.19",
+    "markupsafe>=3.0.4,<4"
 ]
 
 [project.scripts]
@@ -61,6 +63,14 @@ waterShells = "waterEntropy.cli.run_find_Nc:main"
 
 [tool.flit.module]
 name = "waterEntropy"
+
+[tool.ruff.lint.per-file-ignores]
+# Preserve existing public package and module names.
+"waterEntropy/**/__init__.py" = ["N999"]
+"waterEntropy/__init__.py" = ["N999"]
+"waterEntropy/analysis/HB.py" = ["N999"]
+"waterEntropy/analysis/HB_labels.py" = ["N999"]
+"waterEntropy/analysis/RAD.py" = ["N999"]
 
 [tool.pylint.format]
 max-line-length = 125

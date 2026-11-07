@@ -1,7 +1,7 @@
-""" Tests for waterEntropy selections functions in utils."""
+"""Tests for waterEntropy selections functions in utils."""
 
-from tests.input_files import load_inputs
 import waterEntropy.utils.selections as Select
+from tests.input_files import load_inputs
 
 # get mda universe for arginine in solution
 system = load_inputs.get_amber_arginine_soln_universe()

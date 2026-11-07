@@ -1,4 +1,4 @@
-""" Tests for waterEntropy dask_clusters functions in utils."""
+"""Tests for waterEntropy dask_clusters functions in utils."""
 
 import argparse
 import os
@@ -351,7 +351,7 @@ def test_submit_master_mamba(checkoutput):
 @mock.patch("waterEntropy.utils.dask_clusters.system_network_interface")
 def test_configure_cluster(interface):
     """Test master submit file creation"""
-    interface.return_value = list(psutil.net_if_addrs().keys())[0]
+    interface.return_value = next(iter(psutil.net_if_addrs().keys()))
     args = args_helper_cluster(
         [
             "--conda-env",

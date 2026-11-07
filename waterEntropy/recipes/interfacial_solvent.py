@@ -12,14 +12,14 @@ import waterEntropy.analysis.HB as HBond
 import waterEntropy.analysis.HB_labels as HBLabels
 import waterEntropy.analysis.RAD as RADShell
 import waterEntropy.analysis.shell_labels as RADLabels
+import waterEntropy.maths.trig as Trig
+import waterEntropy.utils.selections as Selections
 from waterEntropy.analysis.shells import ShellCollection
 from waterEntropy.entropy.convariances import CovarianceCollection
 from waterEntropy.entropy.orientations import Orientations
 from waterEntropy.entropy.vibrations import Vibrations
-import waterEntropy.maths.trig as Trig
 from waterEntropy.recipes.forces_torques import get_forces_torques
 from waterEntropy.utils.helpers import nested_dict
-import waterEntropy.utils.selections as Selections
 
 from .bulk_water import bulk_water_per_step
 
@@ -97,9 +97,9 @@ def print_frame_solvent_dicts(frame_solvent_indices: dict):
     :param frame_solvent_indices: dictionary containing solvent indices in the
         first shell of solute atoms over each frame analysed
     """
-    for frame, resname_key in sorted(list(frame_solvent_indices.items())):
-        for resname, resid_key in sorted(list(resname_key.items())):
-            for resid, solvents in sorted(list(resid_key.items())):
+    for frame, resname_key in sorted(frame_solvent_indices.items()):
+        for resname, resid_key in sorted(resname_key.items()):
+            for resid, solvents in sorted(resid_key.items()):
                 print(frame, resname, resid, len(solvents), solvents)
 
 
@@ -138,7 +138,6 @@ def get_interfacial_shells(system, start: int, end: int, step: int):
             if shell.nearest_nonlike_idx is not None:
                 # 3b. populate the shells into a dictionary for stats
                 # only if a different atom is in the RAD shell
-                nearest = system.atoms[shell.nearest_nonlike_idx]
                 frame_solvent_shells = save_solvent_shells(
                     ts.frame,
                     shell.atom_idx,
@@ -175,8 +174,8 @@ def print_frame_solvent_shells(frame_solvent_shells: dict):
     :param frame_solvent_indices: dictionary containing solvent indices in the
         first shell of solute atoms over each frame analysed
     """
-    for frame, atom_idx_key in sorted(list(frame_solvent_shells.items())):
-        for atom_idx, shell_indices in sorted(list(atom_idx_key.items())):
+    for frame, atom_idx_key in sorted(frame_solvent_shells.items()):
+        for atom_idx, shell_indices in sorted(atom_idx_key.items()):
             print(frame, atom_idx, shell_indices, len(shell_indices))
 
 

@@ -2,8 +2,8 @@
 Store orientational entropies here
 """
 
-from collections import Counter
 import textwrap
+from collections import Counter
 
 import numpy as np
 
@@ -93,7 +93,7 @@ class WaterOrientCalculator:
             total_hb_count = 0
             for c in HB_vals_dict[hb_selection].values():
                 total_hb_count += c
-            for hb_neighbour, count in sorted(list(HB_vals_dict[hb_selection].items())):
+            for hb_neighbour, count in sorted(HB_vals_dict[hb_selection].items()):
                 pHB = self.get_hb_probability(count, total_hb_count)
                 pHB_dict[hb_neighbour] = [pHB, count]
         return pHB_dict
@@ -272,7 +272,7 @@ class Orientations:
         :param resid_labelled_dict: dictionary of format dict2 containing labelled
             coordination shells and HB donating and accepting
         """
-        for resid, shell_label_key in sorted(list(resid_labelled_dict.items())):
+        for resid, shell_label_key in sorted(resid_labelled_dict.items()):
             self.get_orientational_entropy_from_dict(
                 shell_label_key, self.resid_labelled_Sorient[resid]
             )
@@ -372,15 +372,15 @@ class Orientations:
         """
         Nc_counts = nested_dict()
         Nw_counts = nested_dict()
-        for resname, shell_label_key in sorted(list(labelled_dict.items())):
-            for shell_label, values in sorted(list(shell_label_key.items())):
+        for resname, shell_label_key in sorted(labelled_dict.items()):
+            for shell_label, values in sorted(shell_label_key.items()):
                 N_c = len(shell_label)
-                if N_c not in Nc_counts[resname].keys():
+                if N_c not in Nc_counts[resname]:
                     Nc_counts[resname][N_c] = 0
                 Nc_counts[resname][N_c] += values["shell_count"]
 
                 N_w = values["N_w"]
-                if N_w not in Nw_counts[resname].keys():
+                if N_w not in Nw_counts[resname]:
                     Nw_counts[resname][N_w] = 0
                 Nw_counts[resname][N_w] += values["shell_count"]
         return Nc_counts, Nw_counts
@@ -409,7 +409,7 @@ class Orientations:
 
         for resname, N_c_key in Neff_HBbias_dict.items():
             tot_count, Sorient_HB_ave = 0, 0
-            for _N_c, info in N_c_key.items():
+            for info in N_c_key.values():
                 Nc_eff = info["Nc_eff"]
                 pbias = info["pbias"]
                 count = info["count_Nc_eff"]
@@ -441,8 +441,8 @@ class Orientations:
         Neff_HBbias_dict = (
             nested_dict()
         )  # dict for Neff and pbias_ave averaged over each Nc
-        for resname, shell_label_key in sorted(list(labelled_dict.items())):
-            for shell_label, values in sorted(list(shell_label_key.items())):
+        for resname, shell_label_key in sorted(labelled_dict.items()):
+            for shell_label, values in sorted(shell_label_key.items()):
                 if values["shell_count"] > 0:  # sampling check
                     N_c = len(shell_label)
                     # create object for Sorient
@@ -498,11 +498,11 @@ class Orientations:
         :param labelled_dict: dictionary of format dict1 containing labelled
             coordination shells and HB donating and accepting
         """
-        for resname, shell_label_key in sorted(list(labelled_dict.items())):
+        for resname, shell_label_key in sorted(labelled_dict.items()):
             Sorient_ave, tot_count = 0, 0
             N_c_ave, N_w_ave, Nc_eff_ave, pbias_ave = 0, 0, 0, 0
             Sorient_Nc_ave, Sorient_Nw_ave = 0, 0
-            for shell_label, values in sorted(list(shell_label_key.items())):
+            for shell_label, values in sorted(shell_label_key.items()):
                 if values["shell_count"] > 0:  # make sure enough sampling
                     # create object for Sorient
                     water = WaterOrientCalculator()
@@ -591,8 +591,8 @@ def print_Sorient_dicts(Sorient_dict: dict):
     print(
         "resid resname SorHB count N_c N_w Nc_eff pbias Sor_Nc Sor_Nw SorHB2 Sor_Nc2 Sor_Nw2"
     )
-    for resid, resname_key in sorted(list(Sorient_dict.items())):
-        for resname, terms in sorted(list(resname_key.items())):
+    for resid, resname_key in sorted(Sorient_dict.items()):
+        for resname, terms in sorted(resname_key.items()):
             decimals = 4
 
             Sorient_ave = terms["Sorient_ave"]
