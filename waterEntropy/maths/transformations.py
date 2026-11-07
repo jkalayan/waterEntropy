@@ -2,8 +2,8 @@
 Functions for transforming atomic positions and forces
 """
 
-from MDAnalysis.lib.mdamath import make_whole
 import numpy as np
+from MDAnalysis.lib.mdamath import make_whole
 from numpy import linalg as LA
 
 import waterEntropy.maths.trig as Trig
@@ -138,11 +138,55 @@ def get_axes(molecule, molecule_scale: str, dimensions: np.ndarray):
 
     if molecule_scale == "single_UA":
         UAs = Selections.find_molecule_UAs(molecule)
-        principal_axes = get_flipped_axes(
-            molecule.positions, principal_axes, UAs[0].position, dimensions
-        )  # flip like in CE
+        if np.any(np.isclose(MOI_axis[:-1], MOI_axis[1:], rtol=1e-7, atol=1e-12)):
+            raise ValueError(
+                "Cannot orient principal axes with degenerate moments of inertia"
+            )
+        principal_axes = orient_single_ua_axes(
+            molecule.positions, principal_axes, UAs[0].position
+        )
 
     return principal_axes, MOI_axis
+
+
+def orient_single_ua_axes(positions, principal_axes, heavy_atom_position):
+    """Orient principal axes using ordered heavy-to-atom vectors and their normals.
+
+    Positions must describe a whole molecule. Atom order determines the signs;
+    the first non-orthogonal bond vector, or bond-pair normal, fixes each axis.
+
+    :param positions: a (N,3) array of point positions
+    :param principal_axes (3,3): principal axes of molecule
+    :param heavy_atom_position: (3,) position of heavy atom in single ua molecule
+    """
+    vectors = []
+    for position in positions:
+        vector = position - heavy_atom_position
+        length = LA.norm(vector)
+        if length > 1e-12:
+            vectors.append(vector / length)
+
+    references = list(vectors)
+    for i, vector in enumerate(vectors):
+        for other in vectors[i + 1 :]:
+            normal = np.cross(vector, other)
+            length = LA.norm(normal)
+            if length > 1e-7:
+                references.append(normal / length)
+
+    axes = np.array(principal_axes, dtype=float, copy=True)
+    for axis in axes:
+        for reference in references:
+            projection = np.dot(axis, reference)
+            if abs(projection) > 1e-7:
+                if projection < 0:
+                    axis *= -1
+                break
+        else:
+            raise ValueError(
+                "Cannot orient principal axes from the single-UA molecular geometry"
+            )
+    return axes
 
 
 def MOI(CoM: np.ndarray, positions: np.ndarray, masses: list):

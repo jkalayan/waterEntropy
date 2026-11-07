@@ -120,9 +120,9 @@ def test_covariances(interfacial_entropy_dicts):
         forces,
         np.array(
             [
-                [824648.12, -35700.54, -45097.49],
-                [-35700.53, 1130557.41, -72703.99],
-                [-45097.49, -72703.99, 564357.39],
+                [824648.12302947, -1099.32151405, -44598.64004836],
+                [-1099.32151405, 1130557.41192537, 63512.95489094],
+                [-44598.64004836, 63512.95489094, 564357.38949483],
             ]
         ),
     )
@@ -130,9 +130,9 @@ def test_covariances(interfacial_entropy_dicts):
         torques,
         np.array(
             [
-                [16555327.18, 2611830.64, -2847039.67],
-                [2611830.64, 3332761.454, -58699.82],
-                [-2847039.67, -58699.82, 8487963.46],
+                [16555327.17944721, 4032510.71077588, -2984683.56005148],
+                [4032510.71077588, 3332761.45484771, -1083918.62436743],
+                [-2984683.56005148, -1083918.62436743, 8487963.45839714],
             ]
         ),
     )
@@ -148,12 +148,18 @@ def test_vibrations(interfacial_entropy_dicts):
     trans_freqs = vibrations.translational_freq[("ACE_1", "WAT")]
     rot_freqs = vibrations.rotational_freq[("ACE_1", "WAT")]
 
-    assert np.allclose(Strans, np.array([18.48388489, 16.75872754, 15.45006291]))
-    assert np.allclose(sum(Strans), 50.692675)
-    assert np.allclose(Srot, np.array([4.87430305, 7.8725041, 11.82588593]))
-    assert np.allclose(sum(Srot), 24.572693082)
-    assert np.allclose(trans_freqs, np.array([[546417.58, 830577.85, 1142567.50]]))
-    assert np.allclose(rot_freqs, np.array([[17892189.69, 7692137.61, 2791724.79]]))
+    assert np.allclose(
+        sorted(Strans), np.array([15.46750522, 16.75340504, 18.45542769])
+    )
+    assert np.allclose(sum(Strans), 50.676337954279)
+    assert np.allclose(sorted(Srot), np.array([4.73429158, 7.96112985, 12.80223863]))
+    assert np.allclose(sum(Srot), 25.497660051181)
+    assert np.allclose(
+        sorted(trans_freqs), np.array([550198.33, 831653.74, 1137710.85])
+    )
+    assert np.allclose(
+        sorted(rot_freqs), np.array([2190115.53, 7512997.23, 18672939.34])
+    )
 
 
 @INTERFACIAL_ENTROPY_DICTS

@@ -5,7 +5,11 @@ from types import SimpleNamespace
 import numpy as np
 import pytest
 
+from tests.input_files import load_inputs
+from waterEntropy.entropy.convariances import CovarianceCollection
+from waterEntropy.entropy.vibrations import Vibrations
 from waterEntropy.maths import transformations as trans
+from waterEntropy.recipes.forces_torques import get_forces_torques
 
 
 class FakeAtom:
@@ -68,6 +72,130 @@ def test_get_axes_for_multiple_uas_uses_ua_moi(monkeypatch):
 
     np.testing.assert_array_equal(axes, np.eye(3))
     np.testing.assert_array_equal(moi, [3.0, 2.0, 1.0])
+
+
+@pytest.mark.parametrize(
+    "signs",
+    [[1, 1, 1], [-1, 1, 1], [1, -1, 1], [1, 1, -1], [-1, -1, -1]],
+)
+def test_single_ua_axes_have_geometry_defined_signs(monkeypatch, signs):
+    """Orient every principal axis consistently despite eigenvector sign changes."""
+    positions = np.array([[0.0, 0, 0], [1.0, 1, 0], [1.0, -1, 0]])
+    principal_axes = np.array([[0.0, 0, 1], [0, 1, 0], [1, 0, 0]])
+    molecule = SimpleNamespace(
+        moment_of_inertia=lambda unwrap: np.diag([1.0, 2.0, 3.0]),
+        atoms=object(),
+        positions=positions,
+        principal_axes=lambda: principal_axes * np.array(signs)[:, None],
+    )
+    monkeypatch.setattr(trans, "make_whole", lambda _atoms: None)
+    monkeypatch.setattr(
+        trans.Selections,
+        "find_molecule_UAs",
+        lambda _molecule: [SimpleNamespace(position=positions[0])],
+    )
+
+    axes, _ = trans.get_axes(molecule, "single_UA", np.ones(3) * 10)
+
+    np.testing.assert_allclose(axes, principal_axes * np.array([-1, 1, 1])[:, None])
+
+
+def test_single_ua_axis_orientation_rotates_with_molecule():
+    """The chosen frame follows rigid rotations and translations."""
+    positions = np.array([[0.0, 0, 0], [1.0, 1, 0], [1.0, -1, 0]])
+    axes = np.array([[0.0, 0, 1], [0, 1, 0], [1, 0, 0]])
+    rotation = np.array([[0.0, -1, 0], [0, 0, -1], [1, 0, 0]])
+    translation = np.array([3.0, 4, 5])
+    expected = trans.orient_single_ua_axes(positions, axes, positions[0])
+    rotated_positions = positions @ rotation.T + translation
+
+    actual = trans.orient_single_ua_axes(
+        rotated_positions, axes @ rotation.T, rotated_positions[0]
+    )
+
+    np.testing.assert_allclose(actual, expected @ rotation.T, atol=1e-14)
+
+
+def test_single_ua_axes_ignore_near_orthogonal_bond_projections():
+    """Tiny numerical noise must not override the molecular plane normal."""
+    positions = np.array([[0.0, 0, 0], [1.0, 1, 0], [1.0, -1, 0]])
+    axes = np.array([[1e-10, 0, 1], [0, 1, 0], [1, 0, 0]])
+
+    oriented = trans.orient_single_ua_axes(positions, axes, positions[0])
+
+    np.testing.assert_allclose(oriented[0], -axes[0])
+
+
+def test_single_ua_axes_reject_unoriented_geometry():
+    """Reject a geometry that cannot provide a direction for every axis."""
+    positions = np.array([[0.0, 0, 0], [1.0, 0, 0]])
+
+    with pytest.raises(ValueError, match="molecular geometry"):
+        trans.orient_single_ua_axes(positions, np.eye(3), positions[0])
+
+
+def test_water_covariances_ignore_individual_principal_axis_signs(monkeypatch):
+    """Sign choices for different waters must not change averaged observables."""
+    system = load_inputs.get_amber_arginine_soln_universe()
+    waters = system.select_atoms("resname WAT and name O")[:20]
+
+    def calculate():
+        covariance = CovarianceCollection()
+        for water in waters:
+            get_forces_torques(covariance, water.fragment, "WAT", system)
+        vibration = Vibrations(298)
+        vibration.add_data(covariance, diagonalise=False)
+        return covariance, vibration
+
+    original_covariance, original_vibration = calculate()
+    atom_group = type(waters)
+    original_axes = atom_group.principal_axes
+
+    def flipped_axes(molecule, *args, **kwargs):
+        axes = original_axes(molecule, *args, **kwargs)
+        signs = np.array(
+            [-1 if (int(molecule.indices[0]) // 3) & (1 << i) else 1 for i in range(3)]
+        )
+        return axes * signs[:, None]
+
+    monkeypatch.setattr(atom_group, "principal_axes", flipped_axes)
+    flipped_covariance, flipped_vibration = calculate()
+    key = ("WAT", "WAT")
+
+    assert original_covariance.counts[key] == flipped_covariance.counts[key] == 20
+    for field in ("forces", "torques"):
+        np.testing.assert_allclose(
+            getattr(original_covariance, field)[key],
+            getattr(flipped_covariance, field)[key],
+            rtol=1e-12,
+            atol=1e-12,
+        )
+    for field in ("translational_S", "rotational_S"):
+        np.testing.assert_allclose(
+            np.sort(getattr(original_vibration, field)[key]),
+            np.sort(getattr(flipped_vibration, field)[key]),
+            rtol=1e-12,
+            atol=1e-12,
+        )
+
+
+def test_single_ua_axes_reject_degenerate_moments(monkeypatch):
+    """A degenerate inertia tensor cannot define a unique principal frame."""
+    molecule = SimpleNamespace(
+        moment_of_inertia=lambda unwrap: np.diag([1.0, 1.0, 2.0]),
+        atoms=object(),
+        positions=np.array([[0.0, 0, 0], [1.0, 0, 0], [-1.0, 0, 0]]),
+        principal_axes=lambda: np.eye(3),
+    )
+    monkeypatch.setattr(trans, "make_whole", lambda _atoms: None)
+    monkeypatch.setattr(
+        trans.Selections,
+        "find_molecule_UAs",
+        lambda _molecule: [SimpleNamespace(position=molecule.positions[0])],
+    )
+
+    with pytest.raises(ValueError, match="degenerate"):
+        trans.get_axes(molecule, "single_UA", np.ones(3) * 10)
 
 
 def test_moi_returns_symmetric_tensor():
@@ -177,9 +305,7 @@ def test_get_bonded_axes_selects_bond_vectors(
     elif expected_c == "first_light":
         np.testing.assert_array_equal(captured["c"], light[0].position)
     elif expected_c == "second_heavy":
-        np.testing.assert_array_equal(
-            captured["c"], heavy[1].position if heavy_count == 2 else heavy[1].position
-        )
+        np.testing.assert_array_equal(captured["c"], heavy[1].position)
 
 
 class FakeSelection(list):
