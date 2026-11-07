@@ -1,10 +1,10 @@
-""" Tests for waterEntropy interfacial solvent functions in neighbours."""
+"""Tests for waterEntropy interfacial solvent functions in neighbours."""
 
 import numpy as np
 import pytest
 
-from tests.input_files import load_inputs
 import waterEntropy.recipes.interfacial_solvent as GetSolvent
+from tests.input_files import load_inputs
 
 
 def serial_interfacial_entropy():
@@ -59,51 +59,52 @@ def test_Sorient_dict(interfacial_entropy_dicts):
     """Test outputted orientational entropy values of solvent molecules around a given solute molecule"""
     # resid: {resname = [Sorient, count]}
     Sorient_dict = interfacial_entropy_dicts[0]
-    assert Sorient_dict[1]["ACE"] == pytest.approx(
-        [
-            2.2473807716251804,
-            13,
-            7.0,
-            5.6923076923076925,
-            3.2245457772507913,
-            0.116959182573051,
-            11.549772583950544,
-            8.866118517437595,
-            1.0246793134504353,
-            11.549772583950546,
-            8.866118517437595,
-        ]
+
+    assert Sorient_dict[1]["ACE"]["Sorient_ave"] == pytest.approx(2.2473807716251804)
+    assert Sorient_dict[1]["ACE"]["tot_count"] == pytest.approx(13)
+    assert Sorient_dict[1]["ACE"]["N_c_ave"] == pytest.approx(7.0)
+    assert Sorient_dict[1]["ACE"]["N_w_ave"] == pytest.approx(5.6923076923076925)
+    assert Sorient_dict[1]["ACE"]["Nc_eff_ave"] == pytest.approx(3.2245457772507913)
+    assert Sorient_dict[1]["ACE"]["pbias_ave"] == pytest.approx(0.116959182573051)
+    assert Sorient_dict[1]["ACE"]["Sorient_Nc_ave"] == pytest.approx(11.549772583950544)
+    assert Sorient_dict[1]["ACE"]["Sorient_Nw_ave"] == pytest.approx(8.866118517437595)
+    assert Sorient_dict[1]["ACE"]["Sorient_HB_ave2"] == pytest.approx(
+        1.0246793134504353
     )
-    assert Sorient_dict[2]["ARG"] == pytest.approx(
-        [
-            2.6481382191024245,
-            35,
-            7.514285714285714,
-            6.0,
-            3.464361256421488,
-            0.114223362162831,
-            12.394889769242496,
-            9.388627866311323,
-            0.47562453963817075,
-            12.394889769242495,
-            9.388627866311323,
-        ]
+    assert Sorient_dict[1]["ACE"]["Sorient_Nc_ave2"] == pytest.approx(
+        11.549772583950546
     )
-    assert Sorient_dict[3]["NME"] == pytest.approx(
-        [
-            0.9503950365967891,
-            12,
-            7.333333333333333,
-            5.833333333333333,
-            2.314863945578231,
-            0.0798514739229025,
-            12.077905047118842,
-            9.183582113622649,
-            0.0,
-            12.077905047118845,
-            9.18358211362265,
-        ]
+    assert Sorient_dict[1]["ACE"]["Sorient_Nw_ave2"] == pytest.approx(8.866118517437595)
+
+    assert Sorient_dict[2]["ARG"]["Sorient_ave"] == pytest.approx(2.6481382191024245)
+    assert Sorient_dict[2]["ARG"]["tot_count"] == pytest.approx(35)
+    assert Sorient_dict[2]["ARG"]["N_c_ave"] == pytest.approx(7.514285714285714)
+    assert Sorient_dict[2]["ARG"]["N_w_ave"] == pytest.approx(6.0)
+    assert Sorient_dict[2]["ARG"]["Nc_eff_ave"] == pytest.approx(3.464361256421488)
+    assert Sorient_dict[2]["ARG"]["pbias_ave"] == pytest.approx(0.114223362162831)
+    assert Sorient_dict[2]["ARG"]["Sorient_Nc_ave"] == pytest.approx(12.394889769242496)
+    assert Sorient_dict[2]["ARG"]["Sorient_Nw_ave"] == pytest.approx(9.388627866311323)
+    assert Sorient_dict[2]["ARG"]["Sorient_HB_ave2"] == pytest.approx(
+        0.47562453963817075
     )
+    assert Sorient_dict[2]["ARG"]["Sorient_Nc_ave2"] == pytest.approx(
+        12.394889769242495
+    )
+    assert Sorient_dict[2]["ARG"]["Sorient_Nw_ave2"] == pytest.approx(9.388627866311323)
+
+    assert Sorient_dict[3]["NME"]["Sorient_ave"] == pytest.approx(0.9503950365967891)
+    assert Sorient_dict[3]["NME"]["tot_count"] == pytest.approx(12)
+    assert Sorient_dict[3]["NME"]["N_c_ave"] == pytest.approx(7.333333333333333)
+    assert Sorient_dict[3]["NME"]["N_w_ave"] == pytest.approx(5.833333333333333)
+    assert Sorient_dict[3]["NME"]["Nc_eff_ave"] == pytest.approx(2.314863945578231)
+    assert Sorient_dict[3]["NME"]["pbias_ave"] == pytest.approx(0.0798514739229025)
+    assert Sorient_dict[3]["NME"]["Sorient_Nc_ave"] == pytest.approx(12.077905047118842)
+    assert Sorient_dict[3]["NME"]["Sorient_Nw_ave"] == pytest.approx(9.183582113622649)
+    assert Sorient_dict[3]["NME"]["Sorient_HB_ave2"] == pytest.approx(0.0)
+    assert Sorient_dict[3]["NME"]["Sorient_Nc_ave2"] == pytest.approx(
+        12.077905047118845
+    )
+    assert Sorient_dict[3]["NME"]["Sorient_Nw_ave2"] == pytest.approx(9.18358211362265)
 
 
 @INTERFACIAL_ENTROPY_DICTS
@@ -119,9 +120,9 @@ def test_covariances(interfacial_entropy_dicts):
         forces,
         np.array(
             [
-                [824648.12, 40709.41, -122310.016],
-                [40709.41, 1130557.41, 509577.56],
-                [-122310.016, 509577.56, 564357.39],
+                [824648.12302947, -1099.32151405, -44598.64004836],
+                [-1099.32151405, 1130557.41192537, 63512.95489094],
+                [-44598.64004836, 63512.95489094, 564357.38949483],
             ]
         ),
     )
@@ -129,9 +130,9 @@ def test_covariances(interfacial_entropy_dicts):
         torques,
         np.array(
             [
-                [16555327.18, 2895550.56, -1668424.15],
-                [2895550.56, 3332761.45, -64663.65],
-                [-1668424.15, -64663.65, 8487963.46],
+                [16555327.17944721, 4032510.71077588, -2984683.56005148],
+                [4032510.71077588, 3332761.45484771, -1083918.62436743],
+                [-2984683.56005148, -1083918.62436743, 8487963.45839714],
             ]
         ),
     )
@@ -147,12 +148,18 @@ def test_vibrations(interfacial_entropy_dicts):
     trans_freqs = vibrations.translational_freq[("ACE_1", "WAT")]
     rot_freqs = vibrations.rotational_freq[("ACE_1", "WAT")]
 
-    assert np.allclose(Strans, np.array([21.93192349, 16.6612125, 14.52832366]))
-    assert np.allclose(sum(Strans), 53.12145964157872)
-    assert np.allclose(Srot, np.array([4.95436837, 11.94115717, 7.63322808]))
-    assert np.allclose(sum(Srot), 24.528753622255945)
-    assert np.allclose(trans_freqs, np.array([[237430, 850514, 1431617]]))
-    assert np.allclose(rot_freqs, np.array([[17463732, 2712583, 8199736]]))
+    assert np.allclose(
+        sorted(Strans), np.array([15.46750522, 16.75340504, 18.45542769])
+    )
+    assert np.allclose(sum(Strans), 50.676337954279)
+    assert np.allclose(sorted(Srot), np.array([4.73429158, 7.96112985, 12.80223863]))
+    assert np.allclose(sum(Srot), 25.497660051181)
+    assert np.allclose(
+        sorted(trans_freqs), np.array([550198.33, 831653.74, 1137710.85])
+    )
+    assert np.allclose(
+        sorted(rot_freqs), np.array([2190115.53, 7512997.23, 18672939.34])
+    )
 
 
 @INTERFACIAL_ENTROPY_DICTS

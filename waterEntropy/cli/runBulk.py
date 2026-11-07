@@ -5,16 +5,18 @@ Script to run bulk water entropy
 """
 
 import argparse
-from datetime import datetime
 import logging
 import os
 import sys
+from datetime import datetime
 
 from MDAnalysis import Universe
 
 import waterEntropy.entropy.orientations as OR
 import waterEntropy.entropy.vibrations as VIB
 import waterEntropy.recipes.bulk_water as GetBulkSolvent
+
+logger = logging.getLogger(__name__)
 
 
 def run_waterBulk(args):
@@ -45,7 +47,7 @@ def _conda_env():
     try:
         return os.environ["CONDA_DEFAULT_ENV"]
     except KeyError:
-        logging.error("Please activate your conda/mamba environment")
+        logger.error("Please activate your conda/mamba environment")
         sys.exit(1)
 
 
@@ -111,7 +113,7 @@ def main():
         args = parser.parse_args()
         # if args.hpc is True: args.parallel = True # No need to set both on CLI.
     except argparse.ArgumentError:
-        logging.error(
+        logger.error(
             "Command line arguments are ill-defined, please check the arguments."
         )
         raise

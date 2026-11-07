@@ -11,6 +11,14 @@ Here's how to use waterEntropy on the command-line using the ``runWaterEntropy.p
 
 Topology and trajectory files are available in the ``tests/input_files`` directory.
 
+For single-united-atom molecules such as water, principal-axis signs are fixed
+using the ordered vectors from the heavy atom to the other atoms and their
+cross products. Keep atom ordering consistent across molecules and trajectories.
+This convention changes force and torque covariances and vibrational entropies
+relative to earlier versions, which could depend on the numerical library.
+Molecules with degenerate moments of inertia or geometry that cannot determine
+all axis directions are rejected rather than assigned an arbitrary frame.
+
 Here's how to use waterEntropy via the API:
 
 .. code-block:: Python

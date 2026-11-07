@@ -3,10 +3,10 @@ Label neighbours in a coordination shell based on what they are and what their
 neighbours are.
 """
 
-from waterEntropy.analysis.HB import HBCollection
 import waterEntropy.analysis.RAD as RADShell
-from waterEntropy.analysis.shells import ShellCollection
 import waterEntropy.utils.selections as Selections
+from waterEntropy.analysis.HB import HBCollection
+from waterEntropy.analysis.shells import ShellCollection
 
 
 def get_shell_labels(

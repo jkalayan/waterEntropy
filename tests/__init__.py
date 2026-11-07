@@ -1,4 +1,4 @@
-""" Tests for the waterEntropy."""
+"""Tests for the waterEntropy."""
 
 import os
 

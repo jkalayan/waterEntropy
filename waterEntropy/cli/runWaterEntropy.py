@@ -1,28 +1,31 @@
 #!/usr/bin/env python
 
-"""
+"""Script for running entropy calculations for interfacial waters.
 """
 
 import argparse
-from datetime import datetime
 import logging
 import os
 import shutil
-import psutil
 import sys
-import numpy as np
+from datetime import datetime
 
+import psutil
 from MDAnalysis import Universe
 
-import waterEntropy.recipes.interfacial_solvent as GetSolvent
-import waterEntropy.recipes.bulk_water as GetBulkSolvent
-import waterEntropy.entropy.vibrations as VIB
 import waterEntropy.entropy.orientations as OR
-from waterEntropy.utils.dask_clusters import slurm_configure_cluster, slurm_submit_master
+import waterEntropy.entropy.vibrations as VIB
+import waterEntropy.recipes.interfacial_solvent as GetSolvent
+from waterEntropy.utils.dask_clusters import (
+    slurm_configure_cluster,
+    slurm_submit_master,
+)
+
+logger = logging.getLogger(__name__)
 
 
 def run_waterEntropy(args):
-    """
+    """Run interfacial water entropy calculations.
     """
 
     startTime = datetime.now()
@@ -36,16 +39,11 @@ def run_waterEntropy(args):
     # load topology and coordinates
     u = Universe(args.file_topology, args.file_coords)
     # interfacial waters
-    Sorient_dict, covariances, vibrations, frame_solvent_indices, n_frames = GetSolvent.get_interfacial_water_orient_entropy(u, args.start, args.end, args.step, args.temperature, args.parallel, client)
+    Sorient_dict, covariances, vibrations, _frame_solvent_indices, n_frames = GetSolvent.get_interfacial_water_orient_entropy(u, args.start, args.end, args.step, args.temperature, args.parallel, client)
     print(f"Number of frames analysed: {n_frames}")
     OR.print_Sorient_dicts(Sorient_dict)
     # GetSolvent.print_frame_solvent_dicts(frame_solvent_indices)
     VIB.print_Svib_data(vibrations, covariances)
-
-    # bulk waters
-    # bulk_Sorient_dict, bulk_covariances, bulk_vibrations = GetBulkSolvent.get_bulk_water_orient_entropy(u, start, end, step, temperature)
-    # OR.print_Sorient_dicts(bulk_Sorient_dict)
-    # VIB.print_Svib_data(bulk_vibrations, bulk_covariances)
 
     dask_tmp = os.path.join(os.getcwd(), "dask-scratch-space")
     if os.path.exists(dask_tmp) and os.path.isdir(dask_tmp):
@@ -59,7 +57,7 @@ def _conda_env():
     try:
         return os.environ["CONDA_DEFAULT_ENV"]
     except KeyError:
-        logging.error("Please activate your conda/mamba environment")
+        logger.error("Please activate your conda/mamba environment")
         sys.exit(1)
 
 
@@ -73,7 +71,7 @@ def _conda_exec():
             os.environ['CONDA_EXE']
             return "conda"
         except KeyError:
-            logging.error("Cannot determine your conda executable, make sure they are initialised.")
+            logger.error("Cannot determine your conda executable, make sure they are initialised.")
             sys.exit(1)
 
 
@@ -82,7 +80,7 @@ def _conda_path():
     try:
         return os.environ["CONDA_EXE"]
     except KeyError:
-        logging.error("Please make sure you have conda/mamba set up correctly.")
+        logger.error("Please make sure you have conda/mamba set up correctly.")
         sys.exit(1)
 
 
@@ -248,10 +246,6 @@ def main():
         args = parser.parse_args()
         if args.hpc is True: args.parallel = True # No need to set both on CLI.
     except argparse.ArgumentError:
-        logging.error(
-            "Command line arguments are ill-defined, please check the arguments."
-        )
-        raise
         sys.exit(1)
 
     if args.submit:
