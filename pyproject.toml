@@ -21,12 +21,12 @@ classifiers = [
 keywords = ["water", "entropy", "molecular dynamics", "forces"]
 requires-python = ">=3.11"
 dependencies = [
-    "mdanalysis>=2.10.0",
-    "numpy==2.3.5",
-    "distributed==2026.1.2",
-    "dask==2026.1.2",
-    "dask-jobqueue==0.9.0",
-    "psutil==7.1.3",
+    "mdanalysis>=2.11.0,<3.0",
+    "numpy>=2.3.2,<2.5.0",
+    "distributed>=2025.4.0,<2027.1.0",
+    "dask>=2025.4.0,<2027.1.0",
+    "dask-jobqueue>=0.9.0,<1.0",
+    "psutil>=5.9.4,<8.0",
 ]
 
 [project.urls]
@@ -35,24 +35,26 @@ Source = "https://github.com/jkalayan/waterEntropy"
 [project.optional-dependencies]
 testing = [
     "pgtest==1.3.2",
-    "wheel==0.43.0",
+    "wheel==0.46.2",
     "coverage[toml]",
-    "pytest==8.2.2",
+    "pytest==9.0.3",
     "pytest-cov==5.0.0",
     "pytest-sugar==1.0.0"
 ]
 pre-commit = [
-    "pre-commit==3.7.1",
-    "pylint==3.2.5"
+    "pre-commit>=4.5,<5.0",
+    "ruff>=0.15.2,<1.0",
+    "pylint>=4.0,<5.0",
+    "rstcheck>=6.2,<7.0"
 ]
 docs = [
-    "sphinx",
-    "sphinx_rtd_theme",
-    "sphinxcontrib-contentui",
-    "sphinxcontrib-details-directive",
-    "sphinx_copybutton",
-    "furo",
-    "markupsafe<2.1"
+    "sphinx>=9,<10",
+    "sphinx_rtd_theme>=3.1.0,<4",
+    "sphinxcontrib-contentui>=0.2.5,<1",
+    "sphinxcontrib-details-directive>=0.1.0,<1",
+    "sphinx_copybutton>=0.5.2,<1",
+    "furo==2025.12.19",
+    "markupsafe>=3.0.4,<4"
 ]
 
 [project.scripts]
@@ -62,6 +64,14 @@ waterBulk = "waterEntropy.cli.runBulk:main"
 
 [tool.flit.module]
 name = "waterEntropy"
+
+[tool.ruff.lint.per-file-ignores]
+# Preserve existing public package and module names.
+"waterEntropy/**/__init__.py" = ["N999"]
+"waterEntropy/__init__.py" = ["N999"]
+"waterEntropy/analysis/HB.py" = ["N999"]
+"waterEntropy/analysis/HB_labels.py" = ["N999"]
+"waterEntropy/analysis/RAD.py" = ["N999"]
 
 [tool.pylint.format]
 max-line-length = 125

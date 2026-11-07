@@ -1,4 +1,3 @@
-""" Tests for the waterEntropy.
-"""
+"""Tests for the waterEntropy."""
 
-from .. import TEST_DIR
+from .. import TEST_DIR as TEST_DIR

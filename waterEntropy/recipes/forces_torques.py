@@ -6,9 +6,9 @@ in a Covariances class instance.
 
 import numpy as np
 
-from waterEntropy.entropy.convariances import CovarianceCollection
 import waterEntropy.maths.transformations as Transformation
 import waterEntropy.utils.selections as Select
+from waterEntropy.entropy.convariances import CovarianceCollection
 
 
 def get_forces_torques(

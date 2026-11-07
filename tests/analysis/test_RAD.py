@@ -1,15 +1,15 @@
-""" Tests for waterEntropy RAD functions in neighbours."""
+"""Tests for waterEntropy RAD functions in neighbours."""
 
 import pytest
 
-from tests.input_files import load_inputs
 import waterEntropy.analysis.HB as HBond
 import waterEntropy.analysis.RAD as RADShell
 import waterEntropy.analysis.shell_labels as RADLabels
-from waterEntropy.analysis.shells import ShellCollection
 import waterEntropy.maths.trig as Trig
-from waterEntropy.recipes.interfacial_solvent import find_interfacial_solvent
 import waterEntropy.utils.selections as Selections
+from tests.input_files import load_inputs
+from waterEntropy.analysis.shells import ShellCollection
+from waterEntropy.recipes.interfacial_solvent import find_interfacial_solvent
 
 # get mda universe for arginine in solution
 system = load_inputs.get_amber_arginine_soln_universe()

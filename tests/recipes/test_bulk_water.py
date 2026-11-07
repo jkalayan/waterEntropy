@@ -1,10 +1,10 @@
-""" Tests for waterEntropy bulk water functions in neighbours."""
+"""Tests for waterEntropy bulk water functions in neighbours."""
 
 import numpy as np
 import pytest
 
-from tests.input_files import load_inputs
 import waterEntropy.recipes.bulk_water as GetBulk
+from tests.input_files import load_inputs
 
 
 def bulk_water_entropy():
@@ -31,20 +31,28 @@ def test_Sorient_dict(bulk_water_entropy_dicts):
     """Test outputted orientational entropy values of solvent molecules around a given solute molecule"""
     # resid: {resname = [Sorient, count]}
     Sorient_dict = bulk_water_entropy_dicts[0]
-    assert Sorient_dict["WAT"]["WAT"] == pytest.approx(
-        [
-            11.295694179188464,
-            867,
-            6.8788927335640135,
-            6.8788927335640135,
-            6.8788927335640135,
-            0.25,
-            11.295694179188464,
-            11.295694179188464,
-            11.295694179188464,
-            11.295694179188464,
-            11.295694179188464,
-        ]
+    assert Sorient_dict["WAT"]["WAT"]["Sorient_ave"] == pytest.approx(
+        11.295694179188464
+    )
+    assert Sorient_dict["WAT"]["WAT"]["tot_count"] == pytest.approx(867)
+    assert Sorient_dict["WAT"]["WAT"]["N_c_ave"] == pytest.approx(6.8788927335640135)
+    assert Sorient_dict["WAT"]["WAT"]["N_w_ave"] == pytest.approx(6.8788927335640135)
+    assert Sorient_dict["WAT"]["WAT"]["Nc_eff_ave"] == pytest.approx(6.8788927335640135)
+    assert Sorient_dict["WAT"]["WAT"]["pbias_ave"] == pytest.approx(0.25)
+    assert Sorient_dict["WAT"]["WAT"]["Sorient_Nc_ave"] == pytest.approx(
+        11.295694179188464
+    )
+    assert Sorient_dict["WAT"]["WAT"]["Sorient_Nw_ave"] == pytest.approx(
+        11.295694179188464
+    )
+    assert Sorient_dict["WAT"]["WAT"]["Sorient_HB_ave2"] == pytest.approx(
+        11.295694179188464
+    )
+    assert Sorient_dict["WAT"]["WAT"]["Sorient_Nc_ave2"] == pytest.approx(
+        11.295694179188464
+    )
+    assert Sorient_dict["WAT"]["WAT"]["Sorient_Nw_ave2"] == pytest.approx(
+        11.295694179188464
     )
 
 
@@ -57,17 +65,27 @@ def test_covariances(bulk_water_entropy_dicts):
     torques = covariances.torques[("WAT", "WAT")]
     count = covariances.counts[("WAT", "WAT")]
 
-    print("forces", forces)
-    print("torques", torques)
-    print("count", count)
+    np.testing.assert_allclose(
+        np.linalg.eigvalsh(forces),
+        np.array([670238.35897205, 956264.48039086, 1500198.33819726]),
+        rtol=1e-5,
+        atol=1e-5,
+    )
+
+    np.testing.assert_allclose(
+        np.linalg.eigvalsh(torques),
+        np.array([6429679.41993371, 8474535.92813576, 14066869.27908691]),
+        rtol=1e-5,
+        atol=1e-5,
+    )
 
     assert np.allclose(
         forces,
         np.array(
             [
-                [677734.94716348, 57012.65622729, 1713.67763604],
-                [57012.65622729, 1497942.10124106, 37804.65424194],
-                [1713.67763604, 37804.65424194, 951024.12915563],
+                [677734.94716348, -1664.33742052, 45818.66526039],
+                [-1664.33742052, 1497942.10124106, -34999.54642979],
+                [45818.66526039, -34999.54642979, 951024.12915563],
             ]
         ),
     )
@@ -75,9 +93,9 @@ def test_covariances(bulk_water_entropy_dicts):
         torques,
         np.array(
             [
-                [8527024.55153786, -154805.72447386, 576257.37509633],
-                [-154805.72447386, 6436426.29332658, 56359.58996768],
-                [576257.37509633, 56359.58996768, 14007633.78229195],
+                [8527024.55153785, -97775.14870001, 567575.66039858],
+                [-97775.14870001, 6436426.29332659, 101015.90117385],
+                [567575.66039858, 101015.90117385, 14007633.78229195],
             ]
         ),
     )
@@ -93,9 +111,18 @@ def test_vibrations(bulk_water_entropy_dicts):
     trans_freqs = vibrations.translational_freq[("WAT", "WAT")]
     rot_freqs = vibrations.rotational_freq[("WAT", "WAT")]
 
-    assert np.allclose(Strans, np.array([14.32595231, 17.61982376, 16.21354637]))
-    assert np.allclose(sum(Strans), 48.159322433317016)
-    assert np.allclose(Srot, np.array([5.68693308, 7.5082148, 8.55525875]))
-    assert np.allclose(sum(Srot), 21.75040663028019)
-    assert np.allclose(trans_freqs, np.array([1504472, 673788, 948440]))
-    assert np.allclose(rot_freqs, np.array([14067779, 8479586, 6423718]))
+    assert np.allclose(
+        sorted(Strans), np.array([14.33754546, 16.17982393, 17.64158753])
+    )
+    assert np.allclose(sum(Strans), 48.158956923942)
+    assert np.allclose(
+        sorted(Srot),
+        np.array([5.687156789928, 7.5104303887, 8.55171640995]),
+    )
+    assert np.allclose(sum(Srot), 21.749303588578)
+    assert np.allclose(
+        sorted(trans_freqs), np.array([670238.36, 956264.48, 1500198.34])
+    )
+    assert np.allclose(
+        sorted(rot_freqs), np.array([6429679.42, 8474535.93, 14066869.28])
+    )

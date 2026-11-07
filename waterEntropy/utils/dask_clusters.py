@@ -6,9 +6,9 @@ import os
 import subprocess
 import sys
 
+import psutil
 from dask.distributed import Client
 from dask_jobqueue import SLURMCluster
-import psutil
 
 
 def check_slurm_env():
