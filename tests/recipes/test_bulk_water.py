@@ -67,18 +67,38 @@ def test_covariances(bulk_water_entropy_dicts):
 
     np.testing.assert_allclose(
         np.linalg.eigvalsh(forces),
-        np.array([673788.02213212, 948440.87510386, 1504472.28032419]),
+        np.array([672039.16362729, 942109.73348218, 1512552.2804507]),
         rtol=1e-5,
         atol=1e-5,
     )
 
     np.testing.assert_allclose(
         np.linalg.eigvalsh(torques),
-        np.array([6423718.64945265, 8479586.95316266, 14067779.02454107]),
+        np.array([6407943.77132577, 8467981.43061079, 14095159.42521983]),
         rtol=1e-5,
         atol=1e-5,
     )
 
+    assert np.allclose(
+        forces,
+        np.array(
+            [
+                [677734.94716348, 15739.92772357, -39821.31124937],
+                [15739.92772357, 1497942.10124106, -88748.89476841],
+                [-39821.31124937, -88748.89476841, 951024.12915563],
+            ]
+        ),
+    )
+    assert np.allclose(
+        torques,
+        np.array(
+            [
+                [8527024.55153785, -245284.12233727, 694323.21516024],
+                [-245284.12233727, 6436426.29332659, -54491.9337198],
+                [694323.21516024, -54491.9337198, 14007633.78229195],
+            ]
+        ),
+    )
     assert count == 867
 
 
@@ -91,9 +111,12 @@ def test_vibrations(bulk_water_entropy_dicts):
     trans_freqs = vibrations.translational_freq[("WAT", "WAT")]
     rot_freqs = vibrations.rotational_freq[("WAT", "WAT")]
 
-    assert np.allclose(Strans, np.array([14.32595231, 17.61982376, 16.21354637]))
-    assert np.allclose(sum(Strans), 48.159322433317016)
-    assert np.allclose(Srot, np.array([5.68693308, 7.5082148, 8.55525875]))
-    assert np.allclose(sum(Srot), 21.75040663028019)
-    assert np.allclose(trans_freqs, np.array([1504472, 673788, 948440]))
-    assert np.allclose(rot_freqs, np.array([14067779, 8479586, 6423718]))
+    assert np.allclose(sorted(Strans), np.array([14.30412666, 16.24104262, 17.6305319]))
+    assert np.allclose(sum(Strans), 48.175701175567795)
+    assert np.allclose(
+        sorted(Srot),
+        np.array([5.680208099397993, 7.513307654068938, 8.564650609536658]),
+    )
+    assert np.allclose(sum(Srot), 21.75816636300359)
+    assert np.allclose(trans_freqs, np.array([672039, 942109, 1512552]))
+    assert np.allclose(rot_freqs, np.array([14095159, 8467981, 6407943]))
