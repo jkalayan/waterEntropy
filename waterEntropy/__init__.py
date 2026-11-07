@@ -3,4 +3,4 @@
 # Add imports here
 # from waterEntropy.neighbours.force_torque import *
 
-__version__ = "2.2.0"
+__version__ = "2.3.0"
