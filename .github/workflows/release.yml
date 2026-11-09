@@ -19,12 +19,12 @@ jobs:
     steps:
     - name: checkout repository
       id: repo
-      uses: actions/checkout@v7
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
     - name: get python 3.11.6
-      uses: actions/setup-python@v7
+      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
-        python-version: 3.11.6
+        python-version: 3.15.2
 
     - name: pip latest
       id: latestreleased
@@ -47,7 +47,7 @@ jobs:
     steps:
 
       - name: checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Change version in repo
         run: sed -i "s/__version__ =.*/__version__ = \"${{ github.event.inputs.version }}\"/g" waterEntropy/__init__.py
@@ -78,7 +78,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
 
@@ -96,7 +96,7 @@ jobs:
     steps:
 
       - name: create release
-        uses: softprops/action-gh-release@v3.0.3
+        uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
         with:
           name: v${{ github.event.inputs.version }}
           generate_release_notes: true
@@ -109,14 +109,14 @@ jobs:
     steps:
 
     - name: checkout
-      uses: actions/checkout@v7
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         ref: main
 
     - name: get python 3.11.6
-      uses: actions/setup-python@v7
+      uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
       with:
-        python-version: 3.11.6
+        python-version: 3.15.2
 
     - name: install flit
       run: |
