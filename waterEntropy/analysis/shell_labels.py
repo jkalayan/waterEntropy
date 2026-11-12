@@ -15,21 +15,29 @@ def get_shell_labels(
     # pylint: disable=too-many-locals
     # pylint: disable=unused-argument
     """
-    Get the shell labels of an atoms shell based on the following:
-    For a central UA, rank its coordination shell by proximity to that
-    central UA's nearest non-like molecule UA.
+    Get shell labels for an atom based on its coordination shell.
 
-    * '#_RESNAME' = RAD shell from same molecule type, when nearest nonlike resid is the same as the reference.
+    For a central UA, rank its coordination shell by the proximity of each
+    molecule to the central UA's nearest non-like molecule UA.
 
-    * 'X_RESNAME' = when same molecule type has different nearest nonlike resid.
+    ``#_RESNAME``
+        RAD shell atoms from the same molecule type, when the nearest non-like
+        residue is the same as the reference residue.
 
-    * 'RESNAME' = when molecule of different type is in RAD shell.
+    ``X_RESNAME``
+        Atoms from the same molecule type whose nearest non-like residue differs
+        from the reference residue.
 
-    * '0_RESNAME' = closest different type molecule in RAD shell. (the one its assigned to, its nearest non-like!)
+    ``RESNAME``
+        Atoms in the RAD shell from a different molecule type.
 
-    :param atom_idx: atom index of central atom in coordination shell
-    :param system: mdanalysis instance of atoms in a frame
-    :param shell: shell instance of atom_idx
+    ``0_RESNAME``
+        Atoms in the RAD shell from the closest different-type molecule (the
+        molecule assigned as the central UA's nearest non-like molecule).
+
+    :param atom_idx: index of the central atom in the coordination shell
+    :param system: MDAnalysis instance containing the atoms in a frame
+    :param shell: shell instance for ``atom_idx``
     :param shells: ShellCollection instance
     """
     center = system.atoms[atom_idx]
@@ -166,7 +174,7 @@ def get_strongest_HB(atom_idx: int, system, HBs: HBCollection):
 
     if donates_to:
         # 3. iterate through acceptors
-        for d_idx, (a_idx, HB_strength) in donates_to.items():
+        for a_idx, HB_strength in donates_to.values():
             acceptor = system.atoms[a_idx]
             if acceptor.mass < 1.1:
                 acceptor = Selections.find_bonded_heavy_atom(a_idx, system)

@@ -24,7 +24,7 @@ SUBMITFILE_TESTCASE1 = """#!/bin/bash --login
 eval "$(/path/to/conda shell.bash hook)"
 conda activate waterentropy
 
-srun waterEntropy --file-topology box.prmtop --file-coords frames.nc --start 0 --end 512 --step 1 --hpc --hpc-nodes 4 --hpc-account c01-bio --hpc-qos standard"""  # pylint: disable=line-too-long
+srun waterEntropy --file-topology box.prmtop --file-coords frames.nc --start 0 --end 512 --step 1 --hpc --hpc-nodes 4 --hpc-account c01-bio --hpc-qos standard"""  # noqa: E501
 
 SUBMITFILE_TESTCASE2 = """#!/bin/bash --login
 
@@ -41,7 +41,7 @@ eval "$(/path/to/conda shell.bash hook)"
 eval "$(mamba shell hook --shell bash)"
 mamba activate waterentropy
 
-srun waterEntropy --file-topology box.prmtop --file-coords frames.nc --start 0 --end 512 --step 1 --hpc --hpc-nodes 4 --hpc-account c01-bio --hpc-qos standard"""  # pylint: disable=line-too-long
+srun waterEntropy --file-topology box.prmtop --file-coords frames.nc --start 0 --end 512 --step 1 --hpc --hpc-nodes 4 --hpc-account c01-bio --hpc-qos standard"""  # noqa: E501
 
 
 def args_helper_directives(args):
@@ -170,7 +170,10 @@ def test_slurm_directives_skip():
 
 
 def test_slurm_prologues_conda():
-    """Test that given plausable values that the prologue for conda is correctly assembled"""
+    """
+    Test that given plausable values that the prologue for conda is
+    correctly assembled
+    """
     args = args_helper_prologues(
         [
             "--conda-env",
@@ -190,7 +193,10 @@ def test_slurm_prologues_conda():
 
 
 def test_slurm_prologues_mamba():
-    """Test that given plausable values that the prologue for mamba is correctly assembled"""
+    """
+    Test that given plausable values that the prologue for mamba is
+    correctly assembled
+    """
     args = args_helper_prologues(
         [
             "--conda-env",

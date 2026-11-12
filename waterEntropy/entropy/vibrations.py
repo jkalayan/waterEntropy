@@ -146,13 +146,15 @@ class Vibrations:
         harmonic oscillator:
 
         .. math::
-            S^{\mathrm{vib}} = k_{\mathrm{B}} \sum_{i=1}^{N_\mathrm{vib}} \\
-            \Bigg( \frac{h\nu_i/k_{\mathrm{B}}T}{e^{h\nu_i/k_{\mathrm{B}}T}-1} \\
+
+            S^{\mathrm{vib}} = k_{\mathrm{B}} \sum_{i=1}^{N_\mathrm{vib}}
+            \Bigg( \frac{h\nu_i/k_{\mathrm{B}}T}{e^{h\nu_i/k_{\mathrm{B}}T}-1}
             - \ln(1 - e^{-h\nu_i/k_{\mathrm{B}}T} ) \Bigg)
 
         where:
 
-        - :math:`k_{\mathrm{B}}` is the Boltzmann constant :math:`\mathrm{J/K}` (Joule per Kelvin),
+        * :math:`k_{\mathrm{B}}` is the Boltzmann constant, in
+          :math:`\mathrm{J\,K^{-1}}` (joules per kelvin).
 
         :param covariances: instance of CovarianceCollection class
         :param diagonalise: whether to diagonalise the covariance matrix

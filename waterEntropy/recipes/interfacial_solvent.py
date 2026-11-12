@@ -215,7 +215,8 @@ def get_interfacial_water_orient_entropy(
     # Steps 1,2 and 3 in function calls.
     indices = list(range(start, end, step))
     if parallel is True:
-        # If no Dask client cluster has been setup externally then default to single host.
+        # If no Dask client cluster has been setup externally then
+        # default to single host.
         if client is None:
             client = Client(
                 processes=True, threads_per_worker=1, silence_logs=logging.CRITICAL
@@ -350,7 +351,7 @@ def _interfacial_water_per_step(
             # nearest_resid = nearest.resid
             # nearest_resname = nearest.resname
             for nearest_resid, nearest_resname in zip(
-                [nearest.resid, 0], [nearest.resname, "all"]
+                [nearest.resid, 0], [nearest.resname, "all"], strict=False
             ):
                 # e. populate the labels into a dictionary for stats
                 # only if a different atom is in the RAD shell

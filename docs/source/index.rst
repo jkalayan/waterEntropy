@@ -7,7 +7,7 @@ simulations.
 
 ``waterEntropy`` is available at https://github.com/jkalayan/waterEntropy
 
-.. image:: images/waterentropy_logo_grey.png
+.. image:: _static/logos/waterEntropy-logo-dark.png
     :width: 400px
     :align: center
     :target: https://github.com/jkalayan/waterEntropy
@@ -61,7 +61,7 @@ Funding
 
 Contributors to waterEntropy were supported by:
 
-.. image:: images/ccpbiosim-logo-white-background.png
+.. image:: _static/logos/CCPBioSim-logo-black-bottom-text.png
    :height: 100px
    :target: https://www.ccpbiosim.org/
 

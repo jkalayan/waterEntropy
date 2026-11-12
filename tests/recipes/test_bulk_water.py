@@ -28,7 +28,10 @@ BULK_WATER_ENTROPY_DICTS = pytest.mark.parametrize(
 
 @BULK_WATER_ENTROPY_DICTS
 def test_Sorient_dict(bulk_water_entropy_dicts):
-    """Test outputted orientational entropy values of solvent molecules around a given solute molecule"""
+    """
+    Test outputted orientational entropy values of solvent molecules around a
+    given solute molecule
+    """
     # resid: {resname = [Sorient, count]}
     Sorient_dict = bulk_water_entropy_dicts[0]
     assert Sorient_dict["WAT"]["WAT"]["Sorient_ave"] == pytest.approx(

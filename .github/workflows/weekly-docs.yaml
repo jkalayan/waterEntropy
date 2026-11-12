@@ -1,0 +1,24 @@
+name: Weekly Docs Build
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: weekly-docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docs:
+    name: Docs build
+    uses: CCPBioSim/.github/.github/workflows/ci-docs.yaml@f72e64d2dc791ad5ceda145777a3922895d92a5d # 0.17.0
+    permissions:
+      contents: read
+    with:
+      build-dir: build
+      os: '["ubuntu-26.04", "macos-26", "windows-2025-vs2026"]'
+      python-versions: '["3.12", "3.13", "3.14"]'

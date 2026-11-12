@@ -124,7 +124,9 @@ def get_shell_HB_acceptors(shell, system, HBs: HBCollection):
             sorted_indices, sorted_distances = Trig.get_shell_neighbour_selection(
                 shell, donator, system
             )
-            for A_idx, DA_distance in zip(sorted_indices, sorted_distances):
+            for A_idx, DA_distance in zip(
+                sorted_indices, sorted_distances, strict=False
+            ):
                 # 5. check if neighbouring atom in shell is an acceptor,
                 # if so override current possible acceptor
                 acceptor = system.atoms[A_idx]

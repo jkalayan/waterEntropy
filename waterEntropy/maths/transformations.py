@@ -156,7 +156,7 @@ def orient_single_ua_axes(positions, principal_axes, heavy_atom_position):
     the first non-orthogonal bond vector, or bond-pair normal, fixes each axis.
 
     :param positions: a (N,3) array of point positions
-    :param principal_axes (3,3): principal axes of molecule
+    :param principal_axes: (3,3) principal axes of molecule
     :param heavy_atom_position: (3,) position of heavy atom in single ua molecule
     """
     vectors = []
@@ -200,21 +200,27 @@ def MOI(CoM: np.ndarray, positions: np.ndarray, masses: list):
     :param positions: a (N,3) array of point positions
     :param masses: a (N,) list of point masses
     """
-    I = np.zeros((3, 3))
-    for coord, mass in zip(positions, masses):
-        I[0][0] += (abs(coord[1] - CoM[1]) ** 2 + abs(coord[2] - CoM[2]) ** 2) * mass
-        I[0][1] -= (coord[0] - CoM[0]) * (coord[1] - CoM[1]) * mass
-        I[1][0] -= (coord[0] - CoM[0]) * (coord[1] - CoM[1]) * mass
+    inertia_tensor = np.zeros((3, 3))
+    for coord, mass in zip(positions, masses, strict=False):
+        inertia_tensor[0][0] += (
+            abs(coord[1] - CoM[1]) ** 2 + abs(coord[2] - CoM[2]) ** 2
+        ) * mass
+        inertia_tensor[0][1] -= (coord[0] - CoM[0]) * (coord[1] - CoM[1]) * mass
+        inertia_tensor[1][0] -= (coord[0] - CoM[0]) * (coord[1] - CoM[1]) * mass
 
-        I[1][1] += (abs(coord[0] - CoM[0]) ** 2 + abs(coord[2] - CoM[2]) ** 2) * mass
-        I[0][2] -= (coord[0] - CoM[0]) * (coord[2] - CoM[2]) * mass
-        I[2][0] -= (coord[0] - CoM[0]) * (coord[2] - CoM[2]) * mass
+        inertia_tensor[1][1] += (
+            abs(coord[0] - CoM[0]) ** 2 + abs(coord[2] - CoM[2]) ** 2
+        ) * mass
+        inertia_tensor[0][2] -= (coord[0] - CoM[0]) * (coord[2] - CoM[2]) * mass
+        inertia_tensor[2][0] -= (coord[0] - CoM[0]) * (coord[2] - CoM[2]) * mass
 
-        I[2][2] += (abs(coord[0] - CoM[0]) ** 2 + abs(coord[1] - CoM[1]) ** 2) * mass
-        I[1][2] -= (coord[1] - CoM[1]) * (coord[2] - CoM[2]) * mass
-        I[2][1] -= (coord[1] - CoM[1]) * (coord[2] - CoM[2]) * mass
+        inertia_tensor[2][2] += (
+            abs(coord[0] - CoM[0]) ** 2 + abs(coord[1] - CoM[1]) ** 2
+        ) * mass
+        inertia_tensor[1][2] -= (coord[1] - CoM[1]) * (coord[2] - CoM[2]) * mass
+        inertia_tensor[2][1] -= (coord[1] - CoM[1]) * (coord[2] - CoM[2]) * mass
 
-    return I
+    return inertia_tensor
 
 
 def get_custom_axes(a: np.ndarray, b_list: list, c: np.ndarray, dimensions: np.ndarray):
@@ -320,7 +326,7 @@ def get_custom_PI_MOI(molecule, custom_rotation_axes, center_of_mass, dimensions
     )
     translated_coords = molecule.positions - center_of_mass
     custom_MI_axis = np.zeros(3)
-    for coord, mass in zip(translated_coords, molecule.masses):
+    for coord, mass in zip(translated_coords, molecule.masses, strict=False):
         axis_component = np.sum(
             np.cross(custom_rotation_axes, coord) ** 2 * mass, axis=1
         )

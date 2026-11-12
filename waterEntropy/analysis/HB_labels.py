@@ -296,7 +296,7 @@ def get_HB_labels(atom_idx: int, system, HBs: HBCollection, shells: ShellCollect
 
         if donates_to:
             # 4. iterate through acceptors and add labels
-            for d_idx, (a_idx, _HB_strength) in donates_to.items():
+            for a_idx, _HB_strength in donates_to.values():
                 acceptor = system.atoms[a_idx]
                 if acceptor.mass < 1.1:
                     acceptor = Selections.find_bonded_heavy_atom(a_idx, system)

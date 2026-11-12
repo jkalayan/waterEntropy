@@ -34,7 +34,10 @@ def get_neighbourlist(
         )
         neighbour_indices = neighbours[pairs[:][:, 1]].indices
         sorted_distances, sorted_indices = zip(
-            *sorted(zip(distances, neighbour_indices), key=lambda x: x[0])
+            *sorted(
+                zip(distances, neighbour_indices, strict=False), key=lambda x: x[0]
+            ),
+            strict=False,
         )
         return np.array(sorted_indices), np.array(sorted_distances)
     raise ValueError(
@@ -92,7 +95,10 @@ def get_shell_neighbour_selection(
         # can donate to any atom in the shell
         neighbours = Selections.get_selection(system, "index", all_shell_indices)
     # 1c. can donate to any neighbours outside a shell, not used
-    # neighbours = system.select_atoms(f"all and not index {donator.index} and not bonded index {donator.index}")
+    # neighbours = system.select_atoms(
+    #     f"all and not index {donator.index} and "
+    #     f"not bonded index {donator.index}"
+    #     )
     # 2. Get the neighbours sorted from closest to furthest
     sorted_indices, sorted_distances = get_neighbourlist(
         donator.position, neighbours, system.dimensions, max_cutoff
@@ -146,7 +152,7 @@ def get_vector(a: np.ndarray, b: np.ndarray, dimensions: np.ndarray):
     """
     delta = b - a
     delta_wrapped = []
-    for delt, box in zip(delta, dimensions):
+    for delt, box in zip(delta, dimensions, strict=False):
         if delt < 0 and delt < 0.5 * box:
             delt = delt + box
         if delt > 0 and delt > 0.5 * box:

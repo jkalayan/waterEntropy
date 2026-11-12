@@ -56,7 +56,10 @@ def test_frame_solvent_shells():
 
 @INTERFACIAL_ENTROPY_DICTS
 def test_Sorient_dict(interfacial_entropy_dicts):
-    """Test outputted orientational entropy values of solvent molecules around a given solute molecule"""
+    """
+    Test outputted orientational entropy values of solvent molecules around a
+    given solute molecule
+    """
     # resid: {resname = [Sorient, count]}
     Sorient_dict = interfacial_entropy_dicts[0]
 

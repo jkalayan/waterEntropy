@@ -86,7 +86,8 @@ def get_forces_torques(
                 F_cov_matrices.append([F_cov_matrix])
                 T_cov_matrices.append([T_cov_matrix])
         # populate the covariances to the class instance
-        # TO-DO: set a class instance specifically for the UA length scale of molecules > 1UA
+        # TO-DO: set a class instance specifically for the UA length
+        # scale of molecules > 1UA
         covariances.add_data(
             molecule,
             molecule,
