@@ -1,124 +1,92 @@
 [build-system]
-# build the package with [flit](https://flit.readthedocs.io)
+# Build the package with [flit](https://flit.readthedocs.io)
 requires = ["flit_core >=4,<5"]
 build-backend = "flit_core.buildapi"
 
 [project]
 # See https://www.python.org/dev/peps/pep-0621/
 name = "waterEntropy"
-dynamic = ["version"]  # read from waterEntropy/__init__.py
-description = "Python package for calculating interfacial water entropy from molecular dynamics simulations."
-authors = [{name = "Jas Kalayan", email = "jas.kalayan@stfc.ac.uk"}]
+dynamic = ["version"]
+description = "waterEntropy is a Python package for calculating interfacial water entropy from molecular dynamics simulations."
+authors = [
+    {name = "Harry Swift", email = "harry.swift@stfc.ac.uk"},
+    {name = "James Gebbie-Rayet", email = "james.gebbie@stfc.ac.uk"},
+    {name = "Jas Kalayan", email = "jas.kalayan@stfc.ac.uk"},
+]
+maintainers = [
+    {name = "Jas Kalayan", email = "jas.kalayan@stfc.ac.uk"},
+]
 readme = "README.md"
-license = {file = "LICENSE"}
+license = { file = "LICENSE" }
 classifiers = [
     "Programming Language :: Python",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable"
 ]
-keywords = ["water", "entropy", "molecular dynamics", "forces"]
-requires-python = ">=3.11"
+keywords = ["entropy", "macromolecular systems", "MD simulation"]
+requires-python = ">=3.12"
 dependencies = [
     "mdanalysis>=2.11.0,<3.0",
-    "numpy>=2.3.2,<2.6.0",
-    "distributed>=2025.4.0,<2027.1.0",
-    "dask>=2025.4.0,<2027.1.0",
+    "numpy>=2.3.5,<2.6.0",
+    "distributed>=2025.7.0,<2027.1.0",
+    "dask>=2025.7.0,<2027.1.0",
     "dask-jobqueue>=0.9.0,<1.0",
-    "psutil>=5.9.4,<8.0",
+    "psutil>=7.1.3,<8.0",
 ]
 
 [project.urls]
-Source = "https://github.com/jkalayan/waterEntropy"
+Repository = "https://github.com/jkalayan/waterEntropy"
+Documentation = "https://waterEntropy.readthedocs.io"
 
 [project.optional-dependencies]
 testing = [
-    "pgtest==1.3.2",
-    "wheel==0.48.0",
-    "coverage[toml]",
-    "pytest==9.2.0",
-    "pytest-cov==7.1.0",
-    "pytest-sugar==1.1.1"
+    "pytest>=9.0,<9.2",
+    "pytest-cov>=7.0,<8.0",
+    "pytest-sugar>=1.1,<2.0",
 ]
 pre-commit = [
-    "pre-commit>=4.5,<5.0",
+    "pre-commit>=3.5.0,<5.0",
     "ruff>=0.15.2,<1.0",
-    "pylint>=4.0,<5.0",
+    "pylint>=3.0.0,<5.0",
     "rstcheck>=6.2,<7.0"
 ]
 docs = [
-    "sphinx>=9,<10",
+    "sphinx>=8.0.0,<10",
+    "sphinx-autoapi>=3.8,<4.0",
     "sphinx_rtd_theme>=3.1.0,<4",
     "sphinxcontrib-contentui>=0.2.5,<1",
     "sphinxcontrib-details-directive>=0.1.0,<1",
     "sphinx_copybutton>=0.5.2,<1",
     "furo==2025.12.19",
-    "markupsafe>=3.0.4,<4"
+    "markupsafe>=3.0,<4"
 ]
 
 [project.scripts]
 waterEntropy = "waterEntropy.cli.runWaterEntropy:main"
 waterShells = "waterEntropy.cli.run_find_Nc:main"
 
-[tool.flit.module]
-name = "waterEntropy"
-
-[tool.ruff.lint.per-file-ignores]
-# Preserve existing public package and module names.
-"waterEntropy/**/__init__.py" = ["N999"]
-"waterEntropy/__init__.py" = ["N999"]
-"waterEntropy/analysis/HB.py" = ["N999"]
-"waterEntropy/analysis/HB_labels.py" = ["N999"]
-"waterEntropy/analysis/RAD.py" = ["N999"]
-
-[tool.pylint.format]
-max-line-length = 125
-
-[tool.pylint.messages_control]
-disable = [
-    "too-many-ancestors",
-    "invalid-name",
-    "duplicate-code",
-]
-
 [tool.pytest.ini_options]
-# Configuration for [pytest](https://docs.pytest.org)
-python_files = "test_*.py example_*.py"
-filterwarnings = [
-    "ignore::DeprecationWarning:plumpy:",
-    "ignore::DeprecationWarning:yaml:",
+testpaths = ["tests"]
+
+addopts = "-vv -ra"
+
+markers = [
+  "regression: end-to-end regression tests against baselines",
+  "slow: long-running regression tests (20-30+ minutes)",
 ]
 
-[tool.coverage.run]
-# Configuration of [coverage.py](https://coverage.readthedocs.io)
-# reporting which lines of your plugin are covered by tests
-source=["waterEntropy"]
+[tool.ruff]
+line-length = 88
+target-version = "py311"
 
-[tool.isort]
-# Configuration of [isort](https://isort.readthedocs.io)
-line_length = 120
-force_sort_within_sections = true
-sections = ['FUTURE', 'STDLIB', 'THIRDPARTY', 'FIRSTPARTY', 'LOCALFOLDER']
-extend_skip = [".tpr", ".gro", ".pdb", ".top", ".mdp"]
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
 
-[tool.tox]
-legacy_tox_ini = """
-[tox]
-envlist = py38
-[testenv]
-usedevelop=True
-[testenv:py{38,39,310,311}]
-description = Run the test suite against a python version
-extras = testing
-commands = pytest {posargs}
-[testenv:pre-commit]
-description = Run the pre-commit checks
-extras = pre-commit
-commands = pre-commit run {posargs}
-[testenv:docs]
-description = Build the documentation
-extras = docs
-commands = sphinx-build -nW --keep-going -b html {posargs} docs/source docs/build/html
-commands_post = echo "open file://{toxinidir}/docs/build/html/index.html"
-"""
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

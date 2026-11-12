@@ -1,0 +1,41 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: waterEntropy
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Harry
+    family-names: Swift
+    email: harry.swift@stfc.ac.uk
+    affiliation: 'Scientific Computing Department, STFC Daresbury Laboratory, Warrington WA4 4AD, United Kingdom'
+    orcid: 'https://orcid.org/0009-0007-3323-753X'
+  - given-names: James
+    family-names: Gebbie-Rayet
+    email: james.gebbie@stfc.ac.uk
+    affiliation: 'Scientific Computing Department, STFC Daresbury Laboratory, Warrington WA4 4AD, United Kingdom'
+    orcid: 'https://orcid.org/0000-0001-8271-3431'
+  - given-names: Jas
+    family-names: Kalayan
+    email: jas.kalayan@stfc.ac.uk
+    affiliation: 'Scientific Computing Department, STFC Daresbury Laboratory, Warrington WA4 4AD, United Kingdom'
+    orcid: 'https://orcid.org/0000-0002-6833-1864'
+repository-code: 'https://github.com/jkalayan/waterEntropy'
+abstract: >-
+  waterEntropy is a Python package for calculating interfacial water entropy
+  from molecular dynamics simulations.
+keywords:
+  - entropy
+  - molecular dynamics
+  - MD simulations
+  - multiscale cell correlation
+  - statistical mechanics
+  - biomolecular simulations
+  - interfacial water
+  - hydrogen-bonding
+license: MIT
+version: 2.7.0
+date-released: '2026-11-09'

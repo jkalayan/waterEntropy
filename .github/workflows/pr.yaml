@@ -1,0 +1,43 @@
+name: Pull Request CI
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    name: Unit
+    uses: CCPBioSim/.github/.github/workflows/ci-test-python.yaml@f72e64d2dc791ad5ceda145777a3922895d92a5d # 0.17.0
+    permissions:
+      contents: read
+      checks: write
+      statuses: write
+    with:
+      package: waterEntropy
+      lowest-dependencies-check: true
+      os: '["ubuntu-26.04", "macos-26", "windows-2025-vs2026"]'
+
+  docs:
+    name: Docs
+    needs: unit
+    uses: CCPBioSim/.github/.github/workflows/ci-docs.yaml@f72e64d2dc791ad5ceda145777a3922895d92a5d # 0.17.0
+    permissions:
+      contents: read
+    with:
+      build-dir: build
+      timeout-minutes: 15
+
+  pre-commit:
+    name: Pre-commit
+    needs: unit
+    uses: CCPBioSim/.github/.github/workflows/ci-pre-commit.yaml@f72e64d2dc791ad5ceda145777a3922895d92a5d # 0.17.0
+    permissions:
+      contents: read
+    with:
+      timeout-minutes: 15

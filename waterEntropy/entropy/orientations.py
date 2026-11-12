@@ -42,21 +42,21 @@ class WaterOrientCalculator:
         self.pbias_ave = pbias_ave
 
     def get_non_HB_data(self, Nc):
-        """
+        r"""
         Calculate water orientational entropies without accounting for
         HB biasing, using the following equation (as in the host-guest systems
         paper, https://doi.org/10.1007/s10822-021-00406-5):
 
         .. math::
-            S_\\mathrm{orient} = \\ln \\Bigg(N_c ^ {(3 / 2)} \times \\pi ^ {0.5}
-            \times \frac{p_\\mathrm{corr}}{\\sigma} \\Bigg)
+
+            S_\mathrm{orient} = \ln \Bigg(N_c ^ {(3 / 2)} \times \pi ^ {0.5}
+            \times \frac{p_\mathrm{corr}}{\sigma} \Bigg)
 
         where :math:`N_{c}` is the number of UAs in the coordination shell,
-        :math:`p_\\mathrm{corr}` is the probability that the neighboring
+        :math:`p_\mathrm{corr}` is the probability that the neighboring
         molecules are oriented suitably for each solute, which is set to 0.25
-        for water. And :math:`\\sigma` is the symmetry number for water which
+        for water. And :math:`\sigma` is the symmetry number for water which
         is 2.
-
         """
         S_orient = 0
         if Nc != 0:
@@ -173,7 +173,9 @@ class WaterOrientCalculator:
         containing two hydrogen bond donors.
 
         .. math::
-            S_\mathrm{orient} = \ln \Bigg(N_{c_\mathrm{eff}} ^ {(3 / 2)} \times \pi ^ {0.5}
+
+            S_\mathrm{orient} = \ln \Bigg(N_{c_\mathrm{eff}} ^
+            {(3 / 2)} \times \pi ^ {0.5}
             \times \frac{p_\mathrm{bias\_ave}}{2} \Bigg)
 
         This equation is modified from the previous theory of water molecule
@@ -186,21 +188,25 @@ class WaterOrientCalculator:
         neighbour types that are donated to or accepted from are counted.
 
         .. math::
-            N_{c_\mathrm{eff}} = \sum_i \bigg((ppD_i \times ppA_i) \times \frac{N_i}{0.25} \bigg)
+
+            N_{c_\mathrm{eff}} = \sum_i \bigg((ppD_i \times ppA_i)
+            \times \frac{N_i}{0.25} \bigg)
 
         where :math:`ppD_i` is the probability to donate to a given neighbour
         type :math:`i` compared to accepting from the same neighbour type.
         :math:`ppA_i` is the equivalent probability for accepting from neighbour
         type :math:`i`.
 
-        :math:`p_\mathrm{bias\_ave}` is the average bias in accepting from and donating to
-        a given neighbour type :math:`i`. If it is equally likely to donate to and
-        accept from all neighbour types, then :math:`p_\mathrm{bias\_ave}=0.25`, but if there is
-        any bias in preferentially donating to, accepting from or not HBing to a
-        neighbour at all, then :math:`p_\mathrm{bias\_ave} < 0.25`.
+        :math:`p_\mathrm{bias\_ave}` is the average bias in accepting from and
+        donating to a given neighbour type :math:`i`. If it is equally likely to
+        donate to and accept from all neighbour types,
+        then :math:`p_\mathrm{bias\_ave}=0.25`, but if there is any bias in
+        preferentially donating to, accepting from or not HBing to a neighbour
+        at all, then :math:`p_\mathrm{bias\_ave} < 0.25`.
 
         .. math::
-            p_\mathrm{bias\_ave} = \frac{\sum_i(ppD_i * ppA_i)}{N_c}
+
+            p_\mathrm{bias\_ave} = \frac{\sum_i(ppD_i \times ppA_i)}{N_c}
 
         Both :math:`N_{c_\mathrm{eff}}` and :math:`p_\mathrm{bias\_ave}` are
         used to reduce the orientational entropy of the central molecule by
@@ -247,7 +253,7 @@ class Orientations:
         self.resid_labelled_Sorient = nested_dict()
         self.resname_labelled_Sorient = nested_dict()
 
-    def add_data(self, hb_labels: HBLabels):
+    def add_data(self, hb_labels: HBLabels.HBLabelCollection):
         """Add orientational entropy data"""
         self.get_orientational_entropy_from_dict(
             hb_labels.labelled_shell_counts, self.resname_labelled_Sorient
@@ -589,7 +595,8 @@ def print_Sorient_dicts(Sorient_dict: dict):
     print(textwrap.dedent(terms))
 
     print(
-        "resid resname SorHB count N_c N_w Nc_eff pbias Sor_Nc Sor_Nw SorHB2 Sor_Nc2 Sor_Nw2"
+        "resid resname SorHB count N_c N_w Nc_eff pbias Sor_Nc Sor_Nw "
+        "SorHB2 Sor_Nc2 Sor_Nw2"
     )
     for resid, resname_key in sorted(Sorient_dict.items()):
         for resname, terms in sorted(resname_key.items()):

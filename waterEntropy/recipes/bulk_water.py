@@ -34,7 +34,7 @@ def get_bulk_water_orient_entropy(
     vibrations = Vibrations(temperature)
     hb_labels = HBLabels.HBLabelCollection()
     # pylint: disable=unused-variable
-    for ts in system.trajectory[start:end:step]:
+    for _ts in system.trajectory[start:end:step]:
         # initialise the RAD and HB class instances to store shell information
         shells = ShellCollection()
         HBs = HBond.HBCollection()
