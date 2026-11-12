@@ -7,10 +7,15 @@ simulations.
 
 ``waterEntropy`` is available at https://github.com/jkalayan/waterEntropy
 
-.. image:: _static/logos/waterEntropy-logo-dark.png
-    :width: 400px
-    :align: center
-    :target: https://github.com/jkalayan/waterEntropy
+.. image:: /_static/logos/waterEntropy-logo-dark.png
+   :width: 400px
+   :align: center
+   :class: only-light
+
+.. image:: /_static/logos/waterEntropy-logo-light.png
+   :width: 400px
+   :align: center
+   :class: only-dark
 
 .. toctree::
    :maxdepth: 2

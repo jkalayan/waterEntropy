@@ -11,8 +11,8 @@ waterEntropy
 waterEntropy is a Python package for calculating interfacial water entropy from molecular dynamics simulations.
 
 <p align="center">
-    <img src="docs/source/_static/logos/waterEntropy-logo-light-text.png#gh-dark-mode-only" alt="waterEntropy logo" width="300"/>
-    <img src="https://raw.githubusercontent.com/jkalayan/waterEntropy/refs/heads/main/docs/source/_static/logos/waterEntropy-logo-dark-text.png#gh-light-mode-only" alt="waterEntropy logo" width="300"/>
+    <img src="docs/source/_static/logos/waterEntropy-logo-light.png#gh-dark-mode-only" alt="waterEntropy logo" width="300"/>
+    <img src="https://raw.githubusercontent.com/jkalayan/waterEntropy/refs/heads/main/docs/source/_static/logos/waterEntropy-logo-dark.png#gh-light-mode-only" alt="waterEntropy logo" width="300"/>
 </p>
 
 See [waterEntropy Documentation](https://waterentropy.readthedocs.io/en/latest/) for more information.
