@@ -28,7 +28,7 @@ customdefault:
 all: html
 
 clean:
-	rm -r $(BUILDDIR)
+	rm -rf $(BUILDDIR)
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
