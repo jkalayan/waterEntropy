@@ -25,7 +25,7 @@ authors:
     orcid: 'https://orcid.org/0000-0002-6833-1864'
 repository-code: 'https://github.com/jkalayan/waterEntropy'
 abstract: >-
-  waterEntropy is a Python package for calculating interfacial water entropy 
+  waterEntropy is a Python package for calculating interfacial water entropy
   from molecular dynamics simulations.
 keywords:
   - entropy
