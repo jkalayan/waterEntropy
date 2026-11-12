@@ -182,7 +182,7 @@ class Vibrations:
         if diagonalise:
             eigenvalues = covariance.diagonal()  # get matrix diagonals only
         else:
-            eigenvalues, _eigenvectors = LA.eig(covariance)
+            eigenvalues = LA.eigvalsh(covariance)
         # Replace eigenvalues numbers with 0
         filtered_eigenvalues = np.where(np.isreal(eigenvalues), eigenvalues.real, 0)
         # Replace negative eigenvalues with 0
