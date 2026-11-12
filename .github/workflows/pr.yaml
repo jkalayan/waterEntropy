@@ -41,14 +41,3 @@ jobs:
       contents: read
     with:
       timeout-minutes: 15
-
-  conda-build:
-    name: Conda build
-    needs: unit
-    uses: CCPBioSim/.github/.github/workflows/ci-conda-build.yaml@f72e64d2dc791ad5ceda145777a3922895d92a5d # 0.17.0
-    permissions:
-      contents: read
-    with:
-      channels: CCPBioSim,conda-forge
-      python-versions: '["3.12"]'
-      timeout-minutes: 45
