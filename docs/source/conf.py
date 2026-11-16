@@ -47,12 +47,10 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinxcontrib.contentui",
     "sphinx_copybutton",
-    # "aiida.sphinxext",
 ]
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
-    # "aiida": ("https://aiida.readthedocs.io/projects/aiida-core/en/latest", None),
     "numpy": ("https://numpy.org/doc/stable/", None),
 }
 
@@ -146,8 +144,8 @@ pygments_style = "sphinx"
 # documentation.
 html_theme_options = {
     # "display_version": True,
-    "dark_logo": "_static/logos/waterEntropy-logo-light.png",
-    "light_logo": "_static/logos/waterEntropy-logo-dark.png",
+    "dark_logo": "logos/waterEntropy-logo-light.png",
+    "light_logo": "logos/waterEntropy-logo-dark.png",
 }
 
 html_theme = "furo"
@@ -163,7 +161,7 @@ html_theme = "furo"
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = "_static/logos/waterEntropy-logo-dark.png"
+# html_logo = "_static/logos/waterEntropy-logo-dark.png"
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -173,7 +171,7 @@ html_logo = "_static/logos/waterEntropy-logo-dark.png"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-# html_static_path = ['_static']
+html_static_path = ["_static"]
 
 # Add any extra paths that contain custom files (such as robots.txt or
 # .htaccess) here, relative to this directory. These files are copied
