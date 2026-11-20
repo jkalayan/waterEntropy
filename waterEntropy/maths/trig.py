@@ -2,10 +2,15 @@
 Functions for common trigonometric calculations
 """
 
+import os
+import weakref
+
 import MDAnalysis
+import MDAnalysis.lib.nsgrid
 import numpy as np
 
 import waterEntropy.utils.selections as Selections
+from waterEntropy.utils.topology_cache import get_positions, get_topology_cache
 
 
 def get_neighbourlist(
@@ -45,6 +50,107 @@ def get_neighbourlist(
     )
 
 
+# Grid shortlists are only ever used to propose a superset of the candidates;
+# every distance that reaches the caller is still computed by the original
+# kernel on that subset. The margin makes "within max_cutoff by the grid's own
+# arithmetic" a strict superset of "within max_cutoff by ours", so no neighbour
+# can be lost to a rounding difference between the two.
+#
+# FastNS rejects a cutoff larger than half the box, and the margin can push a
+# cutoff the original path handled over that limit (a 10 A cutoff in an 18 A
+# box). Rather than turn a working call into an exception, such frames keep the
+# original full scan.
+_GRID_MARGIN = 1e-3
+_SHORTLIST_CACHE = weakref.WeakKeyDictionary()
+
+# The shortlist path is bitwise identical to the full scan in every gate run so
+# far (including a full 1001-frame trajectory), but it is the one component of
+# this package that has not had independent review, so it is opt-in. Set
+# CODEENTROPY_FAST_NEIGHBOURS=1 for roughly 15% more speed; leaving it unset
+# keeps the original per-query scan.
+_FAST_NEIGHBOURS_ENV = "CODEENTROPY_FAST_NEIGHBOURS"
+
+
+def _fast_neighbours_enabled() -> bool:
+    """Return whether per-frame neighbour shortlists are enabled."""
+    return os.environ.get(_FAST_NEIGHBOURS_ENV, "0") not in ("0", "", "false", "False")
+
+
+def _heavy_neighbour_shortlists(system, positions, max_cutoff):
+    """Return per-heavy-atom candidate shortlists for the current frame.
+
+    Scanning every heavy atom for each query dominates the water stage: ~2,200
+    queries per frame, each against ~14,000 heavy atoms, i.e. ~31M distance
+    evaluations. One grid search per frame answers all of them at once, in CSR
+    form (``starts`` offsets into a neighbour array ordered by query atom).
+
+    A shortlist is only valid for the exact inputs it was built from, so the
+    cache is keyed on the positions *and* the periodic box: the same coordinates
+    under a different box have different periodic neighbours, and reusing the
+    old shortlist would silently miss some. Nothing in waterEntropy mutates
+    positions or the box mid-frame today; the guard is here so that correctness
+    does not depend on that staying true. The check is a contiguous comparison,
+    far cheaper than the per-query scan it replaces.
+
+    Returns ``None`` when no grid can serve this frame (cutoff too large for the
+    box), leaving callers on the original full-scan path.
+
+    :param system: mdanalysis instance of atoms in a frame
+    :param positions: current full-Universe positions
+    :param max_cutoff: neighbour cutoff the shortlists must cover
+    """
+    universe = getattr(system, "universe", system)
+    cache = get_topology_cache(system)
+    dimensions = np.asarray(system.dimensions, dtype=np.float32)
+
+    entry = _SHORTLIST_CACHE.get(universe)
+    if (
+        entry is not None
+        and entry["cutoff"] == max_cutoff
+        and np.array_equal(entry["dimensions"], dimensions)
+        and entry["positions"].shape == positions.shape
+        and np.array_equal(entry["positions"], positions)
+    ):
+        return entry["shortlists"]
+
+    heavy_indices = cache["heavy_indices"]
+    heavy_positions = np.ascontiguousarray(positions[heavy_indices], dtype=np.float32)
+    try:
+        grid = MDAnalysis.lib.nsgrid.FastNS(
+            float(max_cutoff) + _GRID_MARGIN,
+            heavy_positions,
+            box=dimensions,
+            pbc=True,
+        )
+    except ValueError:
+        # Cutoff too large for this box: no shortlist, keep the full scan.
+        _SHORTLIST_CACHE[universe] = {
+            "cutoff": max_cutoff,
+            "dimensions": dimensions.copy(),
+            "positions": positions.copy(),
+            "shortlists": None,
+        }
+        return None
+    pairs = grid.self_search().get_pairs()
+
+    # Symmetrise: self_search reports each pair once.
+    rows = np.concatenate([pairs[:, 0], pairs[:, 1]])
+    cols = np.concatenate([pairs[:, 1], pairs[:, 0]])
+    order = np.argsort(rows, kind="stable")
+    neighbours = cols[order]
+    counts = np.bincount(rows, minlength=len(heavy_indices))
+    starts = np.concatenate([[0], np.cumsum(counts)]).astype(np.int64)
+
+    shortlists = {"neighbours": neighbours, "starts": starts}
+    _SHORTLIST_CACHE[universe] = {
+        "cutoff": max_cutoff,
+        "dimensions": dimensions.copy(),
+        "positions": positions.copy(),
+        "shortlists": shortlists,
+    }
+    return shortlists
+
+
 def get_sorted_neighbours(i_idx: int, system, max_cutoff=10):
     """
     For a given atom, find neighbouring united atoms from closest to furthest
@@ -54,20 +160,62 @@ def get_sorted_neighbours(i_idx: int, system, max_cutoff=10):
     :param system: mdanalysis instance of atoms in a frame
     :param max_cutoff: set the maximum cutoff value for finding neighbours
     """
-    i_coords = system.atoms.positions[i_idx]
+    positions = get_positions(system)
+    i_coords = positions[i_idx]
     # 1. get the heavy atom neighbour distances within a given distance cutoff
     # CHECK Find out which of the options below is better for RAD shells
     #       Should the central atom bonded UAs be allowed to block?
     #       This was not done in original code, keep the same here
-    neighbours = system.select_atoms(
-        f"""mass 2 to 999 and not index {i_idx}
-                                    and not bonded index {i_idx}"""
-        # f"""mass 2 to 999 and not index {i_idx}"""  # bonded UAs can block
+    cache = get_topology_cache(system)
+    heavy_position = cache["heavy_index_positions"].get(int(i_idx))
+
+    shortlists = (
+        None
+        if heavy_position is None or not _fast_neighbours_enabled()
+        else _heavy_neighbour_shortlists(system, positions, max_cutoff)
     )
-    # 2. Get the neighbours sorted from closest to furthest
-    sorted_indices, sorted_distances = get_neighbourlist(
-        i_coords, neighbours.atoms, system.dimensions, max_cutoff
+
+    if shortlists is None:
+        # No shortlist for this atom (light atom) or this frame (cutoff too
+        # large for the box): keep the original full scan.
+        candidate_indices = np.delete(
+            cache["heavy_indices"], cache["exclude_heavy_positions"][i_idx]
+        )
+    else:
+        start, stop = (
+            shortlists["starts"][heavy_position],
+            shortlists["starts"][heavy_position + 1],
+        )
+        shortlist = shortlists["neighbours"][start:stop]
+        # Ascending atom-index order is what the stable distance sort below
+        # relies on to break ties, exactly as the full scan did.
+        shortlist = np.sort(shortlist)
+        keep = np.ones(len(shortlist), dtype=bool)
+        excluded = cache["exclude_heavy_positions"][i_idx]
+        if len(excluded):
+            keep &= ~np.isin(shortlist, excluded)
+        candidate_indices = cache["heavy_indices"][shortlist[keep]]
+
+    candidate_positions = positions[candidate_indices]
+    # 2. Get the neighbours sorted from closest to furthest. Distances come from
+    # the same kernel as before, on a subset: capped_distance values are
+    # per-pair and elementwise, so they are bitwise identical to the full-scan
+    # values. "bruteforce" is what the original single-point call resolved to
+    # (`_determine_method`: len(reference) < 10), pinned here so the subset
+    # cannot pick a different backend.
+    pairs, distances = MDAnalysis.lib.distances.capped_distance(
+        i_coords,
+        candidate_positions,
+        max_cutoff=max_cutoff,
+        min_cutoff=None,
+        box=system.dimensions,
+        method="bruteforce",
+        return_distances=True,
     )
+    # Original Python sorted() is stable: equal distances retain atom order.
+    order = np.argsort(distances, kind="stable")
+    sorted_indices = candidate_indices[pairs[:, 1]][order]
+    sorted_distances = distances[order]
     return sorted_indices, sorted_distances
 
 

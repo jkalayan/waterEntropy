@@ -7,6 +7,27 @@ import numpy as np
 
 import waterEntropy.maths.trig as Trig
 from waterEntropy.analysis.shells import ShellCollection
+from waterEntropy.utils.topology_cache import get_positions
+
+_PAIR_ENUMERATION: dict[int, tuple[np.ndarray, np.ndarray, np.ndarray]] = {}
+
+
+def _pair_enumeration(R: int):
+    """Return the (y, z) pair indices and per-y offsets for a shell of size R.
+
+    These depend only on R, which is capped at 25, so they are computed once
+    and reused instead of being rebuilt on every call.
+
+    :param R: number of candidate neighbours considered
+    """
+    cached = _PAIR_ENUMERATION.get(R)
+    if cached is None:
+        y_per_pair = np.concatenate([np.full(y, y) for y in range(1, R)])
+        z_per_pair = np.concatenate([np.arange(y) for y in range(1, R)])
+        offsets = np.concatenate([[0], np.cumsum(np.arange(1, R))])
+        cached = (y_per_pair, z_per_pair, offsets)
+        _PAIR_ENUMERATION[R] = cached
+    return cached
 
 
 def get_RAD_neighbours(i_coords, sorted_indices, sorted_distances, system):
@@ -37,37 +58,61 @@ def get_RAD_neighbours(i_coords, sorted_indices, sorted_distances, system):
     """
     # 1. truncate neighbour list to closest 25 united atoms
     range_limit = min(len(sorted_distances), 25)
-    shell = []
-    count = -1
-    # 2. iterate through neighbours from closest to furthest
-    for y in sorted_indices[:range_limit]:
-        count += 1
-        y_idx = np.where(sorted_indices == y)[0][0]
-        j = system.atoms.indices[y]
-        j_coords = system.atoms.positions[y]
-        rij = sorted_distances[y_idx]
-        blocked = False
-        # 3. iterate through neighbours than atom j and check if they block
-        # it from atom i
-        for z in sorted_indices[:count]:  # only closer UAs can block
-            z_idx = np.where(sorted_indices == z)[0][0]
-            k_coords = system.atoms.positions[z]
-            rik = sorted_distances[z_idx]
-            # 4. find the angle jik
-            costheta_jik = Trig.get_angle(
-                j_coords, i_coords, k_coords, system.dimensions[:3]
-            )
-            if np.isnan(costheta_jik):
-                break
-            # 5. check if k blocks j from i
-            LHS = (1 / rij) ** 2
-            RHS = ((1 / rik) ** 2) * costheta_jik
-            if LHS < RHS:
-                blocked = True
-                break
-        # 6. if j is not blocked from i by k, then its in i's shell
-        if blocked is False:
-            shell.append(j)
+    if range_limit == 0:
+        return []
+    # system.atoms.positions copies the position array for *every* atom in
+    # the system (tens of thousands of atoms in a solvated box) on each
+    # access. Fetch it (and the other per-frame system properties) once.
+    all_positions = get_positions(system)
+    all_indices = system.atoms.indices
+    dims = system.dimensions[:3]
+
+    idx = sorted_indices[:range_limit]
+    dist = sorted_distances[:range_limit]
+    positions = all_positions[idx]
+    R = range_limit
+    shell = [int(all_indices[idx[0]])]  # closest neighbour has no z's to check
+    if R == 1:
+        return shell
+
+    # The original algorithm is an O(R^2) Python loop calling get_angle once
+    # per (y, z) candidate pair (y = 1..R-1, z = 0..y-1) - up to ~300 calls
+    # for R=25, each paying numpy's per-call dispatch overhead on a single
+    # triple. get_angle already reduces over axis=-1, so it works unchanged
+    # on batched (M, 3) inputs: build every (y, z) pair once and evaluate
+    # them all in a single call instead of one Python call per pair.
+    # y_per_pair/z_per_pair enumerate pairs grouped by y, with z ascending
+    # within each group - this ordering is what lets the first-trigger scan
+    # below reproduce the original's early-exit semantics exactly.
+    # The pair enumeration depends only on R (at most 25), while this runs a
+    # couple of thousand times per frame, so the arrays are built once per R.
+    y_per_pair, z_per_pair, offsets = _pair_enumeration(R)
+
+    j_coords = positions[y_per_pair]
+    k_coords = positions[z_per_pair]
+    rij = dist[y_per_pair]
+    rik = dist[z_per_pair]
+
+    costheta = Trig.get_angle(j_coords, i_coords, k_coords, dims)
+    # NaN comparisons are always False in numpy, so block_mask is already
+    # False wherever nan_mask is True - matching the original's "isnan halts
+    # checking without setting blocked=True".
+    nan_mask = np.isnan(costheta)
+    block_mask = (1.0 / rij) ** 2 < ((1.0 / rik) ** 2) * costheta
+    trigger_mask = nan_mask | block_mask
+
+    # 2. for each y (from closest to furthest), the original breaks out of
+    # its z-loop (ascending, closest-to-i first) at the FIRST z that either
+    # blocks y (LHS < RHS) or produces a NaN angle (halts checking, not a
+    # block). Only that first trigger among each y's z's matters.
+    for y in range(1, R):
+        start, end = offsets[y - 1], offsets[y]
+        group_trigger = trigger_mask[start:end]
+        if group_trigger.any():
+            first = int(np.argmax(group_trigger))
+            if block_mask[start + first]:
+                continue  # blocked - not in shell
+        shell.append(int(all_indices[idx[y]]))
     return shell
 
 
