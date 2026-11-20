@@ -151,13 +151,6 @@ def test_vibrations(interfacial_entropy_dicts):
     trans_freqs = vibrations.translational_freq[("ACE_1", "WAT")]
     rot_freqs = vibrations.rotational_freq[("ACE_1", "WAT")]
 
-    print("sorted(Strans)", sorted(Strans))
-    print("sum(Strans)", sum(Strans))
-    print("sorted(Srot)", sorted(Srot))
-    print("sum(Srot)", sum(Srot))
-    print("sorted(trans_freqs)", sorted(trans_freqs))
-    print("sorted(rot_freqs)", sorted(rot_freqs))
-
     assert np.allclose(
         sorted(Strans), np.array([15.46750522, 16.75340504, 18.45542769])
     )
