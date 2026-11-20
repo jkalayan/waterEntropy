@@ -11,6 +11,7 @@ from waterEntropy.entropy.convariances import CovarianceCollection
 from waterEntropy.entropy.orientations import Orientations
 from waterEntropy.entropy.vibrations import Vibrations
 from waterEntropy.recipes.forces_torques import get_forces_torques
+from waterEntropy.utils.topology_cache import get_topology_cache
 
 
 def get_bulk_water_orient_entropy(
@@ -68,14 +69,14 @@ def bulk_water_per_step(waters, system, shells, HBs, hb_labels, covariances):
     """
     Calculate per-step bulk-water properties from the supplied data.
     """
-
+    resnames = get_topology_cache(system)["resnames"]
     # iterate through first shell solvent and find their RAD shells,
     # HBing in the shells and shell labels
     for solvent in waters:
         # a. find RAD shell of interfacial solvent
         shell = RADShell.get_RAD_shell(solvent, system, shells)
         # b. Set RAD shell labels as resname of neighbour
-        shell.labels = [system.atoms[n].resname for n in shell.UA_shell]
+        shell.labels = [resnames[n] for n in shell.UA_shell]
         # check shell only contains only solvent molecules
         if set(shell.labels) == {solvent.resname}:
             # c. find HBing in the shell

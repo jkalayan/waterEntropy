@@ -10,6 +10,7 @@ import waterEntropy.utils.selections as Selections
 from waterEntropy.analysis.HB import HBCollection
 from waterEntropy.analysis.shells import ShellCollection
 from waterEntropy.utils.helpers import nested_dict
+from waterEntropy.utils.topology_cache import get_topology_cache
 
 
 class HBLabelCollection:
@@ -274,34 +275,39 @@ def get_HB_labels(atom_idx: int, system, HBs: HBCollection, shells: ShellCollect
     shell = shells.find_shell(atom_idx)
     accepts_from_labels = []
     donates_to_labels = []
-    # 1.check if HB donating to and accepting from have previously
-    # been found
-    if shell and shell.labels:
-        # 2. Find what UAs the central atom donates to and accepts from
-        # with the HBs class instance
-        donates_to = HBs.find_acceptor(atom_idx)
-        accepts_from = HBs.find_donators(atom_idx)
-        if accepts_from:
-            for d_idx, _HB_strength in accepts_from:
-                # 3. check if UA being accepted from is in shell of
-                # central UA and add label to list
-                bonded_UA = Selections.find_bonded_heavy_atom(d_idx, system)
-                if bonded_UA.index in shell.UA_shell:
-                    shell_idx = shell.UA_shell.index(bonded_UA.index)
-                    accepts_from_labels.append(shell.labels[shell_idx])
-                else:
-                    # don't add donating neighbour if not in central UA
-                    # shell
-                    continue
+    if shell:
+        masses = get_topology_cache(system)["masses"]
+        # 1.check if HB donating to and accepting from have previously
+        # been found
+        if shell.labels:
+            # 2. Find what UAs the central atom donates to and accepts from
+            # with the HBs class instance
+            donates_to = HBs.find_acceptor(atom_idx)
+            accepts_from = HBs.find_donators(atom_idx)
+            if accepts_from:
+                for d_idx, _HB_strength in accepts_from:
+                    # 3. check if UA being accepted from is in shell of
+                    # central UA and add label to list
+                    bonded_UA = Selections.find_bonded_heavy_atom(d_idx, system)
+                    if bonded_UA.index in shell.UA_shell:
+                        shell_idx = shell.UA_shell.index(bonded_UA.index)
+                        accepts_from_labels.append(shell.labels[shell_idx])
+                    else:
+                        # don't add donating neighbour if not in central UA
+                        # shell
+                        continue
 
-        if donates_to:
-            # 4. iterate through acceptors and add labels
-            for a_idx, _HB_strength in donates_to.values():
-                acceptor = system.atoms[a_idx]
-                if acceptor.mass < 1.1:
-                    acceptor = Selections.find_bonded_heavy_atom(a_idx, system)
-                shell_idx = shell.UA_shell.index(acceptor.index)
-                donates_to_labels.append(shell.labels[shell_idx])
+            if donates_to:
+                # 4. iterate through acceptors and add labels
+                for a_idx, _HB_strength in donates_to.values():
+                    acceptor_idx = a_idx
+                    if masses[a_idx] < 1.1:
+                        acceptor_idx = Selections.find_bonded_heavy_atom(
+                            a_idx, system
+                        ).index
+                    shell_idx = shell.UA_shell.index(acceptor_idx)
+                    donates_to_labels.append(shell.labels[shell_idx])
+
     # 5. Add labelled neighbours to shells instance
     shell.donates_to_labels = donates_to_labels
     shell.accepts_from_labels = accepts_from_labels
