@@ -1,5 +1,7 @@
 """Tests for waterEntropy trig functions in utils."""
 
+from types import SimpleNamespace
+
 import numpy as np
 import pytest
 
@@ -47,6 +49,46 @@ def test_get_neighbourlist():
             4.07845752,
         ]
     )
+
+
+def test_get_neighbourlist_rejects_duplicate_atom():
+    """Reject a neighbour selection containing the queried atom."""
+    with pytest.raises(ValueError, match="Atom coordinates"):
+        trig.get_neighbourlist(
+            system.atoms[1].position, system.atoms, system.dimensions
+        )
+
+
+def test_heavy_neighbour_shortlists_cache_and_fallback():
+    """Build, reuse, and skip a shortlist when the cutoff is too large."""
+    positions = trig.get_positions(system)
+    shortlists = trig._heavy_neighbour_shortlists(system, positions, 5)
+
+    assert shortlists is not None
+    assert trig._heavy_neighbour_shortlists(system, positions, 5) is shortlists
+    assert trig._heavy_neighbour_shortlists(system, positions, 1e9) is None
+
+
+def test_get_sorted_neighbours_fast_path(monkeypatch):
+    """Use the shortlist path for a heavy atom query."""
+    monkeypatch.setenv("CODEENTROPY_FAST_NEIGHBOURS", "1")
+    indices, distances = trig.get_sorted_neighbours(274, system, max_cutoff=5)
+    light_indices, light_distances = trig.get_sorted_neighbours(0, system, max_cutoff=5)
+
+    assert len(indices) == len(distances)
+    assert np.all(distances[:-1] <= distances[1:])
+    assert len(light_indices) == len(light_distances)
+
+
+def test_get_shell_neighbour_selection_includes_bonded_atoms():
+    """Include all atoms in a shell when heavy-atom filtering is disabled."""
+    shell = SimpleNamespace(UA_shell=[29, 1228])
+    indices, distances = trig.get_shell_neighbour_selection(
+        shell, system.atoms[274], system, heavy_atoms=False
+    )
+
+    assert len(indices) == len(distances)
+    assert len(indices) > 0
 
 
 def test_get_angle():
