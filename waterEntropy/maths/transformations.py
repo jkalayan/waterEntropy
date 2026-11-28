@@ -3,11 +3,11 @@ Functions for transforming atomic positions and forces
 """
 
 import numpy as np
-from MDAnalysis.lib.mdamath import make_whole
 from numpy import linalg as LA
 
 import waterEntropy.maths.trig as Trig
 import waterEntropy.utils.selections as Selections
+from waterEntropy.utils.topology_cache import get_topology_cache
 
 
 def get_torques(
@@ -89,27 +89,31 @@ def get_UA_masses(molecule):
     :param molecule: mdanalysis instance of molecule
     """
     UA_masses = []
+    # bonded_lists/masses are cached per Universe (topology is static across
+    # frames), avoiding a select_atoms("bonded index ...") string-parse per
+    # heavy atom.
+    cache = get_topology_cache(molecule)
+    all_masses = molecule.universe.atoms.masses
     for atom in molecule:
         if atom.mass > 1.1:
             UA_mass = atom.mass
-            bonded_atoms = molecule.select_atoms(f"bonded index {atom.index}")
-            bonded_H_atoms = bonded_atoms.select_atoms("mass 1 to 1.1")
-            for H in bonded_H_atoms:
-                UA_mass += H.mass
+            for bonded_idx in cache["bonded_lists"][atom.index]:
+                bonded_mass = all_masses[bonded_idx]
+                if 1 <= bonded_mass <= 1.1:
+                    UA_mass += bonded_mass
             UA_masses.append(UA_mass)
         else:
             continue
     return UA_masses
 
 
-def get_axes(molecule, molecule_scale: str, dimensions: np.ndarray):
+def get_axes(molecule, molecule_scale: str):
     """
     From a selection of atoms, get the ordered principal axes (3,3) and
     the ordered moment of inertia axes (3,) for that selection of atoms
 
     :param molecule: mdanalysis instance of molecule
     :param molecule_scale: the length scale of molecule
-    :param dimension: (3,) dimensions of system
     """
     # default moment of inertia
     moment_of_inertia = molecule.moment_of_inertia(unwrap=True)
@@ -120,7 +124,6 @@ def get_axes(molecule, molecule_scale: str, dimensions: np.ndarray):
         center_of_mass = molecule.center_of_mass()
         masses = get_UA_masses(molecule)
         moment_of_inertia = MOI(center_of_mass, UAs.positions, masses)
-    make_whole(molecule.atoms)  # deals with PBC
     principal_axes = molecule.principal_axes()
     # diagonalise moment of inertia tensor here
     # pylint: disable=unused-variable
@@ -131,8 +134,7 @@ def get_axes(molecule, molecule_scale: str, dimensions: np.ndarray):
     #           function instead
 
     # sort eigenvalues of moi tensor by largest to smallest magnitude
-    # order = abs(eigenvalues).argsort()[::-1]  # decending order
-    order = np.argsort(np.abs(eigenvalues))[::-1]  # match CE
+    order = abs(eigenvalues).argsort()[::-1]  # decending order
     # principal_axes = principal_axes[order] # PI already ordered correctly
     MOI_axis = eigenvalues[order]
 
@@ -201,7 +203,7 @@ def MOI(CoM: np.ndarray, positions: np.ndarray, masses: list):
     :param masses: a (N,) list of point masses
     """
     inertia_tensor = np.zeros((3, 3))
-    for coord, mass in zip(positions, masses, strict=False):
+    for coord, mass in zip(positions, masses, strict=True):
         inertia_tensor[0][0] += (
             abs(coord[1] - CoM[1]) ** 2 + abs(coord[2] - CoM[2]) ** 2
         ) * mass
@@ -326,7 +328,7 @@ def get_custom_PI_MOI(molecule, custom_rotation_axes, center_of_mass, dimensions
     )
     translated_coords = molecule.positions - center_of_mass
     custom_MI_axis = np.zeros(3)
-    for coord, mass in zip(translated_coords, molecule.masses, strict=False):
+    for coord, mass in zip(translated_coords, molecule.masses, strict=True):
         axis_component = np.sum(
             np.cross(custom_rotation_axes, coord) ** 2 * mass, axis=1
         )
@@ -403,9 +405,7 @@ def get_bonded_axes(system, atom, dimensions):
         )
     if len(heavy_bonded) == 0:
         # !! Check if this scale is correct
-        custom_axes, position_vector = get_axes(
-            UA_all, molecule_scale="single_UA", dimensions=dimensions
-        )
+        custom_axes, position_vector = get_axes(UA_all, molecule_scale="single_UA")
 
     if custom_axes is not None:
         custom_axes, position_vector = get_custom_PI_MOI(

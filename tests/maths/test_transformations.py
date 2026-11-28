@@ -40,14 +40,13 @@ class FakeAtoms(list):
 
 
 def test_get_ua_masses_adds_bonded_hydrogens_and_skips_hydrogens():
-    """Aggregate hydrogen masses into heavy-atom united atoms."""
-    heavy = SimpleNamespace(mass=12.0, index=0)
-    hydrogen = SimpleNamespace(mass=1.0, index=1)
-    heavy.bonded = [hydrogen]
-    atoms = FakeAtoms([heavy, hydrogen])
-    atoms.bonded = [hydrogen]
+    import MDAnalysis as mda
 
-    assert trans.get_UA_masses(atoms) == [13.0]
+    universe = mda.Universe.empty(2)
+    universe.add_TopologyAttr("masses", [12.0, 1.0])
+    universe.add_TopologyAttr("bonds", [(0, 1)])
+
+    assert trans.get_UA_masses(universe.atoms) == [13.0]
 
 
 def test_get_axes_for_multiple_uas_uses_ua_moi(monkeypatch):
@@ -66,9 +65,9 @@ def test_get_axes_for_multiple_uas_uses_ua_moi(monkeypatch):
     )
     monkeypatch.setattr(trans, "get_UA_masses", lambda _molecule: [2.0])
     monkeypatch.setattr(trans, "MOI", lambda *_args: np.diag([1.0, 3.0, 2.0]))
-    monkeypatch.setattr(trans, "make_whole", lambda _atoms: None)
+    # monkeypatch.setattr(trans, "make_whole", lambda _atoms: None)
 
-    axes, moi = trans.get_axes(molecule, "multiple_UAs", np.ones(3))
+    axes, moi = trans.get_axes(molecule, "multiple_UAs")
 
     np.testing.assert_array_equal(axes, np.eye(3))
     np.testing.assert_array_equal(moi, [3.0, 2.0, 1.0])
@@ -88,14 +87,14 @@ def test_single_ua_axes_have_geometry_defined_signs(monkeypatch, signs):
         positions=positions,
         principal_axes=lambda: principal_axes * np.array(signs)[:, None],
     )
-    monkeypatch.setattr(trans, "make_whole", lambda _atoms: None)
+    # monkeypatch.setattr(trans, "make_whole", lambda _atoms: None)
     monkeypatch.setattr(
         trans.Selections,
         "find_molecule_UAs",
         lambda _molecule: [SimpleNamespace(position=positions[0])],
     )
 
-    axes, _ = trans.get_axes(molecule, "single_UA", np.ones(3) * 10)
+    axes, _ = trans.get_axes(molecule, "single_UA")
 
     np.testing.assert_allclose(axes, principal_axes * np.array([-1, 1, 1])[:, None])
 
@@ -187,7 +186,7 @@ def test_single_ua_axes_reject_degenerate_moments(monkeypatch):
         positions=np.array([[0.0, 0, 0], [1.0, 0, 0], [-1.0, 0, 0]]),
         principal_axes=lambda: np.eye(3),
     )
-    monkeypatch.setattr(trans, "make_whole", lambda _atoms: None)
+    # monkeypatch.setattr(trans, "make_whole", lambda _atoms: None)
     monkeypatch.setattr(
         trans.Selections,
         "find_molecule_UAs",
@@ -195,7 +194,7 @@ def test_single_ua_axes_reject_degenerate_moments(monkeypatch):
     )
 
     with pytest.raises(ValueError, match="degenerate"):
-        trans.get_axes(molecule, "single_UA", np.ones(3) * 10)
+        trans.get_axes(molecule, "single_UA")
 
 
 def test_moi_returns_symmetric_tensor():

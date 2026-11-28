@@ -4,7 +4,7 @@ coordination shells
 """
 
 import logging
-import time
+from threading import Lock
 
 from dask.distributed import Client
 
@@ -20,8 +20,13 @@ from waterEntropy.entropy.orientations import Orientations
 from waterEntropy.entropy.vibrations import Vibrations
 from waterEntropy.recipes.forces_torques import get_forces_torques
 from waterEntropy.utils.helpers import nested_dict
+from waterEntropy.utils.topology_cache import get_topology_cache
 
 from .bulk_water import bulk_water_per_step
+
+# A scattered Universe is mutable; concurrent tasks in one worker must not seek
+# it simultaneously, even if an external client uses multiple threads.
+_FRAME_LOCK = Lock()
 
 
 def find_interfacial_solvent(solutes, system, shells: ShellCollection):
@@ -187,6 +192,7 @@ def get_interfacial_water_orient_entropy(
     temperature=298,
     parallel=False,
     client=None,
+    restart_every=0,
 ):
     # pylint: disable=E1121
     # pylint: disable=R0913
@@ -205,50 +211,79 @@ def get_interfacial_water_orient_entropy(
     :param step: steps between frames
     :param parallel: set to True to run the parallel calculation
     :param client: dask client instance if custom cluster layout required
+    :param restart_every: number of batches to process between worker pool
+        restarts, when a client is created internally (client=None);
+        0 disables restarts.
+        Workers are restarted periodically to bound memory growth over long
+        trajectories, but restarting after every single batch (the previous
+        default) means a full worker-pool teardown/respawn roughly once per
+        n_workers frames, which dominates runtime on long trajectories.
     """
     # Initialise data structures to hold processed data.
     frame_solvent_indices = nested_dict()
     covariances = CovarianceCollection()
     hb_labels = HBLabels.HBLabelCollection()
     n_frames = 0
-    results = []
-    # Steps 1,2 and 3 in function calls.
-    indices = list(range(start, end, step))
-    if parallel is True:
-        # If no Dask client cluster has been setup externally then
-        # default to single host.
-        if client is None:
-            client = Client(
-                processes=True, threads_per_worker=1, silence_logs=logging.CRITICAL
-            )
-            # parallelise over frames by packing them and vars into batches and mapping
-            # them across dask workers.
-            batch_size = client.scheduler_info()["n_workers"]
-            batches = [
-                indices[i : i + batch_size] for i in range(0, len(indices), batch_size)
-            ]
-            for i, batch in enumerate(batches):
-                args = [(index, system) for index in batch]
-                futures = client.map(_entropy_per_step, args)
-                results.extend(client.gather(futures))
-                if i < len(batches) - 1:
-                    client.restart()
-                    time.sleep(2)
-        # Otherwise we are on HPC and we can run without the memory fixes.
-        else:
-            args = [(index, system) for index in indices]
-            futures = client.map(_entropy_per_step, args)
-            results.extend(client.gather(futures))
-        client.close()
-    else:
-        for index in indices:
-            results.append(_entropy_per_step((index, system)))
-    # merge the solvent indices dicts
-    for res in results:
+
+    def merge_result(res):
+        nonlocal n_frames
         frame_solvent_indices.update(res[0])
         covariances.merge(res[1])
         hb_labels.merge(res[2])
         n_frames += res[3]
+
+    indices = list(range(start, end, step))
+    if parallel is True:
+        owns_client = client is None
+        system_future = None
+        futures = []
+        try:
+            if owns_client:
+                client = Client(
+                    processes=True,
+                    threads_per_worker=1,
+                    silence_logs=logging.CRITICAL,
+                )
+            # Scatter once: preserve each worker's topology caches between frames.
+            # Bound retained frame payloads by the worker count, not trajectory length.
+            batch_size = max(1, len(client.scheduler_info()["workers"]))
+            system_future = client.scatter([system], broadcast=True, hash=False)[0]
+            for batch_number, offset in enumerate(
+                range(0, len(indices), batch_size), 1
+            ):
+                batch = indices[offset : offset + batch_size]
+                futures = [
+                    client.submit(
+                        _locked_entropy_per_step, index, system_future, pure=False
+                    )
+                    for index in batch
+                ]
+                # Consume in source order so floating-point merging is unchanged.
+                for future in futures:
+                    merge_result(future.result())
+                    future.release()
+                futures = []
+                if (
+                    owns_client
+                    and restart_every
+                    and batch_number % restart_every == 0
+                    and offset + batch_size < len(indices)
+                ):
+                    system_future.release()
+                    client.restart()
+                    system_future = client.scatter(
+                        [system], broadcast=True, hash=False
+                    )[0]
+        finally:
+            if futures:
+                client.cancel(futures)
+            if system_future is not None:
+                system_future.release()
+            if owns_client and client is not None:
+                client.close()
+    else:
+        for index in indices:
+            merge_result(_entropy_per_step((index, system)))
     # 4. get the orientational entropy of interfacial waters and save
     #   them to a dictionary
     # TO-DO: add average Nc in Sorient dict
@@ -270,6 +305,15 @@ def get_interfacial_water_orient_entropy(
         frame_solvent_indices,
         n_frames,
     )
+
+
+def _locked_entropy_per_step(index, system):
+    with _FRAME_LOCK:
+        try:
+            return _entropy_per_step((index, system))
+        except Exception as exc:
+            exc.add_note(f"waterEntropy failed at source frame {index}")
+            raise
 
 
 def _entropy_per_step(args):
@@ -337,6 +381,10 @@ def _interfacial_water_per_step(
     Iterate over waters found at solute interfaces.
     """
 
+    cache = get_topology_cache(system)
+    resids = cache["resids"]
+    resnames = cache["resnames"]
+
     for solvent in first_shell_solvent:
         # a. find RAD shell of interfacial solvent
         shell = RADShell.get_RAD_shell(solvent, system, shells)
@@ -347,11 +395,13 @@ def _interfacial_water_per_step(
         # d. find HB labels
         HBLabels.get_HB_labels(solvent.index, system, HBs, shells)
         if shell.nearest_nonlike_idx is not None:
-            nearest = system.atoms[shell.nearest_nonlike_idx]
+            # nearest = system.atoms[shell.nearest_nonlike_idx]
             # nearest_resid = nearest.resid
             # nearest_resname = nearest.resname
             for nearest_resid, nearest_resname in zip(
-                [nearest.resid, 0], [nearest.resname, "all"], strict=False
+                [resids[shell.nearest_nonlike_idx], 0],
+                [resnames[shell.nearest_nonlike_idx], "all"],
+                strict=False,
             ):
                 # e. populate the labels into a dictionary for stats
                 # only if a different atom is in the RAD shell

@@ -8,6 +8,11 @@ message: >-
   metadata from this file.
 type: software
 authors:
+  - given-names: Süleyman Selim
+    family-names: Çınaroğlu
+    email: suleyman.selim.cinaroglu@ege.edu.tr
+    affiliation: 'Çınaroğlu Lab, Ege University: Izmir, İzmir Province, TR'
+    orcid: 'https://orcid.org/0000-0001-7120-3540'
   - given-names: Harry
     family-names: Swift
     email: harry.swift@stfc.ac.uk

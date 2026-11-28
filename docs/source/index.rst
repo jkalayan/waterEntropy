@@ -61,6 +61,11 @@ If you use this package in your research, please cite the following work:
 
 Please contact Jas Kalayan jas.kalayan@stfc.ac.uk for information concerning ``waterEntropy``.
 
+Acknowledgements
+================
+
+The effieciency of the code has been greatly improved thanks to Süleyman Selim Çınaroğlu and the Çınaroğlu Lab.
+
 Funding
 =======
 
